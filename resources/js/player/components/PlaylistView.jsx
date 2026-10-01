@@ -3,7 +3,7 @@ import { useAudio } from '../context/AudioContext';
 import {
   ArrowLeft, Trash2, Music, Play, Pause, Heart, X, Edit3,
   Shuffle, ListPlus, LayoutGrid, List, Search, Plus, Clock,
-  Pin, PinOff, Sparkles, Check, Upload, Image as ImageIcon, Share2
+  Pin, PinOff, Sparkles, Check, Upload, Image as ImageIcon, Share2, Lock
 } from 'lucide-react';
 
 const EMOJI_OPTIONS = ['🎧', '🔥', '🌙', '☕', '⚡', '💎', '🌊', '🌸', '🚀', '💿', '🎸', '🎹', '✨', '🪐'];
@@ -109,6 +109,7 @@ export default function PlaylistView({ playlistId, onBack }) {
   const currentGradient = GRADIENT_PRESETS.find(g => g.id === (playlist.gradient || 'default')) || GRADIENT_PRESETS[0];
 
   const isCurrentPlaylistPlaying = isPlaying && playlistSongs.some(s => s.id === currentSong?.id);
+  const isLocked = playlist.status !== 'approved' && playlist.isLocked !== false;
 
   const handleOpenEdit = () => {
     setEditName(playlist.name);
@@ -269,6 +270,15 @@ export default function PlaylistView({ playlistId, onBack }) {
                   <Pin className="w-3 h-3" /> PINNED
                 </span>
               )}
+              {isLocked ? (
+                <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-amber-400" /> MENUNGGU IZIN ADMIN (TERKUNCI)
+                </span>
+              ) : (
+                <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1">
+                  <Check className="w-3 h-3 text-emerald-400" /> DISETUJUI ADMIN (AKTIF)
+                </span>
+              )}
             </div>
 
             {/* Title */}
@@ -304,6 +314,26 @@ export default function PlaylistView({ playlistId, onBack }) {
         </div>
       </section>
 
+      {/* Locked Submission Banner */}
+      {isLocked && (
+        <section className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3.5 text-amber-200 animate-fadeIn">
+          <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 flex-shrink-0 mt-0.5">
+            <Lock className="w-5 h-5" />
+          </div>
+          <div className="flex-1 text-xs">
+            <div className="font-bold text-amber-300 text-sm flex items-center gap-2 flex-wrap">
+              <span>Status Pengajuan: Menunggu Persetujuan Administrator</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/25 border border-amber-500/40 text-amber-300 font-mono">
+                TERKUNCI
+              </span>
+            </div>
+            <p className="mt-1 text-amber-200/80 leading-relaxed">
+              Playlist ini telah diajukan ke sistem. Sebelum disetujui di Portal Admin, seluruh lagu dalam playlist ini berstatus terkunci dan belum dapat diputar. Silakan tunggu Administrator menyetujuinya di Dashboard Admin.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Action Bar */}
       <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Playback Controls */}
@@ -311,6 +341,10 @@ export default function PlaylistView({ playlistId, onBack }) {
           {/* Main Play Button */}
           <button
             onClick={() => {
+              if (isLocked) {
+                showToast('🔒 Playlist terkunci! Menunggu izin Administrator sebelum dapat diputar.', 'warning');
+                return;
+              }
               if (isCurrentPlaylistPlaying) {
                 togglePlay();
               } else {
@@ -318,22 +352,38 @@ export default function PlaylistView({ playlistId, onBack }) {
               }
             }}
             disabled={playlistSongs.length === 0}
-            className="w-14 h-14 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_var(--accent-glow)] disabled:opacity-50 disabled:cursor-not-allowed"
-            title={isCurrentPlaylistPlaying ? 'Pause Playlist' : 'Play Playlist'}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-[0_0_20px_var(--accent-glow)] disabled:opacity-50 disabled:cursor-not-allowed ${
+              isLocked
+                ? 'bg-amber-500/20 border-2 border-amber-400/50 text-amber-300 hover:bg-amber-500/30'
+                : 'bg-primary-container text-on-primary-container hover:scale-105 active:scale-95'
+            }`}
+            title={isLocked ? 'Playlist terkunci (Menunggu persetujuan Admin)' : (isCurrentPlaylistPlaying ? 'Pause Playlist' : 'Play Playlist')}
           >
-            {isCurrentPlaylistPlaying ? (
+            {isLocked ? (
+              <Lock className="w-6 h-6 text-amber-300" />
+            ) : isCurrentPlaylistPlaying ? (
               <Pause className="w-6 h-6 fill-current" />
             ) : (
               <Play className="w-6 h-6 fill-current ml-0.5" />
             )}
           </button>
-
+          {/* Shuffle Button */}
           {/* Shuffle Button */}
           <button
-            onClick={() => playPlaylist(playlist.id, true)}
+            onClick={() => {
+              if (isLocked) {
+                showToast('🔒 Playlist terkunci! Menunggu izin Administrator.', 'warning');
+                return;
+              }
+              playPlaylist(playlist.id, true);
+            }}
             disabled={playlistSongs.length === 0}
-            className="h-10 px-4 rounded-full bg-[#1b1b1f] border border-[#454934]/30 hover:border-primary-container hover:text-primary-container text-on-surface-variant flex items-center gap-2 text-xs font-semibold font-mono transition-all disabled:opacity-40"
-            title="Shuffle Play Playlist"
+            className={`h-10 px-4 rounded-full border flex items-center gap-2 text-xs font-semibold font-mono transition-all disabled:opacity-40 ${
+              isLocked
+                ? 'bg-[#1b1b1f] border-amber-500/30 text-amber-300/80'
+                : 'bg-[#1b1b1f] border-[#454934]/30 hover:border-primary-container hover:text-primary-container text-on-surface-variant'
+            }`}
+            title={isLocked ? 'Playlist terkunci' : 'Shuffle Play Playlist'}
           >
             <Shuffle className="w-4 h-4" />
             <span>SHUFFLE</span>
@@ -492,14 +542,19 @@ export default function PlaylistView({ playlistId, onBack }) {
             return (
               <div
                 key={`${song.id}-${idx}`}
-                onClick={() => playSong(song)}
+                onClick={() => {
+                  if (isLocked) {
+                    showToast('🔒 Playlist terkunci! Menunggu izin Administrator sebelum lagu dapat diputar.', 'warning');
+                    return;
+                  }
+                  playSong(song);
+                }}
                 className={`flex items-center justify-between p-2.5 sm:p-3 rounded-xl transition-all cursor-pointer group ${
                   isCurrent
                     ? 'bg-[#292a2d] border border-primary-container/40 text-white shadow-sm'
                     : 'hover:bg-[#222327] text-[#e3e2e6]'
                 }`}
               >
-                {/* Left: Index / Play status + Cover + Title */}
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   <div className="w-6 flex items-center justify-center font-mono text-xs flex-shrink-0 text-on-surface-variant">
                     {isSongPlaying ? (

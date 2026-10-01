@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Music;
 use App\Models\User;
+use App\Models\VisitorLog;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -122,6 +123,30 @@ class DatabaseSeeder extends Seeder
                 ['slug' => $song['slug']],
                 $song
             );
+        }
+
+        if (VisitorLog::count() < 10) {
+            $seedLogs = [];
+            $now = now();
+            for ($daysAgo = 6; $daysAgo >= 0; $daysAgo--) {
+                $date = $now->copy()->subDays($daysAgo)->toDateString();
+                $hitsCount = rand(15, 45);
+                for ($h = 0; $h < $hitsCount; $h++) {
+                    $hour = rand(6, 23);
+                    $ip = '192.168.1.'.rand(10, 80);
+                    $seedLogs[] = [
+                        'ip_hash' => md5($ip.$date),
+                        'path' => '/',
+                        'visit_date' => $date,
+                        'visit_hour' => $hour,
+                        'created_at' => $date.' '.sprintf('%02d:00:00', $hour),
+                        'updated_at' => $date.' '.sprintf('%02d:00:00', $hour),
+                    ];
+                }
+            }
+            if (! empty($seedLogs)) {
+                VisitorLog::insert($seedLogs);
+            }
         }
     }
 }

@@ -179,13 +179,25 @@ export function AudioProvider({ children }) {
           setPlaylists(localPls => {
             const map = new Map();
             for (const cp of communityPls) {
+              const isApproved = cp.status === 'approved' || (cp.is_public && !cp.status);
               map.set(cp.id, {
                 ...cp,
+                status: cp.status || (isApproved ? 'approved' : 'pending'),
+                isLocked: !isApproved,
                 isCommunity: true,
               });
             }
             for (const lp of localPls) {
-              map.set(lp.id, lp);
+              const serverMatch = map.get(lp.id);
+              if (serverMatch) {
+                map.set(lp.id, { ...lp, ...serverMatch });
+              } else {
+                map.set(lp.id, {
+                  ...lp,
+                  status: lp.status || 'pending',
+                  isLocked: lp.status !== 'approved',
+                });
+              }
             }
             return Array.from(map.values());
           });
@@ -648,6 +660,9 @@ export function AudioProvider({ children }) {
       gradient: gradient || 'default',
       customCover: customCover || null,
       creator_name: uploader,
+      status: 'pending',
+      is_public: false,
+      isLocked: true,
       isPinned: false,
       isCommunity: true,
       songs: [],
@@ -656,7 +671,7 @@ export function AudioProvider({ children }) {
 
     // Optimistic local update
     setPlaylists(prev => [newPl, ...prev]);
-    showToast(`📋 Created playlist "${trimmed}"`, 'success');
+    showToast(`⏳ Pengajuan playlist "${trimmed}" berhasil dibuat! Menunggu persetujuan Admin sebelum dapat diputar.`, 'info');
 
     // Centralized database save
     try {
@@ -671,8 +686,18 @@ export function AudioProvider({ children }) {
       });
       if (res && res.success && res.data) {
         const dbId = String(res.data.id);
-        setPlaylists(prev => prev.map(p => p.id === tempId ? { ...p, id: dbId, isCommunity: true } : p));
+        const serverStatus = res.data.status || 'pending';
+        const isLocked = serverStatus !== 'approved';
+        setPlaylists(prev => prev.map(p => p.id === tempId ? {
+          ...p,
+          id: dbId,
+          status: serverStatus,
+          isLocked: isLocked,
+          isCommunity: true
+        } : p));
         newPl.id = dbId;
+        newPl.status = serverStatus;
+        newPl.isLocked = isLocked;
       }
     } catch (err) {
       console.debug('Failed to sync playlist to MySQL:', err);
@@ -754,7 +779,12 @@ export function AudioProvider({ children }) {
 
   const playPlaylist = (playlistId, shuffle = false) => {
     const pl = playlists.find(p => p.id === playlistId);
-    if (!pl || pl.songs.length === 0) {
+    if (!pl) return;
+    if (pl.status !== 'approved' && pl.isLocked !== false) {
+      showToast('🔒 Playlist terkunci! Menunggu izin persetujuan dari Administrator sebelum dapat diputar.', 'warning');
+      return;
+    }
+    if (pl.songs.length === 0) {
       showToast('⚠️ Playlist is empty', 'info');
       return;
     }
@@ -783,7 +813,12 @@ export function AudioProvider({ children }) {
 
   const addPlaylistToQueue = (playlistId) => {
     const pl = playlists.find(p => p.id === playlistId);
-    if (!pl || pl.songs.length === 0) {
+    if (!pl) return;
+    if (pl.status !== 'approved' && pl.isLocked !== false) {
+      showToast('🔒 Playlist terkunci! Menunggu izin persetujuan dari Administrator.', 'warning');
+      return;
+    }
+    if (pl.songs.length === 0) {
       showToast('⚠️ Playlist is empty', 'info');
       return;
     }

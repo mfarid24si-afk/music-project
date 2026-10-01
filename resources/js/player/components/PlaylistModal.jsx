@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAudio } from '../context/AudioContext';
-import { X, Check, ListMusic, Plus } from 'lucide-react';
+import { X, Check, ListMusic, Plus, Lock } from 'lucide-react';
 
 export default function PlaylistModal({ song, isOpen, onClose }) {
   const { playlists, createPlaylist, addToPlaylist, removeFromPlaylist } = useAudio();
@@ -79,6 +79,11 @@ export default function PlaylistModal({ song, isOpen, onClose }) {
                       <span className="text-sm flex-shrink-0">{pl.emoji || '🎧'}</span>
                     )}
                     <span className="text-xs font-semibold truncate font-display">{pl.name}</span>
+                    {pl.status !== 'approved' && pl.isLocked !== false && (
+                      <span title="Menunggu persetujuan Admin" className="text-amber-400 text-[10px] flex items-center gap-0.5 flex-shrink-0">
+                        <Lock className="w-2.5 h-2.5" />
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -116,6 +121,10 @@ export default function PlaylistModal({ song, isOpen, onClose }) {
             <span>Create</span>
           </button>
         </form>
+        <p className="text-[10px] text-amber-300/80 font-mono flex items-center gap-1.5 px-0.5">
+          <Lock className="w-3 h-3 text-amber-400 flex-shrink-0" />
+          <span>Pembuatan playlist baru memerlukan izin Administrator sebelum dapat diputar.</span>
+        </p>
       </div>
     </>
   );

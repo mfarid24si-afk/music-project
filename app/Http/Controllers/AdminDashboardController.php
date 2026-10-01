@@ -413,56 +413,140 @@ class AdminDashboardController extends Controller
      */
     private function getAnalyticsData(): array
     {
-        // 1. Harian: 24 jam (00:00 - 23:00) -> Bar Chart
+        $today = date('Y-m-d');
+        $currentYear = (int) date('Y');
+        $currentMonth = (int) date('m');
+
+        // 1. Harian: 24 jam (00:00 - 23:00) dihitung REAL dari visitor_logs hari ini
         $hourlyLabels = [];
         $hourlyData = [];
         for ($h = 0; $h < 24; $h++) {
             $hourlyLabels[] = sprintf('%02d:00', $h);
-            $hourlyData[] = 0;
+            $hourlyData[$h] = 0;
         }
 
         try {
-            $today = date('Y-m-d');
-            $logs = DB::table('visitor_logs')
+            $dailyLogs = DB::table('visitor_logs')
                 ->where('visit_date', $today)
-                ->selectRaw('visit_hour, count(distinct ip_hash) as total')
+                ->selectRaw('visit_hour, count(*) as total')
                 ->groupBy('visit_hour')
                 ->pluck('total', 'visit_hour');
 
-            foreach ($logs as $hour => $count) {
+            foreach ($dailyLogs as $hour => $count) {
                 if (isset($hourlyData[$hour])) {
                     $hourlyData[$hour] = (int) $count;
                 }
             }
         } catch (\Throwable $e) {
+            Log::warning('Analytics daily query error: '.$e->getMessage());
         }
 
-        if (array_sum($hourlyData) === 0) {
-            $hourlyData = [8, 5, 2, 1, 1, 4, 12, 28, 45, 62, 75, 84, 88, 78, 62, 59, 74, 98, 120, 134, 105, 82, 54, 25];
+        // 2. Mingguan: 7 hari terakhir (6 hari lalu sampai hari ini) dihitung REAL
+        $dayNamesIndo = [
+            'Sun' => 'Minggu',
+            'Mon' => 'Senin',
+            'Tue' => 'Selasa',
+            'Wed' => 'Rabu',
+            'Thu' => 'Kamis',
+            'Fri' => 'Jumat',
+            'Sat' => 'Sabtu',
+        ];
+
+        $weeklyLabels = [];
+        $weeklyDates = [];
+        $weeklyUnique = [];
+        $weeklyViews = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $d = date('Y-m-d', strtotime("-{$i} days"));
+            $dayShort = date('D', strtotime($d));
+            $dayLabel = ($dayNamesIndo[$dayShort] ?? $dayShort).' ('.date('d/m', strtotime($d)).')';
+
+            $weeklyLabels[] = $dayLabel;
+            $weeklyDates[] = $d;
+            $weeklyUnique[$d] = 0;
+            $weeklyViews[$d] = 0;
         }
 
-        // 2. Mingguan: 7 hari (Senin - Minggu) -> Stacked Bar Chart
-        $weeklyLabels = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-        $weeklyUnique = [165, 192, 180, 240, 285, 360, 310];
-        $weeklyViews = [480, 560, 520, 690, 810, 1080, 940];
+        try {
+            $startDate = $weeklyDates[0];
+            $endDate = $weeklyDates[6];
 
-        // 3. Bulanan: 4-5 Minggu -> Line Chart (Grafik Garis)
-        $monthlyLabels = ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'];
-        $monthlyData = [1450, 1890, 2150, 2680];
+            $weekLogs = DB::table('visitor_logs')
+                ->whereBetween('visit_date', [$startDate, $endDate])
+                ->selectRaw('visit_date, count(*) as total_views, count(distinct ip_hash) as unique_ips')
+                ->groupBy('visit_date')
+                ->get();
 
-        // 4. Tahunan: 12 Bulan -> Area Spline Wave Chart
+            foreach ($weekLogs as $row) {
+                if (isset($weeklyUnique[$row->visit_date])) {
+                    $weeklyUnique[$row->visit_date] = (int) $row->unique_ips;
+                    $weeklyViews[$row->visit_date] = (int) $row->total_views;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Analytics weekly query error: '.$e->getMessage());
+        }
+
+        // 3. Bulanan: 4 interval minggu dalam bulan berjalan dihitung REAL
+        $monthlyLabels = ['Minggu 1 (1-7)', 'Minggu 2 (8-14)', 'Minggu 3 (15-21)', 'Minggu 4 (22+)'];
+        $monthlyData = [0, 0, 0, 0];
+
+        try {
+            $monthLogs = DB::table('visitor_logs')
+                ->whereYear('visit_date', $currentYear)
+                ->whereMonth('visit_date', $currentMonth)
+                ->selectRaw('DAY(visit_date) as dom, count(*) as total')
+                ->groupByRaw('DAY(visit_date)')
+                ->get();
+
+            foreach ($monthLogs as $row) {
+                $day = (int) $row->dom;
+                $cnt = (int) $row->total;
+                if ($day <= 7) {
+                    $monthlyData[0] += $cnt;
+                } elseif ($day <= 14) {
+                    $monthlyData[1] += $cnt;
+                } elseif ($day <= 21) {
+                    $monthlyData[2] += $cnt;
+                } else {
+                    $monthlyData[3] += $cnt;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Analytics monthly query error: '.$e->getMessage());
+        }
+
+        // 4. Tahunan: 12 Bulan (Jan - Des) tahun berjalan dihitung REAL
         $yearlyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        $yearlyData = [3800, 4600, 4200, 5800, 6900, 8100, 9600, 10400, 12100, 13600, 15400, 18200];
+        $yearlyData = array_fill(0, 12, 0);
+
+        try {
+            $yearLogs = DB::table('visitor_logs')
+                ->whereYear('visit_date', $currentYear)
+                ->selectRaw('MONTH(visit_date) as month_num, count(*) as total')
+                ->groupByRaw('MONTH(visit_date)')
+                ->pluck('total', 'month_num');
+
+            foreach ($yearLogs as $mNum => $cnt) {
+                $idx = ((int) $mNum) - 1;
+                if (isset($yearlyData[$idx])) {
+                    $yearlyData[$idx] = (int) $cnt;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Analytics yearly query error: '.$e->getMessage());
+        }
 
         return [
             'daily' => [
                 'labels' => $hourlyLabels,
-                'data' => $hourlyData,
+                'data' => array_values($hourlyData),
             ],
             'weekly' => [
                 'labels' => $weeklyLabels,
-                'unique' => $weeklyUnique,
-                'views' => $weeklyViews,
+                'unique' => array_values($weeklyUnique),
+                'views' => array_values($weeklyViews),
             ],
             'monthly' => [
                 'labels' => $monthlyLabels,

@@ -10,6 +10,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <!-- Chart.js CDN for Analytics Visualizations -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('spotirid_admin_theme') || 'default';
+      const savedMode = localStorage.getItem('spotirid_admin_mode') || 'dark';
+      if (savedTheme !== 'default') {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      }
+      if (savedMode === 'light') {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+    })();
+  </script>
   <style>
     :root {
       --bg-primary: #0d0e11;
@@ -30,6 +46,187 @@
       --text-muted: #9a9ca6;
       --font-body: 'Hanken Grotesk', -apple-system, sans-serif;
       --font-mono: 'Space Grotesk', monospace;
+    }
+
+    /* Theme Color Variations (Identical to User Player) */
+    [data-theme="purple"] {
+      --accent: #a855f7;
+      --accent-hover: #c084fc;
+      --accent-glow: rgba(168, 85, 247, 0.25);
+      --border-accent: rgba(168, 85, 247, 0.4);
+    }
+    [data-theme="blue"] {
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --accent-glow: rgba(59, 130, 246, 0.25);
+      --border-accent: rgba(59, 130, 246, 0.4);
+    }
+    [data-theme="cyberpunk"] {
+      --accent: #ec4899;
+      --accent-hover: #f472b6;
+      --accent-glow: rgba(236, 72, 153, 0.25);
+      --border-accent: rgba(236, 72, 153, 0.4);
+    }
+    [data-theme="sunset"] {
+      --accent: #f97316;
+      --accent-hover: #fb923c;
+      --accent-glow: rgba(249, 115, 22, 0.25);
+      --border-accent: rgba(249, 115, 22, 0.4);
+    }
+    [data-theme="ocean"] {
+      --accent: #06b6d4;
+      --accent-hover: #22d3ee;
+      --accent-glow: rgba(6, 182, 212, 0.25);
+      --border-accent: rgba(6, 182, 212, 0.4);
+    }
+
+    /* Light Mode Overrides */
+    html.light {
+      color-scheme: light;
+      --bg-primary: #f4f5f8;
+      --bg-surface: #ffffff;
+      --bg-elevated: #eaecf1;
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --text-main: #111215;
+      --text-muted: #555866;
+    }
+    html.light body {
+      background: var(--bg-primary);
+      color: var(--text-main);
+    }
+    html.light .admin-header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom-color: rgba(0, 0, 0, 0.08);
+    }
+    html.light .header-title,
+    html.light .admin-chip span {
+      color: #111215;
+    }
+    html.light .bento-card,
+    html.light .section-card,
+    html.light .table-container,
+    html.light .tab-nav {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    }
+    html.light .bento-val,
+    html.light .section-title,
+    html.light .song-title {
+      color: #111215;
+    }
+    html.light .form-control {
+      background: #f4f5f8;
+      border-color: rgba(0, 0, 0, 0.12);
+      color: #111215;
+    }
+    html.light .form-control:focus {
+      background: #ffffff;
+    }
+    html.light th {
+      background: #f8f9fa;
+      color: #4b4e5a;
+      border-bottom-color: rgba(0, 0, 0, 0.08);
+    }
+    html.light td {
+      border-bottom-color: rgba(0, 0, 0, 0.06);
+      color: #111215;
+    }
+    html.light tr:hover td {
+      background: #f8f9fa;
+    }
+    html.light .tab-btn {
+      color: #555866;
+    }
+    html.light .tab-btn.active {
+      background: #eaecf1;
+      color: #111215;
+    }
+    html.light .btn-ghost {
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.08);
+      color: #111215;
+    }
+    html.light .btn-ghost:hover {
+      background: rgba(0, 0, 0, 0.1);
+      color: #000;
+    }
+    html.light .badge-subtle {
+      background: #eaecf1;
+      color: #4b4e5a;
+    }
+    html.light .modal-content {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.12);
+      color: #111215;
+    }
+    html.light .modal-head {
+      border-bottom-color: rgba(0, 0, 0, 0.08);
+    }
+    html.light .modal-title {
+      color: #111215;
+    }
+
+    /* Theme & Mode Control UI Elements */
+    .mode-toggle-group {
+      display: inline-flex;
+      background: var(--bg-elevated);
+      padding: 4px;
+      border-radius: 50px;
+      border: 1px solid var(--border-subtle);
+      gap: 4px;
+    }
+    .mode-btn {
+      padding: 8px 18px;
+      border-radius: 50px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      color: #000;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+    .theme-swatches {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .theme-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+    .theme-btn:hover {
+      transform: scale(1.15);
+    }
+    .theme-btn.active {
+      border-color: #ffffff;
+      box-shadow: 0 0 0 3px var(--accent), 0 4px 14px rgba(0, 0, 0, 0.35);
+      transform: scale(1.1);
+    }
+    .theme-btn.active::after {
+      content: '✓';
+      color: #000;
+      font-weight: 900;
+      font-size: 14px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -551,6 +748,24 @@
         </svg>
         <span>Ke Beranda Player</span>
       </a>
+
+      <button type="button" class="btn-ghost" id="quickModeToggle" title="Ganti Mode Gelap / Terang">
+        <svg id="quickIconSun" class="icon" viewBox="0 0 24 24" style="display: none;">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg id="quickIconMoon" class="icon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <span id="quickModeLabel">Dark</span>
+      </button>
 
       <div class="admin-chip">
         <div class="avatar-sm">{{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 2)) }}</div>
@@ -1171,6 +1386,57 @@
     <!-- ==================== TAB 4: SETTINGS ==================== -->
     @if ($activeTab === 'settings')
       <div class="form-grid">
+        <!-- Theme & Appearance Settings -->
+        <div class="section-card" style="grid-column: 1 / -1;">
+          <div class="section-head">
+            <div>
+              <div class="section-title">
+                <svg class="icon" style="color: var(--accent);" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="5"/>
+                  <line x1="12" y1="1" x2="12" y2="3"/>
+                  <line x1="12" y1="21" x2="12" y2="23"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="1" y1="12" x2="3" y2="12"/>
+                  <line x1="21" y1="12" x2="23" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <span>Tampilan & Tema Administrator</span>
+              </div>
+              <p class="section-subtitle">Sesuaikan mode pencahayaan (Gelap/Terang) dan warna aksen dashboard agar identik dengan player user:</p>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px;">Mode Pencahayaan (Dark / Light Mode)</label>
+              <div class="mode-toggle-group">
+                <button type="button" class="mode-btn active" id="btnModeDark" data-mode="dark">
+                  <svg class="icon-sm" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                  <span>Dark Mode (Gelap)</span>
+                </button>
+                <button type="button" class="mode-btn" id="btnModeLight" data-mode="light">
+                  <svg class="icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                  <span>Light Mode (Terang)</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px;">Palet Warna Aksen (Identik dengan Player)</label>
+              <div class="theme-swatches" id="adminThemeSwatches">
+                <button type="button" class="theme-btn active" data-theme="default" title="Acid Lime (Bawaan)" style="background: #ccf228;"></button>
+                <button type="button" class="theme-btn" data-theme="purple" title="Electric Violet" style="background: #a855f7;"></button>
+                <button type="button" class="theme-btn" data-theme="blue" title="Deep Cobalt" style="background: #3b82f6;"></button>
+                <button type="button" class="theme-btn" data-theme="cyberpunk" title="Hot Pink" style="background: #ec4899;"></button>
+                <button type="button" class="theme-btn" data-theme="sunset" title="Safety Amber" style="background: #f97316;"></button>
+                <button type="button" class="theme-btn" data-theme="ocean" title="Cyan Laser" style="background: #06b6d4;"></button>
+              </div>
+              <span style="font-size: 11px; color: var(--text-muted); margin-top: 6px; display: inline-block;">Pilihan tema warna langsung mengubah aksen tombol, badge, sorotan tabel, dan grafik analitik secara instan.</span>
+            </div>
+          </div>
+        </div>
         <!-- Update Profile -->
         <div class="section-card">
           <div class="section-head">
@@ -1548,6 +1814,102 @@
     document.addEventListener('DOMContentLoaded', () => {
       switchChart('daily');
     });
+
+    // ==========================================
+    // Admin Theme & Mode Management System
+    // ==========================================
+    const THEME_KEY = 'spotirid_admin_theme';
+    const MODE_KEY = 'spotirid_admin_mode';
+
+    function getCurrentMode() {
+      return localStorage.getItem(MODE_KEY) || 'dark';
+    }
+
+    function getCurrentTheme() {
+      return localStorage.getItem(THEME_KEY) || 'default';
+    }
+
+    function setAdminMode(mode) {
+      localStorage.setItem(MODE_KEY, mode);
+      if (mode === 'light') {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+      updateModeUI(mode);
+      if (typeof currentPeriod !== 'undefined' && currentPeriod) {
+        switchChart(currentPeriod);
+      }
+    }
+
+    function setAdminTheme(theme) {
+      localStorage.setItem(THEME_KEY, theme);
+      if (theme === 'default') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+      updateThemeUI(theme);
+      if (typeof currentPeriod !== 'undefined' && currentPeriod) {
+        switchChart(currentPeriod);
+      }
+    }
+
+    function updateModeUI(mode) {
+      const sunIcon = document.getElementById('quickIconSun');
+      const moonIcon = document.getElementById('quickIconMoon');
+      const modeLabel = document.getElementById('quickModeLabel');
+      const btnDark = document.getElementById('btnModeDark');
+      const btnLight = document.getElementById('btnModeLight');
+
+      if (mode === 'light') {
+        if (sunIcon) sunIcon.style.display = 'block';
+        if (moonIcon) moonIcon.style.display = 'none';
+        if (modeLabel) modeLabel.textContent = 'Light';
+        if (btnLight) btnLight.classList.add('active');
+        if (btnDark) btnDark.classList.remove('active');
+      } else {
+        if (sunIcon) sunIcon.style.display = 'none';
+        if (moonIcon) moonIcon.style.display = 'block';
+        if (modeLabel) modeLabel.textContent = 'Dark';
+        if (btnDark) btnDark.classList.add('active');
+        if (btnLight) btnLight.classList.remove('active');
+      }
+    }
+
+    function updateThemeUI(theme) {
+      document.querySelectorAll('#adminThemeSwatches .theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+      });
+    }
+
+    const quickToggle = document.getElementById('quickModeToggle');
+    if (quickToggle) {
+      quickToggle.addEventListener('click', () => {
+        const nextMode = getCurrentMode() === 'light' ? 'dark' : 'light';
+        setAdminMode(nextMode);
+      });
+    }
+
+    const btnDark = document.getElementById('btnModeDark');
+    if (btnDark) {
+      btnDark.addEventListener('click', () => setAdminMode('dark'));
+    }
+    const btnLight = document.getElementById('btnModeLight');
+    if (btnLight) {
+      btnLight.addEventListener('click', () => setAdminMode('light'));
+    }
+
+    document.querySelectorAll('#adminThemeSwatches .theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setAdminTheme(btn.dataset.theme);
+      });
+    });
+
+    updateModeUI(getCurrentMode());
+    updateThemeUI(getCurrentTheme());
   </script>
 </body>
 </html>

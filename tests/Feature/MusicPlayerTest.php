@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Music;
+use App\Models\Playlist;
 use App\Models\User;
 use App\Models\VisitorLog;
 
@@ -108,4 +109,75 @@ test('settings page returns ok', function () {
     $response = $this->get('/settings.php');
 
     $response->assertOk();
+});
+
+test('playlist creation initiates in pending state requiring admin approval', function () {
+    $response = $this->postJson('/api/playlists', [
+        'name' => 'Akustik Santai',
+        'description' => 'Koleksi lagu akustik sore',
+        'emoji' => '🎸',
+        'gradient' => 'sunset',
+    ]);
+
+    $response->assertCreated()
+        ->assertJson([
+            'success' => true,
+            'data' => [
+                'name' => 'Akustik Santai',
+                'status' => 'pending',
+                'is_public' => false,
+                'isLocked' => true,
+            ],
+        ]);
+
+    $playlistId = $response->json('data.id');
+    $playlist = Playlist::find($playlistId);
+    expect($playlist)->not->toBeNull();
+    expect($playlist->status)->toBe('pending');
+    expect($playlist->is_public)->toBeFalse();
+});
+
+test('admin can approve pending playlist to unlock it', function () {
+    $playlist = Playlist::create([
+        'slug' => 'test-playlist-pending',
+        'name' => 'Pending Playlist',
+        'status' => 'pending',
+        'is_public' => false,
+    ]);
+
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->post(route('admin.playlists.approve', $playlist->id));
+
+    $response->assertRedirect();
+    $playlist->refresh();
+    expect($playlist->status)->toBe('approved');
+    expect($playlist->is_public)->toBeTrue();
+});
+
+test('admin login page contains password visibility toggle eye button', function () {
+    $response = $this->get(route('admin.login'));
+
+    $response->assertOk();
+    $response->assertSee('id="togglePasswordBtn"', false);
+    $response->assertSee('id="eyeIconOpen"', false);
+    $response->assertSee('id="eyeIconClosed"', false);
+});
+
+test('admin dashboard contains dark and light mode toggle and color theme options', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'settings']));
+
+    $response->assertOk();
+    $response->assertSee('id="quickModeToggle"', false);
+    $response->assertSee('id="btnModeDark"', false);
+    $response->assertSee('id="btnModeLight"', false);
+    $response->assertSee('id="adminThemeSwatches"', false);
 });

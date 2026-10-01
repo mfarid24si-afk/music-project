@@ -148,6 +148,11 @@ export default function Sidebar({ currentView, setView, activePlaylistId, setAct
                           <span className="text-[9px] font-mono text-on-surface-variant/70 truncate">by {pl.creator_name || 'Admin'}</span>
                         </div>
                         {pl.isPinned && <Pin className="w-2.5 h-2.5 text-primary-container flex-shrink-0 ml-1" />}
+                        {pl.status !== 'approved' && pl.isLocked !== false && (
+                          <span title="Menunggu Izin Admin (Terkunci)" className="flex items-center text-amber-400 ml-1 flex-shrink-0">
+                            <Lock className="w-2.5 h-2.5" />
+                          </span>
+                        )}
                       </div>
                       <span className="text-[10px] font-mono text-on-surface-variant px-1.5 py-0.5 rounded bg-[#1b1b1f] border border-[#454934]/30">
                         {pl.songs.length}

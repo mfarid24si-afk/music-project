@@ -316,14 +316,15 @@ class MusicController extends Controller
     public function getPlaylists(): JsonResponse
     {
         try {
-            $playlists = Cache::remember('community_playlists', 60, function () {
-                return Playlist::where('is_public', 1)
-                    ->with(['songs' => function ($q) {
-                        $q->where('is_active', 1);
-                    }])
+            $playlists = Cache::remember('community_playlists', 30, function () {
+                return Playlist::with(['songs' => function ($q) {
+                    $q->where('is_active', 1);
+                }])
                     ->orderBy('created_at', 'desc')
                     ->get()
                     ->map(function (Playlist $pl) {
+                        $status = $pl->status ?: ($pl->is_public ? 'approved' : 'pending');
+
                         return [
                             'id' => (string) $pl->id,
                             'slug' => $pl->slug,
@@ -333,7 +334,9 @@ class MusicController extends Controller
                             'gradient' => $pl->gradient ?? 'default',
                             'customCover' => $pl->custom_cover ?? null,
                             'creator_name' => $pl->creator_name ?: 'Admin',
+                            'status' => $status,
                             'is_public' => (bool) $pl->is_public,
+                            'isLocked' => $status !== 'approved',
                             'songs' => $pl->songs->pluck('id')->map(fn ($id) => (string) $id)->values()->all(),
                             'created_at' => $pl->created_at?->toDateTimeString(),
                         ];
@@ -378,8 +381,9 @@ class MusicController extends Controller
                 'emoji' => $request->input('emoji', '🎧'),
                 'gradient' => $request->input('gradient', 'default'),
                 'custom_cover' => $request->input('custom_cover'),
-                'creator_name' => trim($request->input('creator_name') ?: 'Admin'),
-                'is_public' => true,
+                'creator_name' => trim($request->input('creator_name') ?: 'User'),
+                'status' => 'pending',
+                'is_public' => false,
             ]);
 
             $songIds = $request->input('songs', []);
@@ -393,15 +397,31 @@ class MusicController extends Controller
 
             Cache::forget('community_playlists');
 
+            $loaded = $playlist->load('songs');
+
             return response()->json([
                 'success' => true,
-                'message' => "Playlist \"{$name}\" berhasil dipublikasikan.",
-                'data' => $playlist->load('songs'),
+                'message' => "Pengajuan playlist \"{$name}\" berhasil dikirim. Menunggu persetujuan Administrator.",
+                'data' => [
+                    'id' => (string) $loaded->id,
+                    'slug' => $loaded->slug,
+                    'name' => $loaded->name,
+                    'description' => $loaded->description ?? '',
+                    'emoji' => $loaded->emoji ?? '🎧',
+                    'gradient' => $loaded->gradient ?? 'default',
+                    'customCover' => $loaded->custom_cover ?? null,
+                    'creator_name' => $loaded->creator_name,
+                    'status' => 'pending',
+                    'is_public' => false,
+                    'isLocked' => true,
+                    'songs' => $loaded->songs->pluck('id')->map(fn ($id) => (string) $id)->values()->all(),
+                    'created_at' => $loaded->created_at?->toDateTimeString(),
+                ],
             ], 201);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menyimpan ke database server. Pastikan kredensial MySQL Alwaysdata sudah benar di .env: '.$e->getMessage(),
+                'message' => 'Gagal menyimpan ke database server: '.$e->getMessage(),
             ], 200);
         }
     }
