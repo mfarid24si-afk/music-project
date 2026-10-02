@@ -534,6 +534,8 @@ class MusicController extends Controller
 
     /**
      * Fallback songs when database is initializing or offline.
+     *
+     * @return list<array<string, mixed>>
      */
     private function getFallbackSongs(): array
     {

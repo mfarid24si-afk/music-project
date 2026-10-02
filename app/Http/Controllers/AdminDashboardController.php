@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -410,6 +411,8 @@ class AdminDashboardController extends Controller
 
     /**
      * Compute visitor analytics for the charts.
+     *
+     * @return array<string, array<string, mixed>>
      */
     private function getAnalyticsData(): array
     {
@@ -458,9 +461,10 @@ class AdminDashboardController extends Controller
         $weeklyViews = [];
 
         for ($i = 6; $i >= 0; $i--) {
-            $d = date('Y-m-d', strtotime("-{$i} days"));
-            $dayShort = date('D', strtotime($d));
-            $dayLabel = ($dayNamesIndo[$dayShort] ?? $dayShort).' ('.date('d/m', strtotime($d)).')';
+            $ts = (int) strtotime("-{$i} days");
+            $d = date('Y-m-d', $ts);
+            $dayShort = date('D', $ts);
+            $dayLabel = ($dayNamesIndo[$dayShort] ?? $dayShort).' ('.date('d/m', $ts).')';
 
             $weeklyLabels[] = $dayLabel;
             $weeklyDates[] = $d;

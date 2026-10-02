@@ -144,9 +144,7 @@ class DatabaseSeeder extends Seeder
                     ];
                 }
             }
-            if (! empty($seedLogs)) {
-                VisitorLog::insert($seedLogs);
-            }
+            VisitorLog::insert($seedLogs);
         }
     }
 }
