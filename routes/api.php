@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/music', [MusicController::class, 'index']);
 Route::post('/music', [MusicController::class, 'store']);
 Route::post('/music/play-stat', [MusicController::class, 'playStat']);
-Route::post('/music/{id}', [MusicController::class, 'update'])->whereNumber('id');
-Route::put('/music/{id}', [MusicController::class, 'update'])->whereNumber('id');
+Route::match(['post', 'put'], '/music/{id}', [MusicController::class, 'update'])->whereNumber('id');
 Route::delete('/music/{id}', [MusicController::class, 'destroy'])->whereNumber('id');
 
 // Community Shared Playlists Endpoints
