@@ -84,9 +84,6 @@ export default function Sidebar({
                                 <h1 className="font-display text-base leading-none font-bold tracking-tight text-white">
                                     Spotirid
                                 </h1>
-                                <p className="mt-1 font-mono text-[10px] leading-none font-medium tracking-[0.18em] whitespace-nowrap text-on-surface-variant uppercase">
-                                    FREE MUSIC PLAYBACK
-                                </p>
                             </div>
                         </div>
                         <button

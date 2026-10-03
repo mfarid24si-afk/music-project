@@ -148,10 +148,23 @@ export default function NowPlayingView({ isOpen, onClose }) {
         return idx;
     }, [parsedLines, currentTime]);
 
+    // Scroll ONLY the lyrics panel so a line change never drags the whole
+    // viewport/page along with it (that felt forced, especially on mobile).
     useEffect(() => {
-        activeLineRef.current?.scrollIntoView({
+        const line = activeLineRef.current;
+        const container = lyricsScrollRef.current;
+        if (!line || !container) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const lineRect = line.getBoundingClientRect();
+        const target =
+            container.scrollTop +
+            (lineRect.top - containerRect.top) -
+            (container.clientHeight - lineRect.height) / 2;
+
+        container.scrollTo({
+            top: Math.max(0, target),
             behavior: 'smooth',
-            block: 'center',
         });
     }, [activeIndex]);
 
