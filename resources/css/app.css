@@ -20,6 +20,22 @@
     --color-on-surface-variant: #c5c9ad;
     --color-text-muted: #8f937a;
 
+    /* Semantic player palette. Light mode is driven purely by
+       redefining these variables - no per-class overrides. */
+    --color-canvas: var(--surface-canvas);
+    --color-chrome: var(--surface-chrome);
+    --color-raised: var(--surface-raised);
+    --color-overlay: var(--surface-overlay);
+    --color-inset: var(--surface-inset);
+    --color-chip: var(--surface-chip);
+    --color-hover-surface: var(--surface-hover);
+    --color-line: var(--surface-line);
+    --color-line-strong: var(--surface-line-strong);
+    --color-ink: var(--text-primary);
+    --color-ink-secondary: var(--text-secondary);
+    --color-ink-dim: var(--text-dim);
+    --color-ink-strong: var(--text-strong);
+
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -156,6 +172,28 @@
     --accent-color: #ccf228;
     --on-accent-color: #2a3400;
     --accent-glow: rgba(204, 242, 40, 0.25);
+
+    /* --- Semantic surfaces (authored dark) ---------------------- */
+    /* Every value below mirrors the hex it replaces, so the dark
+       theme is unchanged by the migration. `html.light` below
+       redefines the same names - that is the whole light mode. */
+    --surface-canvas: #121316; /* page background */
+    --surface-chrome: #0d0e11; /* sidebar + player dock */
+    --surface-raised: #1b1b1f; /* cards, rows, panels */
+    --surface-overlay: #1f1f23; /* modals, hovers, tooltips */
+    --surface-inset: #121316; /* inputs, wells */
+    --surface-chip: #292a2d; /* chips, close buttons, inactive avatar */
+    --surface-hover: #1f1f23; /* hover state */
+
+    /* --- Semantic lines ---------------------------------------- */
+    --surface-line: #343538; /* dividers, subtle borders */
+    --surface-line-strong: #454934; /* default borders */
+
+    /* --- Semantic text ----------------------------------------- */
+    --text-primary: #ffffff;
+    --text-secondary: #c5c9ad;
+    --text-dim: rgb(255 255 255 / 0.4); /* inactive lyrics */
+    --text-strong: #e3e2e6;
 }
 
 [data-theme='purple'] {
@@ -188,68 +226,137 @@
     --accent-glow: rgba(6, 182, 212, 0.25);
 }
 
-/* Light mode safe overrides */
+/* ============================================================ */
+/* Light Mode Contrast Normalization                            */
+/* ------------------------------------------------------------ */
+/* The player palette is authored with dark hex utilities, so   */
+/* every one of them is remapped here for light mode. Without    */
+/* this layer any unlisted class leaks a dark surface, an        */
+/* invisible border or an unreadable label into light mode.      */
+/* These rules are unlayered, so they outrank Tailwind's        */
+/* `@layer utilities` on cascade order alone - no !important.   */
+/* ============================================================ */
+
 html.light {
     color-scheme: light;
+
+    --lm-page: #f4f5f8;
+    --lm-page-alt: #eaecf1;
+    --lm-surface: #ffffff;
+    --lm-subtle: #e2e5eb;
+    --lm-line: #c8cdd8;
+    --lm-line-strong: #a9afbe;
+    --lm-text: #111215;
+    --lm-text-2: #4b4e5a;
+    --lm-text-3: #555866;
+    --lm-hover: #e5e8ef;
+
+    /* Accents are darkened so they stay legible as text on white. */
+    --accent-color: #6d8e00;
+    --on-accent-color: #ffffff;
+
+    /* Tokens that had no light value and failed contrast. */
+    --color-on-surface-variant: var(--lm-text-3);
+    --color-text-muted: #5f6370;
+
+    /* --- Semantic surfaces (light) ------------------------------ */
+    --surface-canvas: var(--lm-page);
+    --surface-chrome: var(--lm-page-alt);
+    --surface-raised: var(--lm-surface);
+    --surface-overlay: var(--lm-surface);
+    --surface-inset: var(--lm-page);
+    --surface-chip: var(--lm-subtle);
+    --surface-hover: var(--lm-hover);
+
+    /* --- Semantic lines (light) --------------------------------- */
+    --surface-line: var(--lm-line);
+    --surface-line-strong: var(--lm-line-strong);
+
+    /* --- Semantic text (light) ---------------------------------- */
+    --text-primary: var(--lm-text);
+    --text-secondary: var(--lm-text-3);
+    --text-dim: #7d8291;
+    --text-strong: #181a1f;
 }
-html.light body,
-html.light .bg-\[\#121316\] {
-    background-color: #f4f5f8 !important;
-    color: #111215 !important;
+
+html.light[data-theme='purple'] {
+    --accent-color: #7e22ce;
+    --on-accent-color: #ffffff;
 }
-html.light .bg-\[\#0d0e11\] {
-    background-color: #eaecf1 !important;
-    border-color: rgba(0, 0, 0, 0.08) !important;
+html.light[data-theme='blue'] {
+    --accent-color: #1d4ed8;
+    --on-accent-color: #ffffff;
 }
-html.light .bg-\[\#1b1b1f\] {
-    background-color: #ffffff !important;
-    border-color: rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+html.light[data-theme='cyberpunk'] {
+    --accent-color: #be185d;
+    --on-accent-color: #ffffff;
 }
-html.light .bg-\[\#292a2d\] {
-    background-color: #e2e5eb !important;
-    border-color: rgba(0, 0, 0, 0.08) !important;
-    color: #111215 !important;
+html.light[data-theme='sunset'] {
+    --accent-color: #c2410c;
+    --on-accent-color: #ffffff;
 }
+html.light[data-theme='ocean'] {
+    --accent-color: #0e7490;
+    --on-accent-color: #ffffff;
+}
+
+/* --- Residual light-mode rules --------------------------------- */
+/* Surfaces, borders, gradients and accent tints are all driven by
+   the semantic tokens above, so only the handful of utilities that
+   cannot carry a theme-aware colour still need remapping here. */
+html.light body {
+    background-color: var(--lm-page);
+    color: var(--lm-text);
+}
+
+/* Cards gain a soft lift so white-on-white still reads as layered. */
+html.light .bg-raised,
+html.light .bg-overlay {
+    box-shadow: 0 4px 20px rgb(0 0 0 / 0.04);
+}
+
+/* --- Text ----------------------------------------------------- */
 html.light .text-white {
-    color: #111215 !important;
+    color: var(--lm-text);
 }
 html.light .text-white\/80,
 html.light .text-white\/70,
 html.light .text-white\/60 {
-    color: #4b4e5a !important;
+    color: var(--lm-text-2);
 }
-html.light .text-\[\#e3e2e6\] {
-    color: #181a1f !important;
+/* De-emphasized lyrics: still AA for large text, and darker
+   than the hover state so hover reads as a real state change. */
+html.light .text-white\/40 {
+    color: #7d8291;
 }
 html.light .text-on-surface-variant {
-    color: #555866 !important;
+    color: var(--lm-text-3);
 }
-html.light .border-\[\#454934\]\/20,
-html.light .border-\[\#454934\]\/30,
-html.light .border-\[\#454934\]\/40,
-html.light .border-\[\#454934\]\/50,
-html.light .border-\[\#454934\]\/60,
-html.light .border-\[\#343538\]\/60 {
-    border-color: rgba(0, 0, 0, 0.08) !important;
+html.light .text-text-muted {
+    color: var(--color-text-muted);
 }
-html.light footer.bg-\[\#0d0e11\]\/95 {
-    background-color: rgba(255, 255, 255, 0.95) !important;
-    border-top-color: rgba(0, 0, 0, 0.09) !important;
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04) !important;
+
+/* --- Borders -------------------------------------------------- */
+/* `border-line` / `border-line-strong` already resolve to the light
+   palette; only the white-based borders still need a nudge. */
+html.light .border-white {
+    border-color: var(--lm-line);
 }
-html.light header.bg-\[\#121316\]\/85 {
-    background-color: rgba(244, 245, 248, 0.92) !important;
-    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+html.light .border-white\/10,
+html.light .border-white\/15,
+html.light .border-white\/25 {
+    border-color: rgb(17 18 21 / 0.12);
 }
-html.light .hover\:bg-\[\#1f1f23\]:hover,
-html.light .hover\:bg-\[\#292a2d\]:hover,
-html.light .hover\:bg-\[\#1b1b1f\]:hover {
-    background-color: #e5e8ef !important;
+
+/* --- Interactive states -------------------------------------- */
+html.light .hover\:bg-white\/5:hover {
+    background-color: var(--lm-hover);
 }
-html.light:not([data-theme]) {
-    --accent-color: #6d8e00;
-    --on-accent-color: #ffffff;
+html.light .hover\:bg-white\/10:hover {
+    background-color: rgb(17 18 21 / 0.07);
+}
+html.light .hover\:text-white:hover {
+    color: var(--lm-text);
 }
 
 /* Custom scrollbars */
@@ -283,4 +390,67 @@ html.light:not([data-theme]) {
 
 .spinning-vinyl.paused {
     animation-play-state: paused;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes spinSlow {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 150ms ease-out both;
+}
+
+.animate-fadeSlideUp {
+    animation: fadeSlideUp 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-scaleUp {
+    animation: scaleUp 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-spin-slow {
+    animation: spinSlow 14s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-fadeIn,
+    .animate-fadeSlideUp,
+    .animate-scaleUp,
+    .animate-spin-slow,
+    .spinning-vinyl {
+        animation: none;
+    }
 }

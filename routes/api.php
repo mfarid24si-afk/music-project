@@ -21,12 +21,18 @@ Route::post('/playlists/{id}/songs', [MusicController::class, 'togglePlaylistSon
 Route::get('/music.php', [MusicController::class, 'index']);
 Route::post('/upload_music.php', [MusicController::class, 'store']);
 Route::post('/update_music.php', function (Request $request) {
-    $id = $request->input('id');
+    $id = (int) $request->input('id');
+    if ($id <= 0) {
+        return response()->json(['success' => false, 'message' => 'ID lagu tidak valid.'], 400);
+    }
 
     return app(MusicController::class)->update($request, $id);
 });
 Route::post('/delete_music.php', function (Request $request) {
-    $id = $request->input('id');
+    $id = (int) $request->input('id');
+    if ($id <= 0) {
+        return response()->json(['success' => false, 'message' => 'ID lagu tidak valid.'], 400);
+    }
 
     return app(MusicController::class)->destroy($id);
 });
