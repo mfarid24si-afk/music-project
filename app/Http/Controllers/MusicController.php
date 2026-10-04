@@ -6,6 +6,7 @@ use App\Models\Music;
 use App\Models\Playlist;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -431,6 +432,22 @@ class MusicController extends Controller
      */
     public function destroyPlaylist(int|string $id): JsonResponse
     {
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya Administrator yang dapat menghapus playlist.',
+            ], 403);
+        }
+
+        if (isset($user->role) && strtolower((string) $user->role) === 'user') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya Administrator yang dapat menghapus playlist.',
+            ], 403);
+        }
+
         $playlist = Playlist::find($id);
         if (! $playlist) {
             return response()->json(['success' => false, 'message' => 'Playlist tidak ditemukan.'], 404);

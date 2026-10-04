@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useAudio } from '../context/AudioContext';
-import { LuArrowLeft, LuCheck, LuCircleAlert, LuClock, LuHeart, LuImage, LuLayoutGrid, LuList, LuListPlus, LuLock, LuMusic, LuPause, LuPencil, LuPin, LuPinOff, LuPlay, LuPlus, LuSearch, LuShare2, LuShuffle, LuSparkles, LuTrash2, LuUpload, LuX } from 'react-icons/lu';
+import { LuArrowLeft, LuCheck, LuCircleAlert, LuClock, LuHeart, LuImage, LuLayoutGrid, LuList, LuListPlus, LuLock, LuMusic, LuPause, LuPencil, LuPin, LuPinOff, LuPlay, LuPlus, LuSearch, LuShare2, LuShuffle, LuSparkles, LuUpload, LuX } from 'react-icons/lu';
 const EMOJI_OPTIONS = [
     '🎧',
     '🔥',
@@ -103,7 +103,6 @@ export default function PlaylistView({ playlistId, onBack }) {
         favorites,
         toggleFavorite,
         removeFromPlaylist,
-        deletePlaylist,
         updatePlaylist,
         togglePinPlaylist,
         playPlaylist,
@@ -284,17 +283,6 @@ export default function PlaylistView({ playlistId, onBack }) {
             customCover: editCustomCover,
         });
         handleCloseEdit();
-    };
-
-    const handleDeletePlaylist = () => {
-        if (
-            window.confirm(
-                `Delete playlist "${playlist.name}"? This cannot be undone.`,
-            )
-        ) {
-            deletePlaylist(playlist.id);
-            onBack();
-        }
     };
 
     // Collage artwork component
@@ -622,7 +610,7 @@ export default function PlaylistView({ playlistId, onBack }) {
                     {/* Pin Button (Desktop) */}
                     <button
                         onClick={() => togglePinPlaylist(playlist.id)}
-                        className={`hidden rounded-full border p-2.5 transition-all md:flex ${
+                        className={`ml-auto hidden rounded-full border p-2.5 transition-all md:flex ${
                             playlist.isPinned
                                 ? 'border-primary-container bg-primary-container text-on-primary-container shadow-[0_0_12px_var(--accent-glow)]'
                                 : 'border-line-strong/30 bg-raised text-on-surface-variant hover:bg-chip hover:text-white'
@@ -647,15 +635,6 @@ export default function PlaylistView({ playlistId, onBack }) {
                         title="Edit Playlist Details"
                     >
                         <LuPencil className="h-4 w-4" />
-                    </button>
-
-                    {/* Delete Button */}
-                    <button
-                        onClick={handleDeletePlaylist}
-                        className="ml-auto rounded-full border border-red-500/20 bg-red-500/10 p-2.5 text-red-400 transition-all hover:bg-red-500/20 sm:ml-0"
-                        title="Delete Playlist"
-                    >
-                        <LuTrash2 className="h-4 w-4" />
                     </button>
                 </div>
 

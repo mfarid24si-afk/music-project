@@ -222,6 +222,40 @@ test('admin can approve pending playlist to unlock it', function () {
     expect($playlist->is_public)->toBeTrue();
 });
 
+test('guest cannot delete a playlist', function () {
+    $playlist = Playlist::create([
+        'slug' => 'test-playlist-guest-delete',
+        'name' => 'Playlist Pengunjung',
+        'status' => 'pending',
+        'is_public' => false,
+    ]);
+
+    $this->deleteJson("/api/playlists/{$playlist->id}")->assertUnauthorized();
+
+    expect(Playlist::find($playlist->id))->not->toBeNull();
+});
+
+test('admin can delete a playlist', function () {
+    $playlist = Playlist::create([
+        'slug' => 'test-playlist-admin-delete',
+        'name' => 'Playlist Admin',
+        'status' => 'approved',
+        'is_public' => true,
+    ]);
+
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $this->actingAs($admin)
+        ->deleteJson("/api/playlists/{$playlist->id}")
+        ->assertOk()
+        ->assertJson(['success' => true]);
+
+    expect(Playlist::find($playlist->id))->toBeNull();
+});
+
 test('admin login page contains password visibility toggle eye button', function () {
     $response = $this->get(route('admin.login'));
 
