@@ -2,6 +2,7 @@ import { Form } from '@inertiajs/react';
 import { Eye, EyeOff, LockKeyhole, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AlertError from '@/components/alert-error';
+import IndeterminateProgress from '@/components/indeterminate-progress';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -89,10 +90,14 @@ export default function TwoFactorRecoveryCodes({
                                 <Button
                                     variant="secondary"
                                     type="submit"
+                                    className="relative overflow-hidden"
                                     disabled={processing}
                                     aria-describedby="regenerate-warning"
                                 >
                                     <RefreshCw /> Regenerate codes
+                                    <IndeterminateProgress
+                                        active={processing}
+                                    />
                                 </Button>
                             )}
                         </Form>

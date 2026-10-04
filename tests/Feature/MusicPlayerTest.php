@@ -105,6 +105,70 @@ test('authenticated admin can view dashboard', function () {
     $response->assertOk();
 });
 
+test('admin dashboard renders flash messages with their animation target class', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)
+        ->withSession(['success' => 'Playlist berhasil disetujui'])
+        ->get(route('admin.dashboard'));
+
+    $response->assertOk()
+        ->assertSee('Playlist berhasil disetujui')
+        ->assertSee('class="alert alert-success"', escape: false);
+});
+
+test('admin dashboard loads the built gsap animation entry', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+
+    $response->assertOk()->assertSee('admin-animations', escape: false);
+});
+
+test('admin dashboard table rows expose the gsap animation target', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    Music::create([
+        'slug' => 'lagu-untuk-animasi',
+        'title' => 'Lagu Untuk Animasi',
+        'artist' => 'Artis Uji',
+        'audio_file' => 'lagu-untuk-animasi.mp3',
+        'is_active' => 1,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin.dashboard', ['tab' => 'music']));
+
+    $response->assertOk()
+        ->assertSee('class="table-responsive"', escape: false)
+        ->assertSee('Lagu Untuk Animasi');
+});
+
+test('admin dashboard ships the top page loader for full page navigations', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+
+    $response->assertOk()
+        ->assertSee('@keyframes page-loader-fill', escape: false)
+        ->assertSee("LOADER_ID = 'page-loader'", escape: false)
+        ->assertSee('#page-loader > span', escape: false)
+        ->assertSee('background: var(--accent)', escape: false)
+        ->assertDontSee('page-loader-sweep', escape: false);
+});
+
 test('settings page returns ok', function () {
     $response = $this->get('/settings.php');
 

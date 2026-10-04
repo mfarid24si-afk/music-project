@@ -16,6 +16,7 @@ import {
     updatePlaylistAPI,
     togglePlaylistSongAPI,
 } from '../services/api';
+import { withPageProgress } from '../services/loading-bar';
 
 const AudioContext = createContext(null);
 
@@ -215,10 +216,12 @@ export function AudioProvider({ children }) {
     useEffect(() => {
         async function loadInitialData() {
             try {
-                const [data, communityPls] = await Promise.all([
-                    fetchSongsFromAPI(),
-                    fetchCommunityPlaylists(),
-                ]);
+                const [data, communityPls] = await withPageProgress(() =>
+                    Promise.all([
+                        fetchSongsFromAPI(),
+                        fetchCommunityPlaylists(),
+                    ]),
+                );
 
                 if (data && data.length > 0) {
                     setSongs(data);

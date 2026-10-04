@@ -3,6 +3,7 @@ import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Check, Copy, ScanLine } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AlertError from '@/components/alert-error';
+import IndeterminateProgress from '@/components/indeterminate-progress';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -214,12 +215,13 @@ function TwoFactorVerificationStep({
                             </Button>
                             <Button
                                 type="submit"
-                                className="flex-1"
+                                className="relative flex-1 overflow-hidden"
                                 disabled={
                                     processing || code.length < OTP_MAX_LENGTH
                                 }
                             >
                                 Confirm
+                                <IndeterminateProgress active={processing} />
                             </Button>
                         </div>
                     </div>

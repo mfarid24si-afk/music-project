@@ -1,5 +1,6 @@
 import { usePasskeyRegister } from '@laravel/passkeys/react';
 import { useState } from 'react';
+import IndeterminateProgress from '@/components/indeterminate-progress';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,8 +97,13 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
             {error && <InputError message={error} />}
 
             <div className="flex gap-2">
-                <Button type="submit" disabled={isLoading || !name.trim()}>
+                <Button
+                    type="submit"
+                    className="relative overflow-hidden"
+                    disabled={isLoading || !name.trim()}
+                >
                     {isLoading ? 'Registering...' : 'Register passkey'}
+                    <IndeterminateProgress active={isLoading} />
                 </Button>
                 <Button type="button" variant="ghost" onClick={handleCancel}>
                     Cancel

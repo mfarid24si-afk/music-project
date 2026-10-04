@@ -2,6 +2,7 @@ import { Form } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Heading from '@/components/heading';
+import IndeterminateProgress from '@/components/indeterminate-progress';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { Button } from '@/components/ui/button';
@@ -65,9 +66,13 @@ export default function ManageTwoFactor(props: Props) {
                                 <Button
                                     variant="destructive"
                                     type="submit"
+                                    className="relative overflow-hidden"
                                     disabled={processing}
                                 >
                                     Disable 2FA
+                                    <IndeterminateProgress
+                                        active={processing}
+                                    />
                                 </Button>
                             )}
                         </Form>
@@ -100,8 +105,15 @@ export default function ManageTwoFactor(props: Props) {
                                 onSuccess={() => setShowSetupModal(true)}
                             >
                                 {({ processing }) => (
-                                    <Button type="submit" disabled={processing}>
+                                    <Button
+                                        type="submit"
+                                        className="relative overflow-hidden"
+                                        disabled={processing}
+                                    >
                                         Enable 2FA
+                                        <IndeterminateProgress
+                                            active={processing}
+                                        />
                                     </Button>
                                 )}
                             </Form>

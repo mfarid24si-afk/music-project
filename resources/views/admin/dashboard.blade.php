@@ -4,12 +4,103 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard - Spotirid</title>
+  <style>
+    #page-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      z-index: 9999;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      background: color-mix(in oklab, var(--accent) 20%, transparent);
+    }
+    #page-loader[aria-busy='true'] { opacity: 1; }
+    #page-loader > span {
+      display: block;
+      height: 100%;
+      width: 100%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+    #page-loader[aria-busy='true'] > span {
+      animation: page-loader-fill 2.4s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+    }
+    @keyframes page-loader-fill {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #page-loader[aria-busy='true'] > span {
+        animation: none;
+        transform: scaleX(1);
+      }
+    }
+  </style>
+  <script>
+    (function () {
+      var LOADER_ID = 'page-loader';
+
+      function element() {
+        var existing = document.getElementById(LOADER_ID);
+        if (existing) { return existing; }
+
+        var created = document.createElement('div');
+        created.id = LOADER_ID;
+        created.setAttribute('aria-hidden', 'true');
+        created.innerHTML = '<span></span>';
+        document.body.appendChild(created);
+        return created;
+      }
+
+      function show() {
+        element().setAttribute('aria-busy', 'true');
+      }
+
+      function hide() {
+        var el = document.getElementById(LOADER_ID);
+        if (el) { el.removeAttribute('aria-busy'); }
+      }
+
+      function isPlainLink(event) {
+        if (event.defaultPrevented || event.button !== 0) { return false; }
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) { return false; }
+
+        var anchor = event.target.closest && event.target.closest('a[href]');
+        if (!anchor) { return false; }
+        if (anchor.target && anchor.target !== '_self') { return false; }
+        if (anchor.hasAttribute('download')) { return false; }
+
+        var url = new URL(anchor.href, window.location.href);
+        return url.origin === window.location.origin;
+      }
+
+      document.addEventListener('click', function (event) {
+        if (isPlainLink(event)) { show(); }
+      }, true);
+
+      document.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (form.target && form.target !== '_self') { return; }
+        show();
+      }, true);
+
+      window.addEventListener('pageshow', hide);
+    })();
+  </script>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ccf228' stroke-width='2'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='3'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <!-- Chart.js CDN for Analytics Visualizations -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- GSAP animations for the admin dashboard -->
+  @vite(['resources/js/lib/admin-animations.ts'])
   <script>
     (function() {
       const savedTheme = localStorage.getItem('spotirid_admin_theme') || 'default';

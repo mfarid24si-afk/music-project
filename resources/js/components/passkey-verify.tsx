@@ -2,6 +2,7 @@ import type { UrlMethodPair } from '@inertiajs/core';
 import { router } from '@inertiajs/react';
 import { usePasskeyVerify } from '@laravel/passkeys/react';
 import { KeyRound } from 'lucide-react';
+import IndeterminateProgress from '@/components/indeterminate-progress';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -45,7 +46,7 @@ export default function PasskeyVerify({
                 <Button
                     type="button"
                     variant="outline"
-                    className="w-full"
+                    className="relative w-full overflow-hidden"
                     onClick={verify}
                     disabled={isLoading}
                 >
@@ -53,6 +54,7 @@ export default function PasskeyVerify({
                     {isLoading
                         ? (loadingLabel ?? 'Authenticating...')
                         : (label ?? 'Sign in with a passkey')}
+                    <IndeterminateProgress active={isLoading} />
                 </Button>
                 {error && (
                     <InputError message={error} className="text-center" />
