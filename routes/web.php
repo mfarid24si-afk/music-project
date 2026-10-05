@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminVisitorController;
 use App\Models\VisitorLog;
+use App\Support\VisitorLogMaintenance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,7 +19,7 @@ Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('adm
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
-Route::middleware(['auth'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::post('/playlists/{id}/approve', [AdminDashboardController::class, 'approvePlaylist'])->name('admin.playlists.approve');
     Route::post('/playlists/{id}/unpublish', [AdminDashboardController::class, 'unpublishPlaylist'])->name('admin.playlists.unpublish');
@@ -29,6 +32,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     Route::post('/profile', [AdminDashboardController::class, 'updateAdminProfile'])->name('admin.profile.update');
     Route::post('/password', [AdminDashboardController::class, 'updateAdminPassword'])->name('admin.password.update');
+
+    Route::get('/visitors/export', [AdminVisitorController::class, 'export'])->name('admin.visitors.export');
 });
 
 /*
@@ -51,6 +56,15 @@ Route::get('/', function (Request $request) {
             ]);
         }
     } catch (Throwable $e) {
+    }
+
+    // The host has no cron, so visitor log maintenance rides along with traffic.
+    // Failures are logged and swallowed: a full disk is bad, but a broken home
+    // page is worse, because that is also where visitors would stop coming in.
+    try {
+        VisitorLogMaintenance::runIfNeeded();
+    } catch (Throwable $e) {
+        Log::error('Visitor log maintenance failed', ['message' => $e->getMessage()]);
     }
 
     return inertia('welcome');

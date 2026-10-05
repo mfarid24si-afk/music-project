@@ -147,34 +147,12 @@ export default function PlaylistView({ playlistId, onBack }) {
         editGradient,
         editCustomCover,
     ]);
-    if (!playlist) {
-        return (
-            <div className="animate-fadeIn flex flex-col items-center gap-3 py-20 text-center text-on-surface-variant">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-line-strong/30 bg-raised text-primary-container">
-                    <LuMusic className="h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-bold text-white">
-                    Playlist not found
-                </h3>
-                <p className="max-w-xs text-xs text-on-surface-variant">
-                    The playlist you are looking for may have been deleted or
-                    moved.
-                </p>
-                <button
-                    onClick={onBack}
-                    className="mt-2 rounded-full bg-primary-container px-5 py-2 text-xs font-bold text-on-primary-container shadow-[0_0_12px_var(--accent-glow)] transition-all hover:scale-105 active:scale-95"
-                >
-                    Return to Library
-                </button>
-            </div>
-        );
-    }
 
     const playlistSongs = useMemo(() => {
-        return (playlist.songs || [])
+        return (playlist?.songs || [])
             .map((id) => songs.find((s) => s.id === id))
             .filter(Boolean);
-    }, [playlist.songs, songs]);
+    }, [playlist?.songs, songs]);
 
     const filteredSongs = useMemo(() => {
         if (!filterQuery.trim()) return playlistSongs;
@@ -189,9 +167,9 @@ export default function PlaylistView({ playlistId, onBack }) {
 
     // Songs not yet in this playlist (for recommended quick-add)
     const candidateSongs = useMemo(() => {
-        const existingIds = new Set(playlist.songs || []);
+        const existingIds = new Set(playlist?.songs || []);
         return songs.filter((s) => !existingIds.has(s.id)).slice(0, 6);
-    }, [songs, playlist.songs]);
+    }, [songs, playlist?.songs]);
 
     const totalSeconds = useMemo(() => {
         return playlistSongs.reduce(
@@ -199,27 +177,6 @@ export default function PlaylistView({ playlistId, onBack }) {
             0,
         );
     }, [playlistSongs]);
-
-    const currentGradient =
-        GRADIENT_PRESETS.find(
-            (g) => g.id === (playlist.gradient || 'default'),
-        ) || GRADIENT_PRESETS[0];
-
-    const isCurrentPlaylistPlaying =
-        isPlaying && playlistSongs.some((s) => s.id === currentSong?.id);
-    const isLocked =
-        playlist.status !== 'approved' && playlist.isLocked !== false;
-
-    const handleOpenEdit = () => {
-        setEditName(playlist.name);
-        setEditDesc(playlist.description || '');
-        setEditEmoji(playlist.emoji || '🎧');
-        setEditGradient(playlist.gradient || 'default');
-        setEditCustomCover(playlist.customCover || '');
-        setEditNameError('');
-        setCoverError('');
-        setIsEditing(true);
-    };
 
     const handleCloseEdit = () => {
         setIsEditing(false);
@@ -250,6 +207,50 @@ export default function PlaylistView({ playlistId, onBack }) {
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
     }, [isEditing, isDiscardDialogOpen, isDirty]);
+
+    if (!playlist) {
+        return (
+            <div className="animate-fadeIn flex flex-col items-center gap-3 py-20 text-center text-on-surface-variant">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-line-strong/30 bg-raised text-primary-container">
+                    <LuMusic className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold text-white">
+                    Playlist not found
+                </h3>
+                <p className="max-w-xs text-xs text-on-surface-variant">
+                    The playlist you are looking for may have been deleted or
+                    moved.
+                </p>
+                <button
+                    onClick={onBack}
+                    className="mt-2 rounded-full bg-primary-container px-5 py-2 text-xs font-bold text-on-primary-container shadow-[0_0_12px_var(--accent-glow)] transition-all hover:scale-105 active:scale-95"
+                >
+                    Return to Library
+                </button>
+            </div>
+        );
+    }
+
+    const currentGradient =
+        GRADIENT_PRESETS.find(
+            (g) => g.id === (playlist.gradient || 'default'),
+        ) || GRADIENT_PRESETS[0];
+
+    const isCurrentPlaylistPlaying =
+        isPlaying && playlistSongs.some((s) => s.id === currentSong?.id);
+    const isLocked =
+        playlist.status !== 'approved' && playlist.isLocked !== false;
+
+    const handleOpenEdit = () => {
+        setEditName(playlist.name);
+        setEditDesc(playlist.description || '');
+        setEditEmoji(playlist.emoji || '🎧');
+        setEditGradient(playlist.gradient || 'default');
+        setEditCustomCover(playlist.customCover || '');
+        setEditNameError('');
+        setCoverError('');
+        setIsEditing(true);
+    };
 
     const handleCoverFileUpload = (e) => {
         const file = e.target.files?.[0];

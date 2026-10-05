@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Music;
 use App\Models\Playlist;
+use App\Support\VisitorBackupReminder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,8 @@ class AdminDashboardController extends Controller
     {
         $activeTab = $request->query('tab', 'overview');
         $search = trim((string) $request->query('search', ''));
+
+        $visitorBackupReminderOpen = $this->handleVisitorBackupReminder($request);
 
         try {
             $totalSongs = Music::where('is_active', 1)->count();
@@ -113,8 +117,41 @@ class AdminDashboardController extends Controller
             'approvedPlaylists',
             'songs',
             'analyticsData',
-            'systemInfo'
+            'systemInfo',
+            'visitorBackupReminderOpen'
         ));
+    }
+
+    /**
+     * Resolve the year-end visitor backup banner and fire any due reminder email.
+     *
+     * There is no cron on this host, so the dashboard doubles as the trigger.
+     * Dismissing stores a flag in the session, which keeps the banner out of the
+     * database and out of a new migration.
+     */
+    private function handleVisitorBackupReminder(Request $request): bool
+    {
+        if ($request->boolean('dismiss_visitor_reminder')) {
+            session()->put('visitor_backup_reminder_dismissed_at', Carbon::now()->toDateString());
+        }
+
+        $dismissedOn = session()->get('visitor_backup_reminder_dismissed_at');
+
+        if ($dismissedOn !== null && $dismissedOn === Carbon::now()->toDateString()) {
+            return false;
+        }
+
+        if (! VisitorBackupReminder::isReminderWindowOpen()) {
+            return false;
+        }
+
+        try {
+            VisitorBackupReminder::sendDue();
+        } catch (\Throwable $e) {
+            Log::error('Visitor backup reminder failed to send', ['message' => $e->getMessage()]);
+        }
+
+        return true;
     }
 
     /**

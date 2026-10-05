@@ -951,6 +951,36 @@
       </a>
     </nav>
 
+    @if ($visitorBackupReminderOpen)
+      <div style="display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; margin-bottom: 20px; background: var(--warning-bg); border: 1px solid var(--warning); border-radius: 12px;">
+        <svg class="icon" style="color: var(--warning); flex-shrink: 0;" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 700; color: var(--text-main); font-size: 14px;">Data visitor bisa dibackup</div>
+          <p style="margin: 6px 0 10px; font-size: 12.5px; line-height: 1.6; color: var(--text-muted);">
+            Pengingat ini dikirim 3 kali setiap tanggal {{ config('visitor.backup.reminder_day') }} Desember, pada pukul {{ implode(', ', array_map(fn ($h) => sprintf('%02d:00', $h), config('visitor.backup.reminder_hours'))) }}.
+            Kalau kamu ingin menyimpan salinan data pengunjung, unduh sekarang. Kalau tidak, data tetap dihapus otomatis setelah {{ config('visitor.retention_days') }} hari.
+          </p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="{{ route('admin.visitors.export') }}" class="btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Export Sekarang
+            </a>
+            <a href="{{ route('admin.dashboard', ['tab' => $activeTab, 'dismiss_visitor_reminder' => 1]) }}" class="btn-ghost" style="text-decoration: none;">
+              Tutup
+            </a>
+          </div>
+        </div>
+      </div>
+    @endif
+
     <!-- ==================== TAB 1: OVERVIEW & ANALYTICS ==================== -->
     @if ($activeTab === 'overview')
       <div class="bento-grid">
@@ -1011,6 +1041,28 @@
             </button>
           </div>
         </div>
+
+        <!-- Export Visitor Data -->
+        <form method="GET" action="{{ route('admin.visitors.export') }}"
+              style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; padding: 12px 14px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 10px;">
+          <label style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);" for="visitor-export-from">DARI</label>
+          <input type="date" id="visitor-export-from" name="from"
+                 style="padding: 6px 8px; font-size: 12px; font-family: var(--font-mono); color: var(--text-main); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 6px;">
+          <label style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);" for="visitor-export-to">SAMPAI</label>
+          <input type="date" id="visitor-export-to" name="to"
+                 style="padding: 6px 8px; font-size: 12px; font-family: var(--font-mono); color: var(--text-main); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 6px;">
+          <button type="submit" class="btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export CSV
+          </button>
+          <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">
+            Kosongkan tanggal untuk export semua. File tidak disimpan di server.
+          </span>
+        </form>
 
         <!-- Chart Container -->
         <div style="position: relative; height: 320px; width: 100%;">
