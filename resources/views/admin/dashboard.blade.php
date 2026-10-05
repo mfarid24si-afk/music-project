@@ -1521,7 +1521,7 @@
 
         <!-- Pagination -->
         <div style="margin-top: 20px;">
-          {{ $songs->links() }}
+          {{ $songs->links('admin.partials.pagination-songs') }}
         </div>
       </div>
     @endif
