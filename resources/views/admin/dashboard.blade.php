@@ -1520,8 +1520,8 @@
         </div>
 
         <!-- Pagination -->
-        <div style="margin-top: 20px;">
-          {{ $songs->links('admin.partials.pagination-songs') }}
+        <div style="margin-top: 16px;">
+          {{ $songs->links('admin.partials.pagination-songs', ['itemLabel' => 'lagu']) }}
         </div>
       </div>
     @endif
