@@ -23,21 +23,26 @@ use Illuminate\Support\Facades\Log;
  *
  * Nothing here ever drops the table, and only rows from visitor_logs are
  * touched.
+ *
+ * @phpstan-type MaintenanceResult array{
+ *     ran: bool,
+ *     deleted_by_age: int,
+ *     deleted_by_size: int,
+ *     size_before_mb: float,
+ *     size_after_mb: float,
+ *     trimmed_early: bool
+ * }
+ * @phpstan-type MaintenancePreview array{
+ *     total_rows: int,
+ *     rows_past_retention: int,
+ *     size_mb: float,
+ *     disk_threshold_mb: float,
+ *     over_threshold: bool,
+ *     retention_days: int
+ * }
  */
 class VisitorLogMaintenance
 {
-    /**
-     * Summary of one maintenance pass.
-     *
-     * @phpstan-type MaintenanceResult array{
-     *     ran: bool,
-     *     deleted_by_age: int,
-     *     deleted_by_size: int,
-     *     size_before_mb: float,
-     *     size_after_mb: float,
-     *     trimmed_early: bool
-     * }
-     */
     public const MAINTENANCE_CHECK_KEY = 'visitor_maintenance_checked_at';
 
     /**
@@ -75,12 +80,12 @@ class VisitorLogMaintenance
         $thresholdMb = (float) config('visitor.disk_threshold_mb', 190);
 
         $sizeBeforeMb = static::sizeInMb();
-        $deletedByAge = static::deleteOlderThan(Carbon::now()->subDays(max(0, $retentionDays)));
+        $deletedByAge = self::deleteOlderThan(Carbon::now()->subDays(max(0, $retentionDays)));
 
         $deletedBySize = 0;
 
         if ($force || static::sizeInMb() > $thresholdMb) {
-            $deletedBySize = static::deleteUntilUnderThreshold($thresholdMb);
+            $deletedBySize = self::deleteUntilUnderThreshold($thresholdMb);
         }
 
         $result = [
@@ -101,15 +106,6 @@ class VisitorLogMaintenance
 
     /**
      * Report what a pass would touch, without deleting a single row.
-     *
-     * @phpstan-type MaintenancePreview array{
-     *     total_rows: int,
-     *     rows_past_retention: int,
-     *     size_mb: float,
-     *     disk_threshold_mb: float,
-     *     over_threshold: bool,
-     *     retention_days: int
-     * }
      *
      * @return MaintenancePreview
      */
@@ -141,7 +137,7 @@ class VisitorLogMaintenance
         $table = (new VisitorLog)->getTable();
 
         if ($connection->getDriverName() === 'sqlite') {
-            return round(static::estimatedBytesPerRow() * $connection->table($table)->count() / 1048576, 4);
+            return round(self::estimatedBytesPerRow() * $connection->table($table)->count() / 1048576, 4);
         }
 
         $measured = $connection->selectOne(
@@ -165,7 +161,7 @@ class VisitorLogMaintenance
             $ids = VisitorLog::query()
                 ->whereDate('visit_date', '<', $cutoff->format('Y-m-d'))
                 ->orderBy('id')
-                ->limit(static::batchSize())
+                ->limit(self::batchSize())
                 ->pluck('id');
 
             if ($ids->isEmpty()) {
@@ -197,7 +193,7 @@ class VisitorLogMaintenance
      */
     private static function deleteUntilUnderThreshold(float $thresholdMb): int
     {
-        $targetRows = static::targetRowCount($thresholdMb);
+        $targetRows = self::targetRowCount($thresholdMb);
         $totalRows = VisitorLog::query()->count();
         $excess = $totalRows - $targetRows;
 
@@ -205,7 +201,7 @@ class VisitorLogMaintenance
             return 0;
         }
 
-        return static::deleteOldestRows($excess);
+        return self::deleteOldestRows($excess);
     }
 
     /**
@@ -232,7 +228,7 @@ class VisitorLogMaintenance
             $ids = VisitorLog::query()
                 ->orderBy('visit_date')
                 ->orderBy('id')
-                ->limit(min(static::batchSize(), $remaining))
+                ->limit((int) min(self::batchSize(), $remaining))
                 ->pluck('id');
 
             if ($ids->isEmpty()) {

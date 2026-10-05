@@ -35,7 +35,7 @@ class VisitorBackupReminder
      */
     public static function sendDue(bool $force = false, ?int $onlyHour = null): array
     {
-        $hours = static::reminderHours();
+        $hours = self::reminderHours();
 
         if ($hours === []) {
             return [];
@@ -58,14 +58,14 @@ class VisitorBackupReminder
                 continue;
             }
 
-            $cacheKey = static::cacheKey($now, $hour);
+            $cacheKey = self::cacheKey($now, $hour);
 
             if (! Cache::add($cacheKey, true, $now->copy()->endOfDay())) {
                 continue;
             }
 
             try {
-                $delivered = static::send($hour, $index + 1, count($hours));
+                $delivered = self::send($hour, $index + 1, count($hours));
             } catch (\Throwable $e) {
                 Cache::forget($cacheKey);
                 Log::error('Visitor backup reminder could not be delivered.', [
@@ -93,7 +93,7 @@ class VisitorBackupReminder
      */
     public static function isReminderWindowOpen(?Carbon $now = null): bool
     {
-        $hours = static::reminderHours();
+        $hours = self::reminderHours();
 
         if ($hours === []) {
             return false;
@@ -128,6 +128,11 @@ class VisitorBackupReminder
         return true;
     }
 
+    /**
+     * The configured reminder hours, normalised to a re-indexed list of ints.
+     *
+     * @return list<int>
+     */
     private static function reminderHours(): array
     {
         return array_values(array_map(
