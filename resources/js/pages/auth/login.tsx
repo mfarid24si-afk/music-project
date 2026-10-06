@@ -17,7 +17,11 @@ type Props = {
     canRegister?: boolean;
 };
 
-export default function Login({ status, canResetPassword, canRegister = false }: Props) {
+export default function Login({
+    status,
+    canResetPassword,
+    canRegister = false,
+}: Props) {
     return (
         <>
             <Head title="Log in" />
@@ -101,7 +105,9 @@ export default function Login({ status, canResetPassword, canRegister = false }:
                             </div>
                         ) : (
                             <div className="rounded-xl border border-border/40 bg-muted/30 p-3 text-center text-xs text-muted-foreground">
-                                Pendaftaran akun baru hanya dapat dibuat oleh Administrator. Silakan hubungi admin untuk mendapatkan akses login.
+                                Pendaftaran akun baru hanya dapat dibuat oleh
+                                Administrator. Silakan hubungi admin untuk
+                                mendapatkan akses login.
                             </div>
                         )}
                     </>

@@ -8,7 +8,8 @@ export default function Register() {
             <Head title="Pendaftaran Ditutup" />
             <div className="flex flex-col gap-6 text-center">
                 <div className="rounded-xl border border-border/40 bg-muted/30 p-6 text-sm text-muted-foreground">
-                    Pendaftaran akun baru tidak dibuka untuk umum. Akun hanya dapat dibuat oleh Administrator Spotirid.
+                    Pendaftaran akun baru tidak dibuka untuk umum. Akun hanya
+                    dapat dibuat oleh Administrator Spotirid.
                 </div>
                 <div>
                     <TextLink href={login()}>Kembali ke Halaman Login</TextLink>
