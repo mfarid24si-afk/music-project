@@ -1506,8 +1506,17 @@
 
               <div class="form-grid">
                 <div class="form-group" style="grid-column: span 2;">
-                  <label>Direct Audio URL (HTTP/HTTPS) *</label>
-                  <input type="url" name="songs[0][audio_url]" class="form-control song-audio-url" placeholder="https://cdn.example.com/audio/Artist - Song.mp3" required onchange="handleAudioUrlChange(this)">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label style="margin-bottom: 0;">Direct Audio URL (HTTP/HTTPS) *</label>
+                    <span class="preview-status" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);"></span>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="url" name="songs[0][audio_url]" class="form-control song-audio-url" placeholder="https://cdn.example.com/audio/Artist - Song.mp3" required onchange="handleAudioUrlChange(this)" style="flex: 1;">
+                    <button type="button" class="btn-ghost btn-preview-audio" onclick="toggleAudioPreview(this)" title="Test Putar Audio" style="flex-shrink: 0; padding: 0 14px; height: 42px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;">
+                      <span class="preview-icon">▶</span>
+                      <span class="preview-text">Test Putar</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div class="form-group">
@@ -1944,8 +1953,17 @@
 
         <div class="form-grid">
           <div class="form-group" style="grid-column: span 2;">
-            <label>Direct Audio URL (HTTP/HTTPS) *</label>
-            <input type="url" name="songs[${bulkRowIndex}][audio_url]" class="form-control song-audio-url" placeholder="https://cdn.example.com/audio/Artist - Song.mp3" required onchange="handleAudioUrlChange(this)">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label style="margin-bottom: 0;">Direct Audio URL (HTTP/HTTPS) *</label>
+              <span class="preview-status" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);"></span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <input type="url" name="songs[${bulkRowIndex}][audio_url]" class="form-control song-audio-url" placeholder="https://cdn.example.com/audio/Artist - Song.mp3" required onchange="handleAudioUrlChange(this)" style="flex: 1;">
+              <button type="button" class="btn-ghost btn-preview-audio" onclick="toggleAudioPreview(this)" title="Test Putar Audio" style="flex-shrink: 0; padding: 0 14px; height: 42px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;">
+                <span class="preview-icon">▶</span>
+                <span class="preview-text">Test Putar</span>
+              </button>
+            </div>
           </div>
 
           <div class="form-group">
@@ -1997,6 +2015,13 @@
     function removeBulkSongRow(btn) {
       const card = btn.closest('.bulk-song-card');
       if (card) {
+        if (currentPreviewBtn && card.contains(currentPreviewBtn)) {
+          if (currentPreviewAudio) {
+            currentPreviewAudio.pause();
+            currentPreviewAudio = null;
+            currentPreviewBtn = null;
+          }
+        }
         card.remove();
         reindexBulkSongRows();
       }
@@ -2063,6 +2088,120 @@
           }
         } catch (e) {
         }
+      }
+    }
+
+    // ============================================================
+    // AUDIO QUICK PREVIEW CONTROLLER
+    // ============================================================
+    let currentPreviewAudio = null;
+    let currentPreviewBtn = null;
+
+    function toggleAudioPreview(btn) {
+      const card = btn.closest('.bulk-song-card');
+      if (!card) return;
+
+      const audioInput = card.querySelector('.song-audio-url');
+      const statusEl = card.querySelector('.preview-status');
+      const iconEl = btn.querySelector('.preview-icon');
+      const textEl = btn.querySelector('.preview-text');
+      const url = audioInput ? audioInput.value.trim() : '';
+
+      if (!url) {
+        if (statusEl) {
+          statusEl.textContent = '⚠️ Masukkan link audio dulu!';
+          statusEl.style.color = 'var(--danger)';
+        }
+        if (audioInput) audioInput.focus();
+        return;
+      }
+
+      // If this button is already playing, pause it
+      if (currentPreviewBtn === btn && currentPreviewAudio && !currentPreviewAudio.paused) {
+        currentPreviewAudio.pause();
+        resetPreviewBtn(btn, statusEl);
+        currentPreviewAudio = null;
+        currentPreviewBtn = null;
+        return;
+      }
+
+      // Stop any other currently playing preview
+      if (currentPreviewAudio) {
+        currentPreviewAudio.pause();
+        if (currentPreviewBtn) {
+          const prevCard = currentPreviewBtn.closest('.bulk-song-card');
+          const prevStatus = prevCard ? prevCard.querySelector('.preview-status') : null;
+          resetPreviewBtn(currentPreviewBtn, prevStatus);
+        }
+        currentPreviewAudio = null;
+        currentPreviewBtn = null;
+      }
+
+      // Start playing new preview
+      if (statusEl) {
+        statusEl.textContent = '⏳ Menghubungkan audio...';
+        statusEl.style.color = 'var(--accent)';
+      }
+      if (iconEl) iconEl.textContent = '⏳';
+      if (textEl) textEl.textContent = 'Loading...';
+
+      const audio = new Audio();
+      audio.src = url;
+      currentPreviewAudio = audio;
+      currentPreviewBtn = btn;
+
+      audio.oncanplay = function() {
+        audio.play().then(() => {
+          if (iconEl) iconEl.textContent = '⏸';
+          if (textEl) textEl.textContent = 'Stop Putar';
+          btn.style.borderColor = 'var(--accent)';
+          btn.style.color = 'var(--accent)';
+          if (statusEl) {
+            statusEl.textContent = '🔊 Sedang memutar preview...';
+            statusEl.style.color = 'var(--accent)';
+          }
+        }).catch(err => {
+          resetPreviewBtn(btn, statusEl);
+          if (statusEl) {
+            statusEl.textContent = '❌ Gagal memutar: format tidak didukung / CORS diblokir server hosting.';
+            statusEl.style.color = 'var(--danger)';
+          }
+          currentPreviewAudio = null;
+          currentPreviewBtn = null;
+        });
+      };
+
+      audio.onerror = function() {
+        resetPreviewBtn(btn, statusEl);
+        if (statusEl) {
+          statusEl.textContent = '❌ Link audio error / 404 Not Found';
+          statusEl.style.color = 'var(--danger)';
+        }
+        currentPreviewAudio = null;
+        currentPreviewBtn = null;
+      };
+
+      audio.onended = function() {
+        resetPreviewBtn(btn, statusEl);
+        if (statusEl) {
+          statusEl.textContent = '✓ Selesai';
+          statusEl.style.color = 'var(--success)';
+        }
+        currentPreviewAudio = null;
+        currentPreviewBtn = null;
+      };
+    }
+
+    function resetPreviewBtn(btn, statusEl) {
+      if (!btn) return;
+      const iconEl = btn.querySelector('.preview-icon');
+      const textEl = btn.querySelector('.preview-text');
+      if (iconEl) iconEl.textContent = '▶';
+      if (textEl) textEl.textContent = 'Test Putar';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      if (statusEl) {
+        statusEl.textContent = '';
       }
     }
 

@@ -361,20 +361,25 @@ class AdminDashboardController extends Controller
         }
 
         // Validate each non-empty entry
+        // Validate each non-empty entry with strict protocol checks and batch limits
         $validator = validator(['songs' => $validSongs], [
-            'songs' => 'required|array|min:1',
+            'songs' => 'required|array|min:1|max:50',
             'songs.*.title' => 'required|string|max:255',
             'songs.*.artist' => 'required|string|max:255',
-            'songs.*.audio_url' => 'required|string|max:1000',
-            'songs.*.cover_url' => 'nullable|string|max:1000',
+            'songs.*.audio_url' => ['required', 'string', 'max:1000', 'url:http,https'],
+            'songs.*.cover_url' => ['nullable', 'string', 'max:1000', 'url:http,https'],
             'songs.*.album' => 'nullable|string|max:255',
             'songs.*.genre' => 'nullable|string|max:100',
-            'songs.*.description' => 'nullable|string',
-            'songs.*.youtube_url' => 'nullable|string|max:1000',
+            'songs.*.description' => 'nullable|string|max:1000',
+            'songs.*.youtube_url' => ['nullable', 'string', 'max:1000', 'url:http,https'],
         ], [
+            'songs.max' => 'Maksimal 50 lagu per satu kali simpan demi kestabilan server.',
             'songs.*.title.required' => 'Judul lagu wajib diisi untuk setiap baris.',
             'songs.*.artist.required' => 'Nama artist wajib diisi untuk setiap baris.',
             'songs.*.audio_url.required' => 'Direct Audio URL wajib diisi untuk setiap baris.',
+            'songs.*.audio_url.url' => 'Audio URL harus berupa tautan web yang valid (dimulai dengan http:// atau https://).',
+            'songs.*.cover_url.url' => 'Cover URL harus berupa tautan web yang valid (dimulai dengan http:// atau https://).',
+            'songs.*.youtube_url.url' => 'YouTube URL harus berupa tautan web yang valid (dimulai dengan http:// atau https://).',
         ]);
 
         if ($validator->fails()) {
@@ -387,12 +392,14 @@ class AdminDashboardController extends Controller
             $savedCount = DB::transaction(function () use ($validSongs, $uploaderName): int {
                 $count = 0;
                 foreach ($validSongs as $songData) {
-                    $title = $songData['title'];
-                    $artist = $songData['artist'];
-                    $audioUrl = $songData['audio_url'];
-                    $coverUrl = $songData['cover_url'];
-                    $youtubeUrl = $songData['youtube_url'];
-
+                    $title = strip_tags(trim($songData['title']));
+                    $artist = strip_tags(trim($songData['artist']));
+                    $audioUrl = trim($songData['audio_url']);
+                    $coverUrl = $songData['cover_url'] ? trim($songData['cover_url']) : null;
+                    $youtubeUrl = $songData['youtube_url'] ? trim($songData['youtube_url']) : null;
+                    $album = $songData['album'] ? strip_tags(trim($songData['album'])) : null;
+                    $genre = $songData['genre'] ? strip_tags(trim($songData['genre'])) : null;
+                    $description = $songData['description'] ? strip_tags(trim($songData['description'])) : null;
                     // Auto-fallback cover from YouTube if cover_url is empty but youtube_url is provided
                     if (! $coverUrl && $youtubeUrl) {
                         if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/', $youtubeUrl, $matches)) {
@@ -407,9 +414,9 @@ class AdminDashboardController extends Controller
                         'slug' => $slug,
                         'title' => $title,
                         'artist' => $artist,
-                        'album' => $songData['album'],
-                        'genre' => $songData['genre'],
-                        'description' => $songData['description'],
+                        'album' => $album,
+                        'genre' => $genre,
+                        'description' => $description,
                         'cover_image' => $coverUrl ?: 'believer.jpg',
                         'audio_file' => $audioUrl,
                         'youtube_url' => $youtubeUrl,

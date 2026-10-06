@@ -294,6 +294,8 @@ test('admin dashboard music tab contains multi song bulk upload form and repeate
     $response->assertSee('id="bulkSongsContainer"', false);
     $response->assertSee('addBulkSongRow()', false);
     $response->assertSee(route('admin.music.bulk'), false);
+    $response->assertSee('btn-preview-audio', false);
+    $response->assertSee('toggleAudioPreview(this)', false);
 });
 
 test('guest cannot bulk upload songs', function () {
@@ -372,4 +374,24 @@ test('admin bulk upload ignores completely empty rows', function () {
     $response->assertSessionHas('success');
 
     expect(Music::where('title', 'Viva La Vida')->exists())->toBeTrue();
+});
+
+test('admin bulk upload rejects dangerous protocols', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->post(route('admin.music.bulk'), [
+        'songs' => [
+            [
+                'title' => 'Malicious Track',
+                'artist' => 'Hacker',
+                'audio_url' => 'javascript:alert(1)',
+            ],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors(['songs.0.audio_url']);
+    expect(Music::where('title', 'Malicious Track')->exists())->toBeFalse();
 });
