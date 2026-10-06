@@ -1408,13 +1408,15 @@
           </div>
         </div>
 
-        <form method="POST" action="{{ route('admin.music.store') }}" enctype="multipart/form-data">
-          @csrf
+        <!-- Mode Switcher -->
+        <div class="mode-toggle" style="margin-bottom: 20px;">
+          <button type="button" class="mode-btn active" id="btnModeFile" onclick="setMode('file')">📁 Upload File Audio</button>
+          <button type="button" class="mode-btn" id="btnModeUrl" onclick="setMode('url')">🌐 Input Link Audio (Bisa Banyak Sekaligus)</button>
+        </div>
 
-          <div class="mode-toggle">
-            <button type="button" class="mode-btn active" id="btnModeFile" onclick="setMode('file')">📁 Upload File Audio</button>
-            <button type="button" class="mode-btn" id="btnModeUrl" onclick="setMode('url')">🌐 Direct Audio URL</button>
-          </div>
+        <!-- Single File Upload Form -->
+        <form method="POST" action="{{ route('admin.music.store') }}" enctype="multipart/form-data" id="formModeFile">
+          @csrf
 
           <div class="form-grid">
             <div class="form-group">
@@ -1438,33 +1440,15 @@
             </div>
           </div>
 
-          <!-- File Upload Inputs -->
-          <div id="fileInputs">
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="audio">File Audio (.mp3, .wav, .flac, .m4a, .mp4) *</label>
-                <input type="file" name="audio" id="audio" class="form-control" accept="audio/*,.mp4">
-              </div>
-
-              <div class="form-group">
-                <label for="cover">File Cover Image (.jpg, .png, .webp)</label>
-                <input type="file" name="cover" id="cover" class="form-control" accept="image/*">
-              </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="audio">File Audio (.mp3, .wav, .flac, .m4a, .mp4) *</label>
+              <input type="file" name="audio" id="audio" class="form-control" accept="audio/*,.mp4" required>
             </div>
-          </div>
 
-          <!-- URL Inputs -->
-          <div id="urlInputs" style="display: none;">
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="audio_url">Direct Audio URL (HTTP/HTTPS) *</label>
-                <input type="url" name="audio_url" id="audio_url" class="form-control" placeholder="https://cdn.example.com/song.mp3">
-              </div>
-
-              <div class="form-group">
-                <label for="cover_url">Direct Cover Image URL</label>
-                <input type="url" name="cover_url" id="cover_url" class="form-control" placeholder="https://cdn.example.com/cover.jpg">
-              </div>
+            <div class="form-group">
+              <label for="cover">File Cover Image (.jpg, .png, .webp)</label>
+              <input type="file" name="cover" id="cover" class="form-control" accept="image/*">
             </div>
           </div>
 
@@ -1486,7 +1470,106 @@
               <polyline points="17 8 12 3 7 8"/>
               <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            <span>Simpan & Terbitkan ke Library</span>
+            <span>Simpan & Terbitkan File ke Library</span>
+          </button>
+        </form>
+
+        <!-- Multi-Song Direct URL Bulk Form -->
+        <form method="POST" action="{{ route('admin.music.bulk') }}" id="formModeUrl" style="display: none;">
+          @csrf
+
+          <div class="alert alert-info" style="margin-bottom: 18px; font-size: 13px;">
+            <svg class="icon" viewBox="0 0 24 24" style="flex-shrink: 0; width: 18px; height: 18px;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <div>
+              <strong>Mode Multi-Data Link:</strong> Masukkan Direct Audio URL. Kamu bisa klik tombol <strong>"+ Tambah Space Lagu Lagi"</strong> di bawah untuk menambah space lagu ke-2, ke-3, dst, lalu simpan semuanya sekaligus dalam sekali klik!
+            </div>
+          </div>
+
+          <!-- Dynamic Song Cards Container -->
+          <div id="bulkSongsContainer">
+            <div class="bulk-song-card" data-index="0" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="badge" style="background: rgba(204, 242, 40, 0.15); color: var(--accent); font-weight: 700; font-family: var(--font-mono); font-size: 11px;">
+                    #<span class="song-num">1</span>
+                  </span>
+                  <span style="font-weight: 700; font-size: 13px; color: #fff;">Space Lagu</span>
+                </div>
+                <button type="button" class="btn-ghost btn-remove-row" onclick="removeBulkSongRow(this)" style="display: none; padding: 4px 10px; font-size: 11px; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">
+                  ✕ Hapus
+                </button>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group" style="grid-column: span 2;">
+                  <label>Direct Audio URL (HTTP/HTTPS) *</label>
+                  <input type="url" name="songs[0][audio_url]" class="form-control song-audio-url" placeholder="https://cdn.example.com/audio/Artist - Song.mp3" required onchange="handleAudioUrlChange(this)">
+                </div>
+
+                <div class="form-group">
+                  <label>Judul Lagu *</label>
+                  <input type="text" name="songs[0][title]" class="form-control song-title" placeholder="contoh: Believer" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Nama Artist / Penyanyi *</label>
+                  <input type="text" name="songs[0][artist]" class="form-control song-artist" placeholder="contoh: Imagine Dragons" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Direct Cover Image URL (Opsional)</label>
+                  <input type="url" name="songs[0][cover_url]" class="form-control song-cover-url" placeholder="https://cdn.example.com/covers/image.jpg">
+                </div>
+
+                <div class="form-group">
+                  <label>Link Video YouTube (Opsional)</label>
+                  <input type="url" name="songs[0][youtube_url]" class="form-control song-youtube-url" placeholder="https://youtube.com/watch?v=...">
+                </div>
+
+                <div class="form-group">
+                  <label>Album (Opsional)</label>
+                  <input type="text" name="songs[0][album]" class="form-control song-album" placeholder="contoh: Evolve">
+                </div>
+
+                <div class="form-group">
+                  <label>Genre (Opsional)</label>
+                  <input type="text" name="songs[0][genre]" class="form-control song-genre" placeholder="contoh: Rock, Pop, R&B">
+                </div>
+
+                <div class="form-group" style="grid-column: span 2;">
+                  <label>Deskripsi / Catatan Rilis (Opsional)</label>
+                  <input type="text" name="songs[0][description]" class="form-control song-description" placeholder="Catatan singkat tentang lagu...">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Actions -->
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; margin-bottom: 20px;">
+            <button type="button" class="btn-ghost" onclick="addBulkSongRow()" style="border-color: var(--accent); color: var(--accent); font-weight: 700; padding: 10px 18px;">
+              <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+              <span>+ Tambah Space Lagu Lagi</span>
+            </button>
+            <div style="font-size: 13px; color: var(--text-muted); font-family: var(--font-mono);">
+              Total space lagu: <strong id="bulkSongTotalCount" style="color: var(--accent);">1</strong> lagu
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="btnSubmitBulk">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span id="btnSubmitBulkText">Simpan & Terbitkan Semua ke Library (1 Lagu)</span>
           </button>
         </form>
       </div>
@@ -1816,23 +1899,170 @@
 
   <script>
     function setMode(mode) {
-      const fileInputs = document.getElementById('fileInputs');
-      const urlInputs = document.getElementById('urlInputs');
+      const formFile = document.getElementById('formModeFile');
+      const formUrl = document.getElementById('formModeUrl');
       const btnFile = document.getElementById('btnModeFile');
       const btnUrl = document.getElementById('btnModeUrl');
-      const audioFileInput = document.getElementById('audio');
+      const audioInput = document.getElementById('audio');
 
       if (mode === 'url') {
-        fileInputs.style.display = 'none';
-        urlInputs.style.display = 'block';
-        btnFile.classList.remove('active');
-        btnUrl.classList.add('active');
-        if (audioFileInput) audioFileInput.required = false;
+        if (formFile) formFile.style.display = 'none';
+        if (formUrl) formUrl.style.display = 'block';
+        if (btnFile) btnFile.classList.remove('active');
+        if (btnUrl) btnUrl.classList.add('active');
+        if (audioInput) audioInput.required = false;
       } else {
-        fileInputs.style.display = 'block';
-        urlInputs.style.display = 'none';
-        btnFile.classList.add('active');
-        btnUrl.classList.remove('active');
+        if (formFile) formFile.style.display = 'block';
+        if (formUrl) formUrl.style.display = 'none';
+        if (btnFile) btnFile.classList.add('active');
+        if (btnUrl) btnUrl.classList.remove('active');
+        if (audioInput) audioInput.required = true;
+      }
+    }
+
+    let bulkRowIndex = 0;
+
+    function addBulkSongRow() {
+      bulkRowIndex++;
+      const container = document.getElementById('bulkSongsContainer');
+      const newCard = document.createElement('div');
+      newCard.className = 'bulk-song-card';
+      newCard.dataset.index = bulkRowIndex;
+      newCard.style.cssText = 'background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px; margin-bottom: 16px;';
+      newCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge" style="background: rgba(204, 242, 40, 0.15); color: var(--accent); font-weight: 700; font-family: var(--font-mono); font-size: 11px;">
+              #<span class="song-num">0</span>
+            </span>
+            <span style="font-weight: 700; font-size: 13px; color: #fff;">Space Lagu</span>
+          </div>
+          <button type="button" class="btn-ghost btn-remove-row" onclick="removeBulkSongRow(this)" style="padding: 4px 10px; font-size: 11px; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">
+            ✕ Hapus
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Direct Audio URL (HTTP/HTTPS) *</label>
+            <input type="url" name="songs[${bulkRowIndex}][audio_url]" class="form-control song-audio-url" placeholder="https://cdn.example.com/audio/Artist - Song.mp3" required onchange="handleAudioUrlChange(this)">
+          </div>
+
+          <div class="form-group">
+            <label>Judul Lagu *</label>
+            <input type="text" name="songs[${bulkRowIndex}][title]" class="form-control song-title" placeholder="contoh: Believer" required>
+          </div>
+
+          <div class="form-group">
+            <label>Nama Artist / Penyanyi *</label>
+            <input type="text" name="songs[${bulkRowIndex}][artist]" class="form-control song-artist" placeholder="contoh: Imagine Dragons" required>
+          </div>
+
+          <div class="form-group">
+            <label>Direct Cover Image URL (Opsional)</label>
+            <input type="url" name="songs[${bulkRowIndex}][cover_url]" class="form-control song-cover-url" placeholder="https://cdn.example.com/covers/image.jpg">
+          </div>
+
+          <div class="form-group">
+            <label>Link Video YouTube (Opsional)</label>
+            <input type="url" name="songs[${bulkRowIndex}][youtube_url]" class="form-control song-youtube-url" placeholder="https://youtube.com/watch?v=...">
+          </div>
+
+          <div class="form-group">
+            <label>Album (Opsional)</label>
+            <input type="text" name="songs[${bulkRowIndex}][album]" class="form-control song-album" placeholder="contoh: Evolve">
+          </div>
+
+          <div class="form-group">
+            <label>Genre (Opsional)</label>
+            <input type="text" name="songs[${bulkRowIndex}][genre]" class="form-control song-genre" placeholder="contoh: Rock, Pop, R&B">
+          </div>
+
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Deskripsi / Catatan Rilis (Opsional)</label>
+            <input type="text" name="songs[${bulkRowIndex}][description]" class="form-control song-description" placeholder="Catatan singkat tentang lagu...">
+          </div>
+        </div>
+      `;
+
+      container.appendChild(newCard);
+      reindexBulkSongRows();
+
+      const audioInput = newCard.querySelector('.song-audio-url');
+      if (audioInput) {
+        audioInput.focus();
+      }
+    }
+
+    function removeBulkSongRow(btn) {
+      const card = btn.closest('.bulk-song-card');
+      if (card) {
+        card.remove();
+        reindexBulkSongRows();
+      }
+    }
+
+    function reindexBulkSongRows() {
+      const cards = document.querySelectorAll('#bulkSongsContainer .bulk-song-card');
+      const total = cards.length;
+
+      cards.forEach((card, idx) => {
+        const numSpan = card.querySelector('.song-num');
+        if (numSpan) numSpan.textContent = idx + 1;
+
+        const removeBtn = card.querySelector('.btn-remove-row');
+        if (removeBtn) {
+          removeBtn.style.display = total > 1 ? 'inline-flex' : 'none';
+        }
+
+        const fields = card.querySelectorAll('input');
+        fields.forEach(input => {
+          const name = input.getAttribute('name');
+          if (name) {
+            input.setAttribute('name', name.replace(/songs\[\d+\]/, `songs[${idx}]`));
+          }
+        });
+      });
+
+      const totalCountEl = document.getElementById('bulkSongTotalCount');
+      if (totalCountEl) totalCountEl.textContent = total;
+
+      const submitTextEl = document.getElementById('btnSubmitBulkText');
+      if (submitTextEl) {
+        submitTextEl.textContent = `Simpan & Terbitkan Semua ke Library (${total} Lagu)`;
+      }
+    }
+
+    function handleAudioUrlChange(input) {
+      const url = input.value.trim();
+      if (!url) return;
+
+      const card = input.closest('.bulk-song-card');
+      if (!card) return;
+
+      const titleInput = card.querySelector('.song-title');
+      const artistInput = card.querySelector('.song-artist');
+
+      if (titleInput && artistInput && (!titleInput.value.trim() || !artistInput.value.trim())) {
+        try {
+          const pathname = new URL(url).pathname;
+          let filename = pathname.substring(pathname.lastIndexOf('/') + 1);
+          filename = decodeURIComponent(filename);
+          filename = filename.replace(/\.(mp3|wav|flac|m4a|ogg|mp4)$/i, '');
+
+          if (filename.includes(' - ')) {
+            const parts = filename.split(' - ');
+            if (!artistInput.value.trim() && parts[0]) {
+              artistInput.value = parts[0].trim();
+            }
+            if (!titleInput.value.trim() && parts.slice(1).join(' - ')) {
+              titleInput.value = parts.slice(1).join(' - ').trim();
+            }
+          } else if (!titleInput.value.trim() && filename) {
+            titleInput.value = filename.trim();
+          }
+        } catch (e) {
+        }
       }
     }
 

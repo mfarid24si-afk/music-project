@@ -279,3 +279,97 @@ test('admin dashboard contains dark and light mode toggle and color theme option
     $response->assertSee('id="btnModeLight"', false);
     $response->assertSee('id="adminThemeSwatches"', false);
 });
+
+test('admin dashboard music tab contains multi song bulk upload form and repeater elements', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'music']));
+
+    $response->assertOk();
+    $response->assertSee('id="formModeFile"', false);
+    $response->assertSee('id="formModeUrl"', false);
+    $response->assertSee('id="bulkSongsContainer"', false);
+    $response->assertSee('addBulkSongRow()', false);
+    $response->assertSee(route('admin.music.bulk'), false);
+});
+
+test('guest cannot bulk upload songs', function () {
+    $response = $this->post(route('admin.music.bulk'), [
+        'songs' => [
+            [
+                'title' => 'Song 1',
+                'artist' => 'Artist 1',
+                'audio_url' => 'https://example.com/song1.mp3',
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect(route('login'));
+});
+
+test('admin can bulk upload multiple songs successfully', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->post(route('admin.music.bulk'), [
+        'songs' => [
+            [
+                'title' => 'Yellow',
+                'artist' => 'Coldplay',
+                'audio_url' => 'https://cdn.example.com/yellow.mp3',
+                'cover_url' => 'https://cdn.example.com/yellow.jpg',
+                'album' => 'Parachutes',
+                'genre' => 'Alternative',
+                'description' => 'Classic Coldplay hit',
+                'youtube_url' => 'https://www.youtube.com/watch?v=yKNxeF4KMsY',
+            ],
+            [
+                'title' => 'Fix You',
+                'artist' => 'Coldplay',
+                'audio_url' => 'https://cdn.example.com/fixyou.mp3',
+                'album' => 'X&Y',
+                'genre' => 'Rock',
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect(route('admin.dashboard', ['tab' => 'music']));
+    $response->assertSessionHas('success');
+
+    expect(Music::where('title', 'Yellow')->where('artist', 'Coldplay')->exists())->toBeTrue();
+    expect(Music::where('title', 'Fix You')->where('artist', 'Coldplay')->exists())->toBeTrue();
+});
+
+test('admin bulk upload ignores completely empty rows', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->post(route('admin.music.bulk'), [
+        'songs' => [
+            [
+                'title' => 'Viva La Vida',
+                'artist' => 'Coldplay',
+                'audio_url' => 'https://cdn.example.com/vivalavida.mp3',
+            ],
+            [
+                'title' => '',
+                'artist' => '',
+                'audio_url' => '',
+                'cover_url' => '',
+                'album' => '',
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect(route('admin.dashboard', ['tab' => 'music']));
+    $response->assertSessionHas('success');
+
+    expect(Music::where('title', 'Viva La Vida')->exists())->toBeTrue();
+});

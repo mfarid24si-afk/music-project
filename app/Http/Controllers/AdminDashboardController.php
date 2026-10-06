@@ -320,6 +320,122 @@ class AdminDashboardController extends Controller
     }
 
     /**
+     * Store multiple songs at once from direct URLs.
+     */
+    public function storeBulkSongs(Request $request): RedirectResponse
+    {
+        $rawSongs = $request->input('songs', []);
+        if (! is_array($rawSongs) || empty($rawSongs)) {
+            return back()->with('error', 'Tidak ada data lagu yang dikirimkan.')->withInput();
+        }
+
+        $validSongs = [];
+        foreach ($rawSongs as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $audioUrl = trim((string) ($item['audio_url'] ?? ''));
+            $title = trim((string) ($item['title'] ?? ''));
+            $artist = trim((string) ($item['artist'] ?? ''));
+
+            // Skip completely empty spaces
+            if ($audioUrl === '' && $title === '' && $artist === '') {
+                continue;
+            }
+
+            $validSongs[] = [
+                'audio_url' => $audioUrl,
+                'title' => $title,
+                'artist' => $artist,
+                'album' => trim((string) ($item['album'] ?? '')) ?: null,
+                'genre' => trim((string) ($item['genre'] ?? '')) ?: null,
+                'description' => trim((string) ($item['description'] ?? '')) ?: null,
+                'cover_url' => trim((string) ($item['cover_url'] ?? '')) ?: null,
+                'youtube_url' => trim((string) ($item['youtube_url'] ?? '')) ?: null,
+            ];
+        }
+
+        if (empty($validSongs)) {
+            return back()->with('error', 'Harap isi minimal satu lagu dengan Judul, Artist, dan Audio URL.')->withInput();
+        }
+
+        // Validate each non-empty entry
+        $validator = validator(['songs' => $validSongs], [
+            'songs' => 'required|array|min:1',
+            'songs.*.title' => 'required|string|max:255',
+            'songs.*.artist' => 'required|string|max:255',
+            'songs.*.audio_url' => 'required|string|max:1000',
+            'songs.*.cover_url' => 'nullable|string|max:1000',
+            'songs.*.album' => 'nullable|string|max:255',
+            'songs.*.genre' => 'nullable|string|max:100',
+            'songs.*.description' => 'nullable|string',
+            'songs.*.youtube_url' => 'nullable|string|max:1000',
+        ], [
+            'songs.*.title.required' => 'Judul lagu wajib diisi untuk setiap baris.',
+            'songs.*.artist.required' => 'Nama artist wajib diisi untuk setiap baris.',
+            'songs.*.audio_url.required' => 'Direct Audio URL wajib diisi untuk setiap baris.',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $uploaderName = trim((string) (Auth::user()?->name ?: 'Admin')) ?: 'Admin';
+
+        try {
+            $savedCount = DB::transaction(function () use ($validSongs, $uploaderName): int {
+                $count = 0;
+                foreach ($validSongs as $songData) {
+                    $title = $songData['title'];
+                    $artist = $songData['artist'];
+                    $audioUrl = $songData['audio_url'];
+                    $coverUrl = $songData['cover_url'];
+                    $youtubeUrl = $songData['youtube_url'];
+
+                    // Auto-fallback cover from YouTube if cover_url is empty but youtube_url is provided
+                    if (! $coverUrl && $youtubeUrl) {
+                        if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/', $youtubeUrl, $matches)) {
+                            $coverUrl = 'https://img.youtube.com/vi/'.$matches[1].'/hqdefault.jpg';
+                        }
+                    }
+
+                    $slugBase = Str::slug("{$artist} - {$title}") ?: 'track';
+                    $slug = $slugBase.'-'.Str::random(6);
+
+                    Music::create([
+                        'slug' => $slug,
+                        'title' => $title,
+                        'artist' => $artist,
+                        'album' => $songData['album'],
+                        'genre' => $songData['genre'],
+                        'description' => $songData['description'],
+                        'cover_image' => $coverUrl ?: 'believer.jpg',
+                        'audio_file' => $audioUrl,
+                        'youtube_url' => $youtubeUrl,
+                        'duration' => null,
+                        'file_size' => 0,
+                        'play_count' => 0,
+                        'uploader_name' => $uploaderName,
+                        'is_active' => 1,
+                    ]);
+
+                    $count++;
+                }
+
+                return $count;
+            });
+
+            Cache::flush();
+
+            return redirect()->route('admin.dashboard', ['tab' => 'music'])
+                ->with('success', "Berhasil menambahkan {$savedCount} lagu sekaligus ke library!");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menambahkan lagu secara massal: '.$e->getMessage())->withInput();
+        }
+    }
+
+    /**
      * Update existing song metadata.
      */
     public function updateSong(Request $request, int|string $id): RedirectResponse

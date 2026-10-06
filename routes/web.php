@@ -26,6 +26,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/playlists/{id}', [AdminDashboardController::class, 'deletePlaylist'])->name('admin.playlists.delete');
 
     Route::post('/music', [AdminDashboardController::class, 'storeSong'])->name('admin.music.store');
+    Route::post('/music/bulk', [AdminDashboardController::class, 'storeBulkSongs'])->name('admin.music.bulk');
     Route::post('/music/{id}', [AdminDashboardController::class, 'updateSong'])->name('admin.music.update');
     Route::delete('/music/{id}', [AdminDashboardController::class, 'deleteSong'])->name('admin.music.delete');
 
