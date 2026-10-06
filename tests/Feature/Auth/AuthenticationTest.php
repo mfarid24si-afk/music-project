@@ -21,6 +21,22 @@ test('users can authenticate using the login screen', function () {
     $response->assertRedirect(config('fortify.home'));
 });
 
+test('admin user logging in via main login screen is redirected to admin dashboard', function () {
+    $admin = User::create([
+        'name' => 'Admin User',
+        'email' => 'admin@spotirid.com',
+        'password' => bcrypt('password123'),
+    ]);
+
+    $response = $this->post(route('login.store'), [
+        'email' => 'admin@spotirid.com',
+        'password' => 'password123',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('admin.dashboard'));
+});
+
 test('users with two factor enabled are redirected to two factor challenge', function () {
     $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
 

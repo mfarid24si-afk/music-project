@@ -11,6 +11,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -21,7 +23,47 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(LoginResponse::class, function () {
+            return new class implements LoginResponse
+            {
+                public function toResponse($request)
+                {
+                    $user = $request->user();
+                    $isAdmin = $user && (
+                        (isset($user->role) && strtolower((string) $user->role) === 'admin') ||
+                        strtolower($user->email) === 'admin@spotirid.com' ||
+                        str_starts_with(strtolower($user->email), 'admin@')
+                    );
+
+                    if ($isAdmin) {
+                        return redirect()->intended(route('admin.dashboard'));
+                    }
+
+                    return redirect()->intended(config('fortify.home', '/'));
+                }
+            };
+        });
+
+        $this->app->singleton(TwoFactorLoginResponse::class, function () {
+            return new class implements TwoFactorLoginResponse
+            {
+                public function toResponse($request)
+                {
+                    $user = $request->user();
+                    $isAdmin = $user && (
+                        (isset($user->role) && strtolower((string) $user->role) === 'admin') ||
+                        strtolower($user->email) === 'admin@spotirid.com' ||
+                        str_starts_with(strtolower($user->email), 'admin@')
+                    );
+
+                    if ($isAdmin) {
+                        return redirect()->intended(route('admin.dashboard'));
+                    }
+
+                    return redirect()->intended(config('fortify.home', '/'));
+                }
+            };
+        });
     }
 
     /**
