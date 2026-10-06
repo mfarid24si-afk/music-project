@@ -14,6 +14,7 @@ import PlaylistView from './components/PlaylistView';
 import ToastContainer from './components/ToastContainer';
 import { LuMusic, LuPlay, LuSparkles } from 'react-icons/lu';
 import SettingsModal from './components/SettingsModal';
+import SuggestSongModal from './components/SuggestSongModal';
 
 export default function App() {
     const {
@@ -37,6 +38,7 @@ export default function App() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
+    const [isSuggestSongOpen, setIsSuggestSongOpen] = useState(false);
     // Library active tab
     const [libraryTab, setLibraryTab] = useState('liked'); // 'liked', 'recent'
 
@@ -114,6 +116,7 @@ export default function App() {
                 isMobileOpen={isMobileMenuOpen}
                 setIsMobileOpen={setIsMobileMenuOpen}
                 onOpenSettings={() => setIsSettingsOpen(true)}
+                onOpenSuggestSong={() => setIsSuggestSongOpen(true)}
             />
 
             {/* Main Viewport */}
@@ -130,6 +133,7 @@ export default function App() {
                         setIsMobileMenuOpen((prev) => !prev)
                     }
                     onOpenSettings={() => setIsSettingsOpen(true)}
+                    onOpenSuggestSong={() => setIsSuggestSongOpen(true)}
                 />
                 {/* Scrollable Stream */}
                 <main className="flex-1 overflow-y-auto px-4 pt-6 pb-36 md:px-8">
@@ -391,6 +395,12 @@ export default function App() {
             <SettingsModal
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
+            />
+
+            {/* Member Suggest Song Modal */}
+            <SuggestSongModal
+                isOpen={isSuggestSongOpen}
+                onClose={() => setIsSuggestSongOpen(false)}
             />
         </div>
     );

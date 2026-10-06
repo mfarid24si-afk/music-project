@@ -13,6 +13,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         $this->withoutMiddleware(PreventRequestForgery::class);
+        config(['session.path' => '/']);
     }
 
     protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void

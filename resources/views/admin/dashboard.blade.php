@@ -941,6 +941,19 @@
           <circle cx="18" cy="16" r="3"/>
         </svg>
         <span>Kelola Lagu & Upload</span>
+        @if ($totalPendingSongs > 0)
+          <span class="badge-count" style="background: #f59e0b; color: #000;" title="{{ $totalPendingSongs }} lagu menunggu persetujuan">{{ $totalPendingSongs }}</span>
+        @endif
+      </a>
+      <a href="{{ route('admin.dashboard', ['tab' => 'users']) }}" class="tab-btn {{ $activeTab === 'users' ? 'active' : '' }}">
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>Kelola Pengguna</span>
+        <span class="badge-count">{{ $totalUsers }}</span>
       </a>
       <a href="{{ route('admin.dashboard', ['tab' => 'settings']) }}" class="tab-btn {{ $activeTab === 'settings' ? 'active' : '' }}">
         <svg class="icon" viewBox="0 0 24 24">
@@ -1003,11 +1016,19 @@
         </div>
 
         <div class="bento-card">
-          <div class="bento-title">Menunggu Persetujuan</div>
+          <div class="bento-title">Playlist Pending</div>
           <div class="bento-value" style="color: {{ $totalPendingPlaylists > 0 ? '#ef4444' : 'inherit' }};">
             {{ $totalPendingPlaylists }}
           </div>
-          <div class="bento-desc">Playlist baru buatan user butuh approval</div>
+          <div class="bento-desc">Playlist buatan user butuh approval</div>
+        </div>
+
+        <div class="bento-card">
+          <div class="bento-title">Lagu Pending Approval</div>
+          <div class="bento-value" style="color: {{ $totalPendingSongs > 0 ? '#f59e0b' : 'inherit' }};">
+            {{ $totalPendingSongs }}
+          </div>
+          <div class="bento-desc">Pengajuan lagu dari member butuh persetujuan</div>
         </div>
       </div>
 
@@ -1392,6 +1413,93 @@
 
     <!-- ==================== TAB 3: MUSIC LIBRARY & UPLOAD ==================== -->
     @if ($activeTab === 'music')
+      @if ($totalPendingSongs > 0)
+        <!-- Pending Song Submissions Moderation Card -->
+        <div class="section-card" style="border-color: rgba(245, 158, 11, 0.4); background: linear-gradient(180deg, rgba(245, 158, 11, 0.04) 0%, var(--bg-surface) 100%); margin-bottom: 24px;">
+          <div class="section-head">
+            <div>
+              <div class="section-title" style="color: var(--warning);">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>Pengajuan Lagu Menunggu Persetujuan ({{ $totalPendingSongs }} Lagu)</span>
+              </div>
+              <p class="section-subtitle">Lagu yang diajukan oleh pengguna berakun. Dengarkan audio dan setujui untuk menerbitkan ke Beranda publik:</p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Lagu</th>
+                  <th>Pengaju</th>
+                  <th>Genre & Album</th>
+                  <th>Tanggal Pengajuan</th>
+                  <th style="text-align: right;">Aksi Moderasi</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach ($pendingSongs as $ps)
+                  <tr>
+                    <td>
+                      <div class="song-cell">
+                        <img src="{{ $ps->img }}" class="thumb" alt="Cover" onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'.9em\' font-size=\'90\'>🎵</text></svg>'">
+                        <div>
+                          <div class="song-title">{{ $ps->title }}</div>
+                          <div class="song-artist">{{ $ps->artist }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: #fff;">
+                        👤 {{ $ps->uploader_name ?: 'Member' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div style="font-size: 12px; color: var(--text-main);">{{ $ps->album ?: '—' }}</div>
+                      <div style="font-size: 11px; color: var(--text-muted);">{{ $ps->genre ?: 'Pop' }}</div>
+                    </td>
+                    <td style="font-size: 12px; color: var(--text-muted);">
+                      {{ $ps->created_at ? $ps->created_at->format('d M Y, H:i') : '—' }}
+                    </td>
+                    <td style="text-align: right;">
+                      <div style="display: inline-flex; align-items: center; gap: 8px;">
+                        @if ($ps->src)
+                          <button type="button" class="btn-ghost" onclick="playModerationAudio('{{ $ps->src }}', this)" title="Dengarkan Lagu Ini" style="padding: 6px 12px; font-size: 11px;">
+                            <span class="mod-icon">▶</span>
+                            <span class="mod-label">Dengar</span>
+                          </button>
+                        @endif
+                        <button type="button" class="btn-ghost" onclick="openEditPendingSongModal({{ json_encode($ps) }})" title="Edit Detail Lagu Sebelum Disetujui" style="padding: 6px 12px; font-size: 11px; color: var(--accent); border-color: rgba(204, 242, 40, 0.4);">
+                          ✏ Edit & Setujui
+                        </button>
+
+                        <form method="POST" action="{{ route('admin.music.approve', $ps->id) }}" style="display: inline;">
+                          @csrf
+                          <button type="submit" class="btn-action btn-approve" title="Setujui & Publikasikan">
+                            ✓ Setujui
+                          </button>
+                        </form>
+
+                        <form method="POST" action="{{ route('admin.music.reject', $ps->id) }}" onsubmit="return confirm('Apakah Anda yakin ingin menolak & menghapus lagu \'{{ $ps->title }}\'?');" style="display: inline;">
+                          @csrf
+                          <button type="submit" class="btn-action btn-danger" title="Tolak Lagu">
+                            ✕ Tolak
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
+        </div>
+      @endif
+
       <!-- Upload New Song Card -->
       <div class="section-card">
         <div class="section-head">
@@ -1784,19 +1892,33 @@
             @csrf
             <div class="form-group">
               <label for="current_password">Password Saat Ini *</label>
-              <input type="password" name="current_password" id="current_password" class="form-control" placeholder="••••••••" required>
+              <div style="position: relative;">
+                <input type="password" name="current_password" id="current_password" class="form-control" placeholder="••••••••" required style="padding-right: 42px;">
+                <button type="button" onclick="togglePasswordVisibility('current_password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 4px;" title="Lihat / Sembunyikan Password">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
             </div>
 
             <div class="form-group">
               <label for="new_password">Password Baru *</label>
-              <input type="password" name="new_password" id="new_password" class="form-control" placeholder="Minimal 6 karakter" required>
+              <div style="position: relative;">
+                <input type="password" name="new_password" id="new_password" class="form-control" placeholder="Minimal 6 karakter" required style="padding-right: 42px;">
+                <button type="button" onclick="togglePasswordVisibility('new_password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 4px;" title="Lihat / Sembunyikan Password">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
             </div>
 
             <div class="form-group">
               <label for="new_password_confirmation">Konfirmasi Password Baru *</label>
-              <input type="password" name="new_password_confirmation" id="new_password_confirmation" class="form-control" placeholder="Ulangi password baru" required>
+              <div style="position: relative;">
+                <input type="password" name="new_password_confirmation" id="new_password_confirmation" class="form-control" placeholder="Ulangi password baru" required style="padding-right: 42px;">
+                <button type="button" onclick="togglePasswordVisibility('new_password_confirmation', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 4px;" title="Lihat / Sembunyikan Password">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
             </div>
-
             <button type="submit" class="btn-primary" style="margin-top: 8px;">
               <span>Ubah Password</span>
             </button>
@@ -1844,6 +1966,191 @@
               <span>Tersambung ({{ $systemInfo['db_name'] }})</span>
             </div>
           </div>
+        </div>
+      </div>
+    @endif
+
+    <!-- ==================== TAB 5: KELOLA PENGGUNA ==================== -->
+    @if ($activeTab === 'users')
+      <div class="bento-grid" style="margin-bottom: 24px;">
+        <div class="bento-card">
+          <div class="bento-title">Total Pengguna Terdaftar</div>
+          <div class="bento-value">{{ $totalUsers }}</div>
+          <div class="bento-desc">Akun pengguna aktif di sistem Spotirid</div>
+        </div>
+
+        <div class="bento-card">
+          <div class="bento-title">Akun Anda Saat Ini</div>
+          <div class="bento-value" style="font-size: 18px; color: var(--accent);">{{ Auth::user()->name }}</div>
+          <div class="bento-desc">{{ Auth::user()->email }} (Administrator)</div>
+        </div>
+      </div>
+
+      <!-- Form Tambah User Baru -->
+      <div class="section-card" style="margin-bottom: 24px;">
+        <div class="section-head">
+          <div>
+            <div class="section-title">
+              <svg class="icon" style="color: var(--accent);" viewBox="0 0 24 24">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <line x1="19" y1="8" x2="19" y2="14"/>
+                <line x1="22" y1="11" x2="16" y2="11"/>
+              </svg>
+              <span>Tambah Akun Pengguna Baru</span>
+            </div>
+            <p class="section-subtitle">Daftarkan akun pengguna baru dengan kredensial login (Email & Password):</p>
+          </div>
+        </div>
+
+        <form method="POST" action="{{ route('admin.users.store') }}">
+          @csrf
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="new_user_name">Nama Lengkap / Username *</label>
+              <input type="text" name="name" id="new_user_name" class="form-control" placeholder="contoh: John Doe, Member 1" value="{{ old('name') }}" required>
+            </div>
+
+            <div class="form-group">
+              <label for="new_user_email">Alamat Email *</label>
+              <input type="email" name="email" id="new_user_email" class="form-control" placeholder="contoh: user@example.com" value="{{ old('email') }}" required>
+            </div>
+
+            <div class="form-group">
+              <label for="new_user_password">Password Login *</label>
+              <div style="position: relative;">
+                <input type="password" name="password" id="new_user_password" class="form-control" placeholder="Minimal 8 karakter" required minlength="8" style="padding-right: 42px;">
+                <button type="button" onclick="togglePasswordVisibility('new_user_password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 4px;" title="Lihat / Sembunyikan Password">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="new_user_password_confirmation">Konfirmasi Password *</label>
+              <div style="position: relative;">
+                <input type="password" name="password_confirmation" id="new_user_password_confirmation" class="form-control" placeholder="Ulangi password di atas" required minlength="8" style="padding-right: 42px;">
+                <button type="button" onclick="togglePasswordVisibility('new_user_password_confirmation', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 4px;" title="Lihat / Sembunyikan Password">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" style="margin-top: 14px;">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <line x1="19" y1="8" x2="19" y2="14"/>
+              <line x1="22" y1="11" x2="16" y2="11"/>
+            </svg>
+            <span>Buat & Daftarkan Pengguna</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Daftar Pengguna -->
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <div class="section-title">
+              <svg class="icon" style="color: var(--accent);" viewBox="0 0 24 24">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <span>Daftar Pengguna Terdaftar ({{ $totalUsers }} akun)</span>
+            </div>
+            <p class="section-subtitle">Kelola seluruh kredensial akun pengguna di sistem Spotirid:</p>
+          </div>
+
+          <!-- Search form -->
+          <form method="GET" action="{{ route('admin.dashboard') }}" style="display: flex; gap: 8px;">
+            <input type="hidden" name="tab" value="users">
+            <input type="text" name="user_search" value="{{ $userSearch }}" placeholder="Cari nama / email..." class="form-control" style="width: 220px; height: 36px; font-size: 12px;">
+            <button type="submit" class="btn-ghost" style="padding: 0 14px; height: 36px;">Cari</button>
+            @if ($userSearch)
+              <a href="{{ route('admin.dashboard', ['tab' => 'users']) }}" class="btn-ghost" style="height: 36px;">Reset</a>
+            @endif
+          </form>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Pengguna</th>
+                <th>Email</th>
+                <th>Tanggal Terdaftar</th>
+                <th>Status Akun</th>
+                <th style="text-align: right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              @forelse ($users as $u)
+                <tr>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <div class="thumb" style="border-radius: 50%; font-weight: 700; color: var(--accent); background: rgba(204, 242, 40, 0.1);">
+                        {{ strtoupper(substr($u->name, 0, 1)) }}
+                      </div>
+                      <div>
+                        <div style="font-weight: 700; color: #fff;">{{ $u->name }}</div>
+                        @if ($u->id === Auth::id())
+                          <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #86efac; font-size: 10px;">Akun Anda</span>
+                        @endif
+                      </div>
+                    </div>
+                  </td>
+                  <td style="font-family: var(--font-mono); font-size: 12px; color: var(--text-muted);">
+                    {{ $u->email }}
+                  </td>
+                  <td style="font-size: 12px; color: var(--text-muted);">
+                    {{ $u->created_at ? $u->created_at->format('d M Y, H:i') : '—' }}
+                  </td>
+                  <td>
+                    @if (isset($u->role) && strtolower($u->role) === 'admin')
+                      <span class="badge" style="background: rgba(204, 242, 40, 0.15); color: var(--accent);">Administrator</span>
+                    @elseif (isset($u->role) && strtolower($u->role) === 'user')
+                      <span class="badge" style="background: rgba(255, 255, 255, 0.05); color: #9a9ca6;">Pengguna Biasa</span>
+                    @else
+                      <span class="badge" style="background: rgba(34, 197, 94, 0.1); color: #86efac;">Aktif</span>
+                    @endif
+                  </td>
+                  <td style="text-align: right;">
+                    <div style="display: inline-flex; align-items: center; gap: 6px;">
+                      <button type="button" class="btn-ghost" onclick="openEditUserModal({{ json_encode(['id' => $u->id, 'name' => $u->name, 'email' => $u->email]) }})" style="padding: 5px 12px; font-size: 11px; color: var(--accent); border-color: rgba(204, 242, 40, 0.4);" title="Edit Akun Pengguna">
+                        ✏ Edit
+                      </button>
+                      @if ($u->id !== Auth::id())
+                        <form method="POST" action="{{ route('admin.users.delete', $u->id) }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun pengguna \'{{ $u->name }}\'?');" style="display: inline;">
+                          @csrf
+                          @method('DELETE')
+                          <button type="submit" class="btn-ghost" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3); padding: 5px 12px; font-size: 11px;">
+                            Hapus Akun
+                          </button>
+                        </form>
+                      @else
+                        <span style="font-size: 11px; color: var(--text-muted); font-style: italic;">Akun Anda</span>
+                      @endif
+                    </div>
+                  </td>
+                </tr>
+              @empty
+                <tr>
+                  <td colspan="5" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                    Tidak ada akun pengguna yang ditemukan.
+                  </td>
+                </tr>
+              @endforelse
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top: 16px;">
+          {{ $users->links() }}
         </div>
       </div>
     @endif
@@ -1901,6 +2208,137 @@
         <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
           <button type="button" onclick="closeEditModal()" class="btn-ghost">Batal</button>
           <button type="submit" class="btn-primary">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="editUserModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+          <svg class="icon" style="color: var(--accent);" viewBox="0 0 24 24">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          <span>Edit Akun Pengguna</span>
+        </h3>
+        <button type="button" onclick="closeEditUserModal()" class="btn-ghost" style="padding: 4px 10px;">✕</button>
+      </div>
+
+      <form id="editUserForm" method="POST" action="">
+        @csrf
+
+        <div class="form-group">
+          <label for="edit_user_name">Nama Lengkap / Username *</label>
+          <input type="text" name="name" id="edit_user_name" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit_user_email">Alamat Email *</label>
+          <input type="email" name="email" id="edit_user_email" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit_user_password">Password Baru (Kosongkan jika tidak diubah)</label>
+          <div style="position: relative;">
+            <input type="password" name="password" id="edit_user_password" class="form-control" placeholder="Minimal 8 karakter (opsional)" minlength="8" style="padding-right: 42px;">
+            <button type="button" onclick="togglePasswordVisibility('edit_user_password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 4px;" title="Lihat / Sembunyikan Password">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="edit_user_password_confirmation">Konfirmasi Password Baru</label>
+          <div style="position: relative;">
+            <input type="password" name="password_confirmation" id="edit_user_password_confirmation" class="form-control" placeholder="Ulangi password baru" minlength="8" style="padding-right: 42px;">
+            <button type="button" onclick="togglePasswordVisibility('edit_user_password_confirmation', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 4px;" title="Lihat / Sembunyikan Password">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+          <button type="button" onclick="closeEditUserModal()" class="btn-ghost">Batal</button>
+          <button type="submit" class="btn-primary">Simpan Perubahan User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit & Approve Pending Song Modal -->
+  <div id="editPendingSongModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 600px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+            <svg class="icon" style="color: var(--warning);" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>Edit Metadata & Setujui Lagu</span>
+          </h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+            Periksa atau lengkapi informasi lagu sebelum diterbitkan secara resmi:
+          </p>
+        </div>
+        <button type="button" onclick="closeEditPendingSongModal()" class="btn-ghost" style="padding: 4px 10px;">✕</button>
+      </div>
+
+      <form id="editPendingSongForm" method="POST" action="">
+        @csrf
+
+        <div class="form-grid">
+          <div class="form-group" style="grid-column: span 2;">
+            <label for="eps_audio_url">Direct Audio URL (HTTP/HTTPS) *</label>
+            <input type="url" name="audio_url" id="eps_audio_url" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eps_title">Judul Lagu *</label>
+            <input type="text" name="title" id="eps_title" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eps_artist">Nama Artist *</label>
+            <input type="text" name="artist" id="eps_artist" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eps_cover_url">Cover Image URL *</label>
+            <input type="url" name="cover_url" id="eps_cover_url" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eps_youtube_url">Link Video YouTube *</label>
+            <input type="url" name="youtube_url" id="eps_youtube_url" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eps_album">Album *</label>
+            <input type="text" name="album" id="eps_album" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eps_genre">Genre *</label>
+            <input type="text" name="genre" id="eps_genre" class="form-control" required>
+          </div>
+
+          <div class="form-group" style="grid-column: span 2;">
+            <label for="eps_description">Catatan / Deskripsi Rilis *</label>
+            <input type="text" name="description" id="eps_description" class="form-control" required>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+          <button type="button" onclick="closeEditPendingSongModal()" class="btn-ghost">Batal</button>
+          <button type="submit" class="btn-primary" style="background: var(--accent); color: #000;">
+            ✓ Simpan & Publikasikan ke Beranda
+          </button>
         </div>
       </form>
     </div>
@@ -2203,6 +2641,115 @@
       if (statusEl) {
         statusEl.textContent = '';
       }
+    }
+
+    function playModerationAudio(url, btn) {
+      if (!url) return;
+      const iconEl = btn.querySelector('.mod-icon');
+      const textEl = btn.querySelector('.mod-label');
+
+      if (currentPreviewBtn === btn && currentPreviewAudio && !currentPreviewAudio.paused) {
+        currentPreviewAudio.pause();
+        if (iconEl) iconEl.textContent = '▶';
+        if (textEl) textEl.textContent = 'Dengar';
+        btn.style.color = '';
+        currentPreviewAudio = null;
+        currentPreviewBtn = null;
+        return;
+      }
+
+      if (currentPreviewAudio) {
+        currentPreviewAudio.pause();
+        if (currentPreviewBtn) {
+          const prevIcon = currentPreviewBtn.querySelector('.mod-icon') || currentPreviewBtn.querySelector('.preview-icon');
+          const prevText = currentPreviewBtn.querySelector('.mod-label') || currentPreviewBtn.querySelector('.preview-text');
+          if (prevIcon) prevIcon.textContent = '▶';
+          if (prevText) prevText.textContent = prevText.classList?.contains('mod-label') ? 'Dengar' : 'Test Putar';
+          currentPreviewBtn.style.color = '';
+        }
+        currentPreviewAudio = null;
+        currentPreviewBtn = null;
+      }
+
+      if (iconEl) iconEl.textContent = '⏳';
+      if (textEl) textEl.textContent = 'Loading...';
+
+      const audio = new Audio();
+      audio.src = url;
+      currentPreviewAudio = audio;
+      currentPreviewBtn = btn;
+
+      audio.oncanplay = function() {
+        audio.play().then(() => {
+          if (iconEl) iconEl.textContent = '⏸';
+          if (textEl) textEl.textContent = 'Stop';
+          btn.style.color = 'var(--accent)';
+        }).catch(() => {
+          if (iconEl) iconEl.textContent = '▶';
+          if (textEl) textEl.textContent = 'Dengar';
+          btn.style.color = '';
+          currentPreviewAudio = null;
+          currentPreviewBtn = null;
+        });
+      };
+
+      audio.onerror = function() {
+        alert('Gagal memutar audio preview: file rusak atau URL tidak dapat diakses.');
+        if (iconEl) iconEl.textContent = '▶';
+        if (textEl) textEl.textContent = 'Dengar';
+        btn.style.color = '';
+        currentPreviewAudio = null;
+        currentPreviewBtn = null;
+      };
+
+      audio.onended = function() {
+        if (iconEl) iconEl.textContent = '▶';
+        if (textEl) textEl.textContent = 'Dengar';
+        btn.style.color = '';
+        currentPreviewAudio = null;
+        currentPreviewBtn = null;
+      };
+    }
+
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const isPass = input.type === 'password';
+      input.type = isPass ? 'text' : 'password';
+      btn.style.color = isPass ? 'var(--accent)' : 'var(--text-muted)';
+      btn.innerHTML = isPass
+        ? '<svg class="icon" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+        : '<svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    }
+
+    function openEditUserModal(user) {
+      document.getElementById('editUserForm').action = '{{ url("/admin/users") }}/' + user.id;
+      document.getElementById('edit_user_name').value = user.name || '';
+      document.getElementById('edit_user_email').value = user.email || '';
+      document.getElementById('edit_user_password').value = '';
+      document.getElementById('edit_user_password_confirmation').value = '';
+      document.getElementById('editUserModal').style.display = 'flex';
+    }
+
+    function closeEditUserModal() {
+      document.getElementById('editUserModal').style.display = 'none';
+    }
+
+    function openEditPendingSongModal(song) {
+      document.getElementById('editPendingSongForm').action = '{{ url("/admin/music") }}/' + song.id + '/approve-edit';
+      document.getElementById('eps_title').value = song.title || '';
+      document.getElementById('eps_artist').value = song.artist || '';
+      document.getElementById('eps_audio_url').value = song.audio_file || '';
+      document.getElementById('eps_cover_url').value = (song.cover_image && song.cover_image !== 'believer.jpg') ? song.cover_image : '';
+      document.getElementById('eps_youtube_url').value = song.youtube_url || '';
+      document.getElementById('eps_album').value = song.album || '';
+      document.getElementById('eps_genre').value = song.genre || '';
+      document.getElementById('eps_description').value = song.description || '';
+      document.getElementById('editPendingSongModal').style.display = 'flex';
+    }
+
+    function closeEditPendingSongModal() {
+      document.getElementById('editPendingSongModal').style.display = 'none';
     }
 
     function openEditModal(song) {

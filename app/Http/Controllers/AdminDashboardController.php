@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Music;
 use App\Models\Playlist;
+use App\Models\User;
 use App\Support\VisitorBackupReminder;
 use App\Support\VisitorTracking;
 use Illuminate\Http\RedirectResponse;
@@ -33,6 +34,8 @@ class AdminDashboardController extends Controller
 
         try {
             $totalSongs = Music::where('is_active', 1)->count();
+            $totalPendingSongs = Music::where('is_active', 0)->count();
+            $pendingSongs = Music::where('is_active', 0)->orderBy('created_at', 'desc')->get();
             $totalPlays = Music::where('is_active', 1)->sum('play_count');
 
             // Safe column check for status
@@ -85,16 +88,31 @@ class AdminDashboardController extends Controller
                         ->orWhere('uploader_name', 'like', "%{$search}%");
                 });
             }
-
             $songs = $songsQuery->paginate(15)->withQueryString();
+
+            $totalUsers = User::count();
+            $userSearch = trim((string) $request->query('user_search', ''));
+            $usersQuery = User::orderBy('created_at', 'desc');
+            if ($userSearch !== '') {
+                $usersQuery->where(function ($q) use ($userSearch) {
+                    $q->where('name', 'like', "%{$userSearch}%")
+                        ->orWhere('email', 'like', "%{$userSearch}%");
+                });
+            }
+            $users = $usersQuery->paginate(15, ['*'], 'users_page')->withQueryString();
         } catch (\Throwable $e) {
             $totalSongs = 0;
+            $totalPendingSongs = 0;
+            $pendingSongs = collect();
             $totalPlays = 0;
             $totalApprovedPlaylists = 0;
             $totalPendingPlaylists = 0;
             $pendingPlaylists = collect();
             $approvedPlaylists = collect();
             $songs = new LengthAwarePaginator([], 0, 15);
+            $totalUsers = 0;
+            $userSearch = '';
+            $users = new LengthAwarePaginator([], 0, 15);
             session()->flash('error', 'Catatan database: '.$e->getMessage());
         }
 
@@ -121,7 +139,12 @@ class AdminDashboardController extends Controller
             'analyticsData',
             'systemInfo',
             'visitorBackupReminderOpen',
-            'visitorTrackingEnabled'
+            'visitorTrackingEnabled',
+            'totalUsers',
+            'users',
+            'userSearch',
+            'totalPendingSongs',
+            'pendingSongs'
         ));
     }
 
@@ -233,6 +256,98 @@ class AdminDashboardController extends Controller
                 ->with('success', "Playlist \"{$name}\" berhasil dihapus secara permanen.");
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal menghapus playlist: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Approve a pending song submission.
+     */
+    public function approveSong(int|string $id): RedirectResponse
+    {
+        try {
+            $song = Music::findOrFail($id);
+            $song->update(['is_active' => 1]);
+            Cache::flush();
+
+            return redirect()->route('admin.dashboard', ['tab' => 'music'])
+                ->with('success', "Lagu \"{$song->title}\" oleh {$song->artist} berhasil disetujui dan kini aktif di Beranda!");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menyetujui lagu: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Reject and delete a pending song submission.
+     */
+    public function rejectSong(int|string $id): RedirectResponse
+    {
+        try {
+            $song = Music::findOrFail($id);
+            $title = $song->title;
+            $song->delete();
+            Cache::flush();
+
+            return redirect()->route('admin.dashboard', ['tab' => 'music'])
+                ->with('info', "Pengajuan lagu \"{$title}\" telah ditolak dan dihapus.");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menolak lagu: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Update metadata and approve a pending song submission.
+     */
+    public function updateAndApproveSong(Request $request, int|string $id): RedirectResponse
+    {
+        $song = Music::findOrFail($id);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'artist' => 'required|string|max:255',
+            'audio_url' => ['required', 'string', 'max:1000', 'url:http,https'],
+            'cover_url' => ['nullable', 'string', 'max:1000', 'url:http,https'],
+            'youtube_url' => ['nullable', 'string', 'max:1000', 'url:http,https'],
+            'album' => 'nullable|string|max:255',
+            'genre' => 'nullable|string|max:100',
+            'description' => 'nullable|string|max:1000',
+        ], [
+            'title.required' => 'Judul lagu wajib diisi.',
+            'artist.required' => 'Nama artist wajib diisi.',
+            'audio_url.required' => 'Direct audio URL wajib diisi.',
+            'audio_url.url' => 'Audio URL harus berupa tautan yang valid (http:// atau https://).',
+        ]);
+
+        try {
+            $title = strip_tags(trim((string) $request->input('title')));
+            $artist = strip_tags(trim((string) $request->input('artist')));
+            $audioUrl = trim((string) $request->input('audio_url'));
+            $coverUrl = $request->input('cover_url') ? trim((string) $request->input('cover_url')) : $song->cover_image;
+            $youtubeUrl = $request->input('youtube_url') ? trim((string) $request->input('youtube_url')) : null;
+
+            if ((! $coverUrl || $coverUrl === 'believer.jpg') && $youtubeUrl) {
+                if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/', $youtubeUrl, $matches)) {
+                    $coverUrl = 'https://img.youtube.com/vi/'.$matches[1].'/hqdefault.jpg';
+                }
+            }
+
+            $song->update([
+                'title' => $title,
+                'artist' => $artist,
+                'audio_file' => $audioUrl,
+                'cover_image' => $coverUrl ?: 'believer.jpg',
+                'youtube_url' => $youtubeUrl,
+                'album' => $request->input('album') ? strip_tags(trim((string) $request->input('album'))) : null,
+                'genre' => $request->input('genre') ? strip_tags(trim((string) $request->input('genre'))) : null,
+                'description' => $request->input('description') ? strip_tags(trim((string) $request->input('description'))) : null,
+                'is_active' => 1,
+            ]);
+
+            Cache::flush();
+
+            return redirect()->route('admin.dashboard', ['tab' => 'music'])
+                ->with('success', "Lagu \"{$title}\" berhasil diedit dan disetujui untuk terbit di Beranda!");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal memperbarui & menyetujui lagu: '.$e->getMessage());
         }
     }
 
@@ -439,6 +554,105 @@ class AdminDashboardController extends Controller
                 ->with('success', "Berhasil menambahkan {$savedCount} lagu sekaligus ke library!");
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal menambahkan lagu secara massal: '.$e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Store a newly created user with credentials.
+     */
+    public function storeUser(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'nullable|string|in:admin,user',
+        ], [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'email.required' => 'Alamat email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email ini sudah terdaftar di sistem.',
+            'password.required' => 'Password wajib diisi.',
+            'password.min' => 'Password minimal terdiri dari 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+        ]);
+
+        try {
+            $userData = [
+                'name' => strip_tags(trim($request->input('name'))),
+                'email' => strtolower(trim($request->input('email'))),
+                'password' => Hash::make($request->input('password')),
+                'email_verified_at' => now(),
+            ];
+
+            if (Schema::hasColumn('users', 'role')) {
+                $userData['role'] = $request->input('role', 'user');
+            }
+
+            $user = User::create($userData);
+
+            return redirect()->route('admin.dashboard', ['tab' => 'users'])
+                ->with('success', "Akun pengguna \"{$user->name}\" ({$user->email}) berhasil dibuat dan siap digunakan!");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal membuat pengguna: '.$e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Delete an existing user account.
+     */
+    public function deleteUser(int|string $id): RedirectResponse
+    {
+        if ((int) Auth::id() === (int) $id) {
+            return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+        }
+
+        try {
+            $user = User::findOrFail($id);
+            $name = $user->name;
+            $user->delete();
+
+            return redirect()->route('admin.dashboard', ['tab' => 'users'])
+                ->with('success', "Akun pengguna \"{$name}\" berhasil dihapus dari sistem.");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menghapus pengguna: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Update an existing user account (name, email, optional password).
+     */
+    public function updateUser(Request $request, int|string $id): RedirectResponse
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'password' => 'nullable|string|min:8|confirmed',
+        ], [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'email.required' => 'Alamat email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email ini sudah digunakan oleh akun lain.',
+            'password.min' => 'Password baru minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password baru tidak cocok.',
+        ]);
+
+        try {
+            $user->name = strip_tags(trim((string) $request->input('name')));
+            $user->email = strtolower(trim((string) $request->input('email')));
+
+            if ($request->filled('password')) {
+                $user->password = Hash::make($request->input('password'));
+            }
+
+            $user->save();
+
+            return redirect()->route('admin.dashboard', ['tab' => 'users'])
+                ->with('success', "Data akun pengguna \"{$user->name}\" ({$user->email}) berhasil diperbarui!");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal memperbarui pengguna: '.$e->getMessage());
         }
     }
 

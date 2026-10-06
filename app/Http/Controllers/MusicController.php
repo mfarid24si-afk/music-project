@@ -182,6 +182,85 @@ class MusicController extends Controller
     }
 
     /**
+     * Submit a song suggestion by an authenticated member.
+     * Song is created with is_active = 0 (pending admin approval).
+     * Accepts ONLY URL inputs, file uploads are rejected.
+     */
+    public function suggestSong(Request $request): JsonResponse
+    {
+        if ($request->hasFile('audio') || $request->hasFile('cover')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengajuan lagu hanya mendukung direct link URL audio, bukan upload file.',
+            ], 422);
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'artist' => 'required|string|max:255',
+            'audio_url' => ['required', 'string', 'max:1000', 'url:http,https'],
+            'cover_url' => ['required', 'string', 'max:1000', 'url:http,https'],
+            'youtube_url' => ['required', 'string', 'max:1000', 'url:http,https'],
+            'album' => 'required|string|max:255',
+            'genre' => 'required|string|max:100',
+            'description' => 'required|string|max:1000',
+        ], [
+            'title.required' => 'Judul lagu wajib diisi.',
+            'artist.required' => 'Nama artist wajib diisi.',
+            'audio_url.required' => 'Direct Audio URL wajib diisi.',
+            'audio_url.url' => 'Audio URL harus berupa tautan web yang valid (dimulai dengan http:// atau https://).',
+            'cover_url.required' => 'Direct Cover Image URL wajib diisi.',
+            'cover_url.url' => 'Cover URL harus berupa tautan web yang valid (dimulai dengan http:// atau https://).',
+            'youtube_url.required' => 'Link video YouTube wajib diisi.',
+            'youtube_url.url' => 'Link video YouTube harus berupa tautan web yang valid.',
+            'album.required' => 'Nama album wajib diisi.',
+            'genre.required' => 'Genre lagu wajib diisi.',
+            'description.required' => 'Deskripsi / catatan rilis wajib diisi.',
+        ]);
+
+        $title = strip_tags(trim((string) $request->input('title')));
+        $artist = strip_tags(trim((string) $request->input('artist')));
+        $audioUrl = trim((string) $request->input('audio_url'));
+        $coverUrl = $request->input('cover_url') ? trim((string) $request->input('cover_url')) : null;
+        $youtubeUrl = $request->input('youtube_url') ? trim((string) $request->input('youtube_url')) : null;
+
+        if (! $coverUrl && $youtubeUrl) {
+            if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/', $youtubeUrl, $matches)) {
+                $coverUrl = 'https://img.youtube.com/vi/'.$matches[1].'/hqdefault.jpg';
+            }
+        }
+
+        $slugBase = Str::slug("{$artist} - {$title}") ?: 'track';
+        $slug = $slugBase.'-'.Str::random(6);
+
+        $user = Auth::user();
+        $uploaderName = $user ? $user->name : 'Member';
+
+        $music = Music::create([
+            'slug' => $slug,
+            'title' => $title,
+            'artist' => $artist,
+            'album' => $request->input('album') ? strip_tags(trim((string) $request->input('album'))) : null,
+            'genre' => $request->input('genre') ? strip_tags(trim((string) $request->input('genre'))) : null,
+            'description' => $request->input('description') ? strip_tags(trim((string) $request->input('description'))) : null,
+            'cover_image' => $coverUrl ?: 'believer.jpg',
+            'audio_file' => $audioUrl,
+            'youtube_url' => $youtubeUrl,
+            'duration' => null,
+            'file_size' => 0,
+            'play_count' => 0,
+            'uploader_name' => $uploaderName,
+            'is_active' => 0,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Lagu \"{$title}\" berhasil diajukan! Menunggu peninjauan dan persetujuan Administrator sebelum tampil di Beranda.",
+            'data' => $music,
+        ], 201);
+    }
+
+    /**
      * Update an existing song.
      */
     public function update(Request $request, int|string $id): JsonResponse

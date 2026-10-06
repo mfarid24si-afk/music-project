@@ -143,7 +143,7 @@ return [
     |
     */
 
-    'path' => env('SESSION_PATH', '/'),
+    'path' => str_contains((string) env('SESSION_PATH', '/'), 'Program Files/Git') ? '/' : env('SESSION_PATH', '/'),
 
     /*
     |--------------------------------------------------------------------------

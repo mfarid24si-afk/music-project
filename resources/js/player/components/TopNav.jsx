@@ -1,19 +1,25 @@
 import React from 'react';
-import { LuChevronLeft, LuChevronRight, LuLock, LuMenu, LuSearch, LuSettings, LuX } from 'react-icons/lu';
+import { usePage, router } from '@inertiajs/react';
+import { LuChevronLeft, LuChevronRight, LuLock, LuLogIn, LuLogOut, LuMenu, LuPlus, LuSearch, LuSettings, LuX } from 'react-icons/lu';
 import { useAudio } from '../context/AudioContext';
 import { getAppBaseUrl } from '../services/api';
+
 const getPortalUrl = (subpath) => {
     const base = getAppBaseUrl();
     const cleanSub = (subpath || '').replace(/^\/+/, '');
     return `${base}${cleanSub}`;
 };
+
 export default function TopNav({
     searchVal,
     setSearchVal,
     onToggleMobileMenu,
     onOpenSettings,
+    onOpenSuggestSong,
 }) {
     const { profileName } = useAudio();
+    const { auth } = usePage().props;
+    const user = auth?.user;
 
     const getInitials = (name) => {
         if (!name || !name.trim()) return 'US';
@@ -72,21 +78,77 @@ export default function TopNav({
                 </div>
             </div>
 
-            {/* Right zone: Settings, Admin, and Profile */}
+            {/* Right zone: Suggest Song (if auth), Settings, Admin, and Profile */}
             <div className="flex flex-shrink-0 items-center gap-2 sm:gap-2.5">
-                <a
-                    href={getPortalUrl('admin/login')}
-                    className="hidden h-9 items-center gap-1.5 rounded-full border border-line-strong/30 bg-raised px-3 text-xs font-semibold text-on-surface-variant transition-all hover:border-primary-container hover:bg-chip hover:text-primary-container sm:flex"
-                    title="Login Khusus Administrator"
-                >
-                    <LuLock className="h-3.5 w-3.5 text-primary-container" />
-                    <span>Admin Portal</span>
-                </a>
+                {user ? (
+                    <>
+                        {/* Member Special Action: Suggest Song */}
+                        <button
+                            type="button"
+                            onClick={onOpenSuggestSong}
+                            className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-primary-container/50 bg-primary-container/15 px-3.5 text-xs font-bold text-primary-container shadow-sm transition-all hover:bg-primary-container hover:text-on-primary-container"
+                            title="Ajukan Lagu Baru (Khusus Member)"
+                        >
+                            <LuPlus className="h-4 w-4" />
+                            <span className="hidden sm:inline">Ajukan Lagu</span>
+                        </button>
+
+                        {/* Member User Chip */}
+                        <div
+                            className="flex items-center gap-2 rounded-full border border-line-strong/30 bg-raised py-1 pr-3 pl-2"
+                            title={`Login sebagai ${user.name}`}
+                        >
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-container font-mono text-[10px] font-bold text-on-primary-container">
+                                {getInitials(user.name)}
+                            </div>
+                            <span className="hidden max-w-[120px] truncate text-xs font-medium text-white sm:inline">
+                                {user.name}
+                            </span>
+                        </div>
+
+                        {/* Logout button */}
+                        <button
+                            type="button"
+                            onClick={() => router.post('/logout')}
+                            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-line-strong/30 bg-raised text-on-surface-variant transition-all hover:border-danger/40 hover:bg-danger/10 hover:text-danger"
+                            title="Keluar dari akun"
+                        >
+                            <LuLogOut className="h-3.5 w-3.5" />
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        {/* Guest: Login Button */}
+                        <a
+                            href={getPortalUrl('login')}
+                            className="flex h-9 items-center gap-1.5 rounded-full border border-line-strong/30 bg-raised px-3 text-xs font-bold text-white transition-all hover:border-primary-container hover:bg-chip hover:text-primary-container"
+                            title="Masuk ke Akun Member"
+                        >
+                            <LuLogIn className="h-3.5 w-3.5 text-primary-container" />
+                            <span>Masuk</span>
+                        </a>
+
+                        {/* Guest: Listener Profile Chip */}
+                        <div
+                            onClick={onOpenSettings}
+                            className="flex cursor-pointer items-center gap-2 rounded-full border border-line-strong/30 bg-raised py-1 pr-3 pl-2 transition-colors hover:border-primary-container"
+                            title="Klik untuk membuka pengaturan profil & tema"
+                        >
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-container font-mono text-[10px] font-bold text-on-primary-container">
+                                {getInitials(profileName)}
+                            </div>
+                            <span className="hidden text-xs font-medium text-white sm:inline">
+                                {profileName || 'Listener'}
+                            </span>
+                        </div>
+                    </>
+                )}
+
                 <button
                     type="button"
                     onClick={onOpenSettings}
                     className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-line-strong/30 bg-raised px-3 text-xs font-semibold text-on-surface-variant transition-all hover:bg-chip hover:text-white"
-                    title="Pengaturan Player (Tema, Mode, Audio, Profil)"
+                    title="Pengaturan Player"
                 >
                     <LuSettings className="h-3.5 w-3.5" />
                     <span className="hidden md:inline">Settings</span>
@@ -94,19 +156,14 @@ export default function TopNav({
 
                 <div className="mx-0.5 hidden h-4 w-px bg-chip/40 sm:block" />
 
-                {/* Listener Chip */}
-                <div
-                    onClick={onOpenSettings}
-                    className="flex cursor-pointer items-center gap-2 rounded-full border border-line-strong/30 bg-raised py-1 pr-3 pl-2 transition-colors hover:border-primary-container"
-                    title="Klik untuk membuka pengaturan profil & tema"
+                <a
+                    href={getPortalUrl('admin/login')}
+                    className="hidden h-9 items-center gap-1.5 rounded-full border border-line-strong/30 bg-raised px-3 text-xs font-semibold text-on-surface-variant transition-all hover:border-primary-container hover:bg-chip hover:text-primary-container sm:flex"
+                    title="Login Khusus Administrator"
                 >
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-container font-mono text-[10px] font-bold text-on-primary-container">
-                        {getInitials(profileName)}
-                    </div>
-                    <span className="hidden text-xs font-medium text-white sm:inline">
-                        {profileName || 'Listener'}
-                    </span>
-                </div>
+                    <LuLock className="h-3.5 w-3.5 text-primary-container" />
+                    <span className="hidden lg:inline">Admin</span>
+                </a>
             </div>
         </header>
     );

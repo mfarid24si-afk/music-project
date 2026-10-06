@@ -1,8 +1,8 @@
 import React from 'react';
+import { usePage } from '@inertiajs/react';
 import { useAudio } from '../context/AudioContext';
 import { LuBadgeCheck, LuCheck, LuDisc3, LuHouse, LuLibrary, LuListMusic, LuLock, LuPin, LuPlus, LuSearch, LuX } from 'react-icons/lu';
 import { getAppBaseUrl } from '../services/api';
-
 const THEMES = [
     { id: 'default', color: '#ccf228', name: 'Acid Lime' },
     { id: 'purple', color: '#a855f7', name: 'Electric Violet' },
@@ -20,9 +20,12 @@ export default function Sidebar({
     isMobileOpen,
     setIsMobileOpen,
     onOpenSettings,
+    onOpenSuggestSong,
 }) {
     const { theme, setTheme, playlists, createPlaylist, profileName } =
         useAudio();
+    const { auth } = usePage().props;
+    const user = auth?.user;
 
     const handleCreatePlaylist = () => {
         const name = window.prompt('Enter playlist name:');
@@ -127,6 +130,20 @@ export default function Sidebar({
                             );
                         })}
                     </nav>
+
+                    {user && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onOpenSuggestSong?.();
+                                if (setIsMobileOpen) setIsMobileOpen(false);
+                            }}
+                            className="flex items-center gap-3 rounded-xl border border-primary-container/40 bg-primary-container/10 px-4 py-2.5 text-left text-sm font-bold text-primary-container transition-all hover:bg-primary-container hover:text-on-primary-container shadow-sm"
+                        >
+                            <LuPlus className="h-5 w-5" />
+                            <span>Ajukan Lagu Baru</span>
+                        </button>
+                    )}
 
                     {/* Divider */}
                     <div className="h-px w-full bg-chip/60" />

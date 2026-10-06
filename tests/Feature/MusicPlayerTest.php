@@ -4,6 +4,7 @@ use App\Models\Music;
 use App\Models\Playlist;
 use App\Models\User;
 use App\Models\VisitorLog;
+use Illuminate\Http\UploadedFile;
 
 beforeEach(function () {
     if (Music::count() === 0) {
@@ -104,7 +105,6 @@ test('authenticated admin can view dashboard', function () {
 
     $response->assertOk();
 });
-
 test('admin dashboard renders flash messages with their animation target class', function () {
     $admin = User::firstOrCreate(
         ['email' => 'admin@spotirid.com'],
@@ -394,4 +394,293 @@ test('admin bulk upload rejects dangerous protocols', function () {
 
     $response->assertSessionHasErrors(['songs.0.audio_url']);
     expect(Music::where('title', 'Malicious Track')->exists())->toBeFalse();
+});
+
+test('admin dashboard contains users tab and displays user list', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'users']));
+
+    $response->assertOk();
+    $response->assertSee('Kelola Pengguna', false);
+    $response->assertSee('Tambah Akun Pengguna Baru', false);
+    $response->assertSee('action="'.route('admin.users.store').'"', false);
+    $response->assertSee($admin->email, false);
+});
+
+test('guest cannot create user via admin endpoint', function () {
+    $response = $this->post(route('admin.users.store'), [
+        'name' => 'New User',
+        'email' => 'newuser@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ]);
+
+    $response->assertRedirect(route('login'));
+    expect(User::where('email', 'newuser@example.com')->exists())->toBeFalse();
+});
+
+test('admin can create a new user with credentials', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->post(route('admin.users.store'), [
+        'name' => 'Budi Santoso',
+        'email' => 'budi@spotirid.com',
+        'password' => 'secret1234',
+        'password_confirmation' => 'secret1234',
+    ]);
+
+    $response->assertRedirect(route('admin.dashboard', ['tab' => 'users']));
+    $response->assertSessionHas('success');
+
+    $createdUser = User::where('email', 'budi@spotirid.com')->first();
+    expect($createdUser)->not->toBeNull();
+    expect($createdUser->name)->toBe('Budi Santoso');
+    expect(Hash::check('secret1234', $createdUser->password))->toBeTrue();
+});
+
+test('admin user creation validates unique email and password confirmation', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->post(route('admin.users.store'), [
+        'name' => 'Duplicate User',
+        'email' => 'admin@spotirid.com',
+        'password' => 'short',
+        'password_confirmation' => 'mismatch',
+    ]);
+
+    $response->assertSessionHasErrors(['email', 'password']);
+});
+
+test('admin cannot delete their own account but can delete another user', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $otherUser = User::create([
+        'name' => 'Target User',
+        'email' => 'target@spotirid.com',
+        'password' => bcrypt('password123'),
+    ]);
+
+    // Try self deletion
+    $selfDeleteResponse = $this->actingAs($admin)->delete(route('admin.users.delete', $admin->id));
+    $selfDeleteResponse->assertSessionHas('error');
+    expect(User::where('id', $admin->id)->exists())->toBeTrue();
+
+    // Delete other user
+    $deleteResponse = $this->actingAs($admin)->delete(route('admin.users.delete', $otherUser->id));
+    $deleteResponse->assertRedirect(route('admin.dashboard', ['tab' => 'users']));
+    $deleteResponse->assertSessionHas('success');
+    expect(User::where('id', $otherUser->id)->exists())->toBeFalse();
+});
+
+test('public self registration is disabled', function () {
+    $response = $this->get('/register');
+    $response->assertNotFound();
+});
+
+test('guest cannot submit song via suggest endpoint', function () {
+    $response = $this->postJson(route('music.suggest'), [
+        'title' => 'Guest Track',
+        'artist' => 'Guest',
+        'audio_url' => 'https://cdn.example.com/guest.mp3',
+    ]);
+
+    $response->assertUnauthorized();
+});
+
+test('authenticated member can submit song via suggest endpoint and defaults to pending', function () {
+    $member = User::create([
+        'name' => 'Member One',
+        'email' => 'member1@spotirid.com',
+        'password' => bcrypt('password123'),
+    ]);
+
+    $response = $this->actingAs($member)->postJson(route('music.suggest'), [
+        'title' => 'Fix You Live',
+        'artist' => 'Coldplay',
+        'audio_url' => 'https://cdn.example.com/audio/fix-you-live.mp3',
+        'cover_url' => 'https://cdn.example.com/covers/fix-you.jpg',
+        'youtube_url' => 'https://youtube.com/watch?v=12345678901',
+        'album' => 'Live 2012',
+        'genre' => 'Rock',
+        'description' => 'Great live version',
+    ]);
+
+    $response->assertCreated();
+    $response->assertJson([
+        'success' => true,
+    ]);
+
+    $song = Music::where('title', 'Fix You Live')->first();
+    expect($song)->not->toBeNull();
+    expect($song->artist)->toBe('Coldplay');
+    expect($song->uploader_name)->toBe('Member One');
+    expect($song->is_active)->toBeFalse(); // Must be pending!
+});
+
+test('suggest song endpoint rejects file uploads', function () {
+    $member = User::create([
+        'name' => 'Member Two',
+        'email' => 'member2@spotirid.com',
+        'password' => bcrypt('password123'),
+    ]);
+
+    $fakeFile = UploadedFile::fake()->create('track.mp3', 100);
+
+    $response = $this->actingAs($member)->post(route('music.suggest'), [
+        'title' => 'Uploaded Track',
+        'artist' => 'Artist',
+        'audio' => $fakeFile,
+        'audio_url' => 'https://cdn.example.com/track.mp3',
+    ]);
+
+    $response->assertStatus(422);
+    expect(Music::where('title', 'Uploaded Track')->exists())->toBeFalse();
+});
+
+test('admin can approve pending song and make it live on beranda', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $pendingSong = Music::create([
+        'slug' => 'pending-song-1',
+        'title' => 'Pending Approval Track',
+        'artist' => 'Indie Artist',
+        'audio_file' => 'https://cdn.example.com/pending.mp3',
+        'uploader_name' => 'Member One',
+        'is_active' => 0,
+    ]);
+
+    // Admin dashboard shows the pending song
+    $dashResponse = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'music']));
+    $dashResponse->assertOk();
+    $dashResponse->assertSee('Pending Approval Track');
+    $dashResponse->assertSee('Member One');
+
+    // Approve song
+    $approveResponse = $this->actingAs($admin)->post(route('admin.music.approve', $pendingSong->id));
+    $approveResponse->assertRedirect(route('admin.dashboard', ['tab' => 'music']));
+    $approveResponse->assertSessionHas('success');
+
+    $pendingSong->refresh();
+    expect($pendingSong->is_active)->toBeTrue();
+});
+
+test('admin can reject pending song and remove it from database', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $rejectedSong = Music::create([
+        'slug' => 'rejected-song-1',
+        'title' => 'To Be Rejected Track',
+        'artist' => 'Spam Artist',
+        'audio_file' => 'https://cdn.example.com/spam.mp3',
+        'uploader_name' => 'Member Spam',
+        'is_active' => 0,
+    ]);
+
+    // Reject song
+    $rejectResponse = $this->actingAs($admin)->post(route('admin.music.reject', $rejectedSong->id));
+    $rejectResponse->assertRedirect(route('admin.dashboard', ['tab' => 'music']));
+    $rejectResponse->assertSessionHas('info');
+
+    expect(Music::where('id', $rejectedSong->id)->exists())->toBeFalse();
+});
+
+test('admin can update user account information and password', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $user = User::create([
+        'name' => 'Original Name',
+        'email' => 'original@spotirid.com',
+        'password' => bcrypt('oldpassword'),
+    ]);
+
+    $response = $this->actingAs($admin)->post(route('admin.users.update', $user->id), [
+        'name' => 'Updated Name',
+        'email' => 'updated@spotirid.com',
+        'password' => 'newsecretpass',
+        'password_confirmation' => 'newsecretpass',
+    ]);
+
+    $response->assertRedirect(route('admin.dashboard', ['tab' => 'users']));
+    $response->assertSessionHas('success');
+
+    $user->refresh();
+    expect($user->name)->toBe('Updated Name');
+    expect($user->email)->toBe('updated@spotirid.com');
+    expect(Hash::check('newsecretpass', $user->password))->toBeTrue();
+});
+
+test('suggest song endpoint requires all fields strictly', function () {
+    $member = User::create([
+        'name' => 'Strict Member',
+        'email' => 'strict@spotirid.com',
+        'password' => bcrypt('password123'),
+    ]);
+
+    // Missing cover_url, youtube_url, album, genre, description
+    $response = $this->actingAs($member)->postJson(route('music.suggest'), [
+        'title' => 'Incomplete Track',
+        'artist' => 'Incomplete Artist',
+        'audio_url' => 'https://cdn.example.com/audio.mp3',
+    ]);
+
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['cover_url', 'youtube_url', 'album', 'genre', 'description']);
+});
+
+test('admin can edit metadata and approve pending song in one go', function () {
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $song = Music::create([
+        'slug' => 'draft-track',
+        'title' => 'Draft Track',
+        'artist' => 'Draft Artist',
+        'audio_file' => 'https://cdn.example.com/draft.mp3',
+        'uploader_name' => 'Member User',
+        'is_active' => 0,
+    ]);
+
+    $response = $this->actingAs($admin)->post(route('admin.music.approve-edit', $song->id), [
+        'title' => 'Polished Track',
+        'artist' => 'Polished Artist',
+        'audio_url' => 'https://cdn.example.com/polished.mp3',
+        'cover_url' => 'https://cdn.example.com/polished.jpg',
+        'youtube_url' => 'https://youtube.com/watch?v=12345678901',
+        'album' => 'Polished Album',
+        'genre' => 'Polished Genre',
+        'description' => 'Polished description notes',
+    ]);
+
+    $response->assertRedirect(route('admin.dashboard', ['tab' => 'music']));
+    $response->assertSessionHas('success');
+
+    $song->refresh();
+    expect($song->title)->toBe('Polished Track');
+    expect($song->artist)->toBe('Polished Artist');
+    expect($song->audio_file)->toBe('https://cdn.example.com/polished.mp3');
+    expect($song->is_active)->toBeTrue();
 });

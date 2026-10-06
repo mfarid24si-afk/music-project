@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminVisitorController;
+use App\Http\Controllers\MusicController;
 use App\Support\VisitorLogMaintenance;
 use App\Support\VisitorTracking;
 use Illuminate\Http\Request;
@@ -29,9 +30,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/music/bulk', [AdminDashboardController::class, 'storeBulkSongs'])->name('admin.music.bulk');
     Route::post('/music/{id}', [AdminDashboardController::class, 'updateSong'])->name('admin.music.update');
     Route::delete('/music/{id}', [AdminDashboardController::class, 'deleteSong'])->name('admin.music.delete');
+    Route::post('/music/{id}/approve', [AdminDashboardController::class, 'approveSong'])->name('admin.music.approve');
+    Route::post('/music/{id}/reject', [AdminDashboardController::class, 'rejectSong'])->name('admin.music.reject');
+    Route::post('/music/{id}/approve-edit', [AdminDashboardController::class, 'updateAndApproveSong'])->name('admin.music.approve-edit');
 
     Route::post('/profile', [AdminDashboardController::class, 'updateAdminProfile'])->name('admin.profile.update');
     Route::post('/password', [AdminDashboardController::class, 'updateAdminPassword'])->name('admin.password.update');
+    Route::post('/users', [AdminDashboardController::class, 'storeUser'])->name('admin.users.store');
+    Route::delete('/users/{id}', [AdminDashboardController::class, 'deleteUser'])->name('admin.users.delete');
+    Route::post('/users/{id}', [AdminDashboardController::class, 'updateUser'])->name('admin.users.update');
 
     Route::get('/visitors/export', [AdminVisitorController::class, 'export'])->name('admin.visitors.export');
     Route::post('/visitors/tracking', [AdminVisitorController::class, 'updateTracking'])->name('admin.visitors.tracking.update');
@@ -68,6 +75,10 @@ Route::get('/settings.php', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/music/suggest', [MusicController::class, 'suggestSong'])->name('music.suggest');
 });
 
 require __DIR__.'/settings.php';
