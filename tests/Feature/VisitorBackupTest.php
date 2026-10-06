@@ -7,6 +7,7 @@ use App\Models\VisitorLog;
 use App\Notifications\VisitorBackupReminderNotification;
 use App\Support\VisitorBackupReminder;
 use App\Support\VisitorLogMaintenance;
+use App\Support\VisitorTracking;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -24,6 +25,7 @@ beforeEach(function () {
     }
 
     config([
+        'visitor.tracking_enabled' => true,
         'visitor.retention_days' => 365,
         'visitor.disk_threshold_mb' => 190,
         'visitor.trim_batch_size' => 500,
@@ -437,5 +439,115 @@ describe('banner dashboard', function () {
         $this->actingAs($this->regularUser)
             ->get(route('admin.dashboard'))
             ->assertForbidden();
+    });
+});
+
+describe('sakelar pencatatan pengunjung', function () {
+    test('tamu tidak bisa mengubah sakelar', function () {
+        $this->post(route('admin.visitors.tracking.update'), ['enabled' => '0'])
+            ->assertRedirect(route('login'));
+
+        expect(VisitorTracking::isEnabled())->toBeTrue();
+    });
+
+    test('user biasa ditolak dengan 403', function () {
+        $this->actingAs($this->regularUser)
+            ->post(route('admin.visitors.tracking.update'), ['enabled' => '0'])
+            ->assertForbidden();
+
+        expect(VisitorTracking::isEnabled())->toBeTrue();
+    });
+
+    test('tanpa nilai enabled tidak diterima', function () {
+        $this->actingAs($this->admin)
+            ->post(route('admin.visitors.tracking.update'))
+            ->assertSessionHasErrors('enabled');
+
+        expect(VisitorTracking::isEnabled())->toBeTrue();
+    });
+
+    test('nilai yang bukan boolean ditolak', function () {
+        $this->actingAs($this->admin)
+            ->post(route('admin.visitors.tracking.update'), ['enabled' => 'mungkin'])
+            ->assertSessionHasErrors('enabled');
+
+        expect(VisitorTracking::isEnabled())->toBeTrue();
+    });
+
+    test('admin bisa mematikan pencatatan', function () {
+        $this->actingAs($this->admin)
+            ->post(route('admin.visitors.tracking.update'), ['enabled' => '0'])
+            ->assertRedirect(route('admin.dashboard', ['tab' => 'overview']))
+            ->assertSessionHas('success');
+
+        expect(VisitorTracking::isEnabled())->toBeFalse();
+    });
+
+    test('admin bisa menyalakan pencatatan kembali', function () {
+        VisitorTracking::setEnabled(false);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.visitors.tracking.update'), ['enabled' => '1'])
+            ->assertRedirect(route('admin.dashboard', ['tab' => 'overview']));
+
+        expect(VisitorTracking::isEnabled())->toBeTrue();
+    });
+
+    test('halaman depan tidak menambah baris saat pencatatan mati', function () {
+        VisitorTracking::setEnabled(false);
+
+        $this->get(route('home'))->assertOk();
+
+        expect(VisitorLog::count())->toBe(0);
+    });
+
+    test('halaman depan tetap mencatat saat pencatatan hidup', function () {
+        VisitorTracking::setEnabled(true);
+
+        $this->get(route('home'))->assertOk();
+
+        expect(VisitorLog::count())->toBe(1);
+    });
+
+    test('data lama tetap bisa diekspor saat pencatatan mati', function () {
+        makeVisitor('2026-03-15');
+        VisitorTracking::setEnabled(false);
+
+        $csv = $this->actingAs($this->admin)
+            ->get(route('admin.visitors.export'))
+            ->streamedContent();
+
+        expect($csv)->toContain('2026-03-15');
+    });
+
+    test('perawatan tetap berjalan meski pencatatan mati', function () {
+        makeVisitor('2024-01-01');
+        VisitorTracking::setEnabled(false);
+        Cache::forget(VisitorLogMaintenance::MAINTENANCE_CHECK_KEY);
+
+        $this->get(route('home'))->assertOk();
+
+        expect(VisitorLog::whereDate('visit_date', '<', now()->subDays(365)->toDateString())->count())->toBe(0);
+    });
+
+    test('dashboard menampilkan status hidup dan tombol untuk mematikan', function () {
+        $this->actingAs($this->admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('Pencatatan Pengunjung')
+            ->assertSee('Nonaktifkan')
+            ->assertSee('name="enabled" value="0"', false);
+    });
+
+    test('dashboard menampilkan status mati dan tombol untuk menyalakan', function () {
+        VisitorTracking::setEnabled(false);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('Pencatatan Pengunjung')
+            ->assertSee('Aktifkan Lagi')
+            ->assertSee('name="enabled" value="1"', false)
+            ->assertSee('Pencatatan pengunjung sedang dinonaktifkan');
     });
 });

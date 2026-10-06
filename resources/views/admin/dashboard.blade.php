@@ -1042,6 +1042,66 @@
           </div>
         </div>
 
+        <!-- Visitor Counting Switch -->
+        <form method="POST" action="{{ route('admin.visitors.tracking.update') }}"
+              style="display: flex; align-items: center; gap: 10px 12px; flex-wrap: wrap; margin-bottom: 12px; padding: 12px 14px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 10px;">
+          @csrf
+          <input type="hidden" name="enabled" value="{{ $visitorTrackingEnabled ? '0' : '1' }}">
+
+          <span style="display: inline-flex; align-items: center; gap: 8px;">
+            <svg class="icon" style="color: {{ $visitorTrackingEnabled ? 'var(--success)' : 'var(--text-muted)' }};" viewBox="0 0 24 24">
+              @if ($visitorTrackingEnabled)
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              @else
+                <path d="M17.94 17.94A10.4 10.4 0 0 1 12 20C5 20 1 12 1 12a19.8 19.8 0 0 1 5.06-5.94"/>
+                <path d="M9.9 4.24A9.9 9.9 0 0 1 12 4c7 0 11 8 11 8a19.8 19.8 0 0 1-2.16 3.19"/>
+                <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              @endif
+            </svg>
+            <span style="font-size: 13px; font-weight: 700;">Pencatatan Pengunjung</span>
+            <span class="badge"
+                  style="background: {{ $visitorTrackingEnabled ? 'var(--success-bg)' : 'var(--danger-bg)' }}; color: {{ $visitorTrackingEnabled ? 'var(--success)' : 'var(--danger)' }};">
+              {{ $visitorTrackingEnabled ? 'Aktif' : 'Nonaktif' }}
+            </span>
+          </span>
+
+          <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">
+            @if ($visitorTrackingEnabled)
+              Aktif — setiap kunjungan dicatat, maksimal 1 baris per IP per jam.
+            @else
+              Nonaktif — kunjungan baru tidak dicatat. Data lama & grafik tetap utuh.
+            @endif
+          </span>
+
+          <button type="submit"
+                  class="{{ $visitorTrackingEnabled ? 'btn-ghost' : 'btn-primary' }}"
+                  style="margin-left: auto; display: inline-flex; align-items: center; gap: 6px; height: 34px;">
+            <svg class="icon" viewBox="0 0 24 24">
+              @if ($visitorTrackingEnabled)
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/>
+              @else
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="8 12 11 15 16 9"/>
+              @endif
+            </svg>
+            {{ $visitorTrackingEnabled ? 'Nonaktifkan' : 'Aktifkan Lagi' }}
+          </button>
+        </form>
+
+        @unless ($visitorTrackingEnabled)
+          <div class="alert alert-info" style="margin-bottom: 16px;">
+            <svg class="icon" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span>Pencatatan pengunjung sedang dinonaktifkan. Grafik di bawah hanya menampilkan data historis.</span>
+          </div>
+        @endunless
+
         <!-- Export Visitor Data -->
         <form method="GET" action="{{ route('admin.visitors.export') }}"
               style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; padding: 12px 14px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 10px;">

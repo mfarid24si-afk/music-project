@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Music;
 use App\Models\Playlist;
 use App\Support\VisitorBackupReminder;
+use App\Support\VisitorTracking;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -98,6 +99,7 @@ class AdminDashboardController extends Controller
         }
 
         $analyticsData = $this->getAnalyticsData();
+        $visitorTrackingEnabled = VisitorTracking::isEnabled();
         $systemInfo = [
             'php_version' => PHP_VERSION,
             'laravel_version' => app()->version(),
@@ -118,7 +120,8 @@ class AdminDashboardController extends Controller
             'songs',
             'analyticsData',
             'systemInfo',
-            'visitorBackupReminderOpen'
+            'visitorBackupReminderOpen',
+            'visitorTrackingEnabled'
         ));
     }
 

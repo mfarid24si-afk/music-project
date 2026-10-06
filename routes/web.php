@@ -3,10 +3,9 @@
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminVisitorController;
-use App\Models\VisitorLog;
 use App\Support\VisitorLogMaintenance;
+use App\Support\VisitorTracking;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +33,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/password', [AdminDashboardController::class, 'updateAdminPassword'])->name('admin.password.update');
 
     Route::get('/visitors/export', [AdminVisitorController::class, 'export'])->name('admin.visitors.export');
+    Route::post('/visitors/tracking', [AdminVisitorController::class, 'updateTracking'])->name('admin.visitors.tracking.update');
 });
 
 /*
@@ -42,19 +42,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::get('/', function (Request $request) {
+    // Counting can be switched off from the admin dashboard. A failure here is
+    // swallowed for the same reason the maintenance failure below is: a broken
+    // home page costs real visitors, a missed row does not.
     try {
-        $ip = $request->ip() ?: '127.0.0.1';
-        $ipHash = md5($ip.date('Y-m-d'));
-        $cacheKey = 'visitor_logged_'.$ipHash.'_'.date('H');
-        if (! Cache::has($cacheKey)) {
-            Cache::put($cacheKey, 1, 3600);
-            VisitorLog::create([
-                'ip_hash' => $ipHash,
-                'path' => $request->path() ?: '/',
-                'visit_date' => date('Y-m-d'),
-                'visit_hour' => (int) date('G'),
-            ]);
-        }
+        VisitorTracking::record($request);
     } catch (Throwable $e) {
     }
 

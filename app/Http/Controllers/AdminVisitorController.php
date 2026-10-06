@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\VisitorLog;
+use App\Support\VisitorTracking;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -22,6 +24,30 @@ class AdminVisitorController extends Controller
         'created_at',
         'updated_at',
     ];
+
+    /**
+     * Turn visitor counting on or off from the dashboard.
+     *
+     * Only new page views stop being recorded. Rows that were already collected
+     * stay untouched, the charts keep reading from them, and the export still
+     * works, so switching counting off is reversible without losing anything.
+     */
+    public function updateTracking(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $enabled = (bool) $validated['enabled'];
+
+        VisitorTracking::setEnabled($enabled);
+
+        return redirect()
+            ->route('admin.dashboard', ['tab' => 'overview'])
+            ->with('success', $enabled
+                ? 'Pencatatan pengunjung aktif lagi. Kunjungan berikutnya mulai dicatat.'
+                : 'Pencatatan pengunjung dinonaktifkan. Kunjungan baru tidak dicatat; data lama dan grafik tetap utuh.');
+    }
 
     /**
      * Stream visitor rows straight to the browser as CSV.

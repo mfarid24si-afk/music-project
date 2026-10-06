@@ -4,6 +4,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Visitor Counting Switch
+    |--------------------------------------------------------------------------
+    |
+    | The shipped default for whether page views are recorded at all. The admin
+    | dashboard overrides it at runtime, so this value only decides what happens
+    | before anyone touches the toggle, and what a flushed cache falls back to.
+    |
+    | Turning counting off stops new rows from being written. It does not touch
+    | rows that were already recorded, and it does not stop maintenance: trimming
+    | is what keeps the disk budget safe, so it keeps running either way.
+    |
+    | @see \App\Support\VisitorTracking::isEnabled()
+    |
+    */
+
+    'tracking_enabled' => (bool) env('VISITOR_TRACKING_ENABLED', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Visitor Log Retention
     |--------------------------------------------------------------------------
     |
