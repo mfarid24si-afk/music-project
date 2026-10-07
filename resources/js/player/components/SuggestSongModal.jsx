@@ -19,6 +19,7 @@ export default function SuggestSongModal({ isOpen, onClose }) {
     const [errorMsg, setErrorMsg] = useState('');
     const [previewAudio, setPreviewAudio] = useState(null);
     const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+    const [isPlayingYtPreview, setIsPlayingYtPreview] = useState(false);
     const [previewLoading, setPreviewLoading] = useState(false);
 
     if (!isOpen) return null;
@@ -100,6 +101,7 @@ export default function SuggestSongModal({ isOpen, onClose }) {
             previewAudio.pause();
         }
         setIsPlayingPreview(false);
+        setIsPlayingYtPreview(false);
         setErrorMsg('');
         onClose();
     };
@@ -335,32 +337,93 @@ export default function SuggestSongModal({ isOpen, onClose }) {
                         </>
                     ) : (
                         <>
-                            {/* YouTube URL Field with Auto-Cover Preview */}
+                            {/* YouTube URL Field with Quick Test Play */}
                             <div className="flex flex-col gap-1.5">
-                                <label className="font-mono text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
-                                    Link Video YouTube (HTTP/HTTPS) *
-                                </label>
-                                <input
-                                    type="url"
-                                    required
-                                    value={youtubeUrl}
-                                    onChange={(e) => setYoutubeUrl(e.target.value)}
-                                    placeholder="https://www.youtube.com/watch?v=... atau https://youtu.be/..."
-                                    className="rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
-                                />
+                                <div className="flex items-center justify-between">
+                                    <label className="font-mono text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
+                                        Link Video YouTube (HTTP/HTTPS) *
+                                    </label>
+                                    {currentYtId && (
+                                        <span className="font-mono text-[10px] text-primary-container">
+                                            ID Terdeteksi: {currentYtId}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="url"
+                                        required
+                                        value={youtubeUrl}
+                                        onChange={(e) => {
+                                            setYoutubeUrl(e.target.value);
+                                            setIsPlayingYtPreview(false);
+                                        }}
+                                        placeholder="https://www.youtube.com/watch?v=... atau https://youtu.be/..."
+                                        className="flex-1 rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
+                                    />
+                                    {currentYtId && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPlayingYtPreview(!isPlayingYtPreview)}
+                                            className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
+                                                isPlayingYtPreview
+                                                    ? 'border-danger bg-danger/20 text-danger'
+                                                    : 'border-line-strong/30 bg-raised text-on-surface-variant hover:border-danger hover:text-white'
+                                            }`}
+                                            title="Test putar video YouTube"
+                                        >
+                                            {isPlayingYtPreview ? (
+                                                <>
+                                                    <LuPause className="h-3.5 w-3.5 text-danger" />
+                                                    <span>Tutup</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <LuPlay className="h-3.5 w-3.5 text-danger" />
+                                                    <span>Tes Dengar</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
+                            {/* Mini Player / Cover Preview */}
                             {currentYtId && (
-                                <div className="flex items-center gap-3 rounded-xl border border-line-strong/30 bg-canvas p-2.5">
-                                    <img
-                                        src={`https://img.youtube.com/vi/${currentYtId}/hqdefault.jpg`}
-                                        alt="Thumbnail Preview"
-                                        className="h-14 w-20 rounded-lg object-cover"
-                                    />
-                                    <div className="text-xs">
-                                        <div className="font-bold text-white">Cover Otomatis Terhubung</div>
-                                        <div className="font-mono text-[10px] text-primary-container">ID: {currentYtId}</div>
-                                    </div>
+                                <div className="flex flex-col gap-2 rounded-xl border border-line-strong/30 bg-canvas p-2.5">
+                                    {isPlayingYtPreview ? (
+                                        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+                                            <iframe
+                                                src={`https://www.youtube-nocookie.com/embed/${currentYtId}?autoplay=1&controls=1&modestbranding=1`}
+                                                title="YouTube Test Player"
+                                                className="h-full w-full border-0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={`https://img.youtube.com/vi/${currentYtId}/hqdefault.jpg`}
+                                                    alt="Thumbnail Preview"
+                                                    className="h-12 w-18 rounded-lg object-cover"
+                                                />
+                                                <div className="text-xs">
+                                                    <div className="font-bold text-white">Cover Otomatis Terhubung</div>
+                                                    <div className="text-[11px] text-on-surface-variant">Klik &quot;Tes Dengar&quot; untuk memastikan video bisa diputar</div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsPlayingYtPreview(true)}
+                                                className="flex items-center gap-1 rounded-lg border border-line-strong/30 bg-raised px-2.5 py-1.5 text-[11px] font-semibold text-white transition-colors hover:border-danger hover:text-danger"
+                                            >
+                                                <LuPlay className="h-3 w-3 text-danger" />
+                                                <span>Cek Suara</span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </>

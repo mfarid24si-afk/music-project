@@ -1707,8 +1707,20 @@
 
           <div class="form-grid">
             <div class="form-group" style="grid-column: span 2;">
-              <label for="yt_url">Link Video YouTube (HTTP/HTTPS) *</label>
-              <input type="url" name="youtube_url" id="yt_url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." required oninput="handleYoutubeUrlInput(this)">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label for="yt_url" style="margin-bottom: 0;">Link Video YouTube (HTTP/HTTPS) *</label>
+                <span id="yt_detected_id" style="font-size: 11px; font-family: var(--font-mono); color: var(--accent);"></span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="url" name="youtube_url" id="yt_url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." required oninput="handleYoutubeUrlInput(this)" style="flex: 1;">
+                <button type="button" class="btn-ghost" id="btnTestYt" onclick="toggleAdminYtTest()" style="display: none; padding: 0 14px; height: 42px; font-size: 12px; font-weight: 700; color: var(--danger); border-color: rgba(239, 68, 68, 0.4);" title="Test Putar Suara YouTube">
+                  <span id="yt_btn_icon">▶</span>
+                  <span id="yt_btn_label">Tes Dengar</span>
+                </button>
+              </div>
+              <div id="yt_preview_box" style="display: none; margin-top: 10px; border-radius: 10px; overflow: hidden; background: #000;">
+                <iframe id="yt_preview_iframe" src="" style="width: 100%; height: 200px; border: 0;" allow="autoplay"></iframe>
+              </div>
             </div>
 
             <div class="form-group">
@@ -2423,10 +2435,62 @@
 
     function handleYoutubeUrlInput(input) {
       const url = input.value.trim();
-      if (!url) return;
-      const titleInput = document.getElementById('yt_title');
-      const artistInput = document.getElementById('yt_artist');
-      // Try to parse basic hints from video title or url if available
+      const detectedSpan = document.getElementById('yt_detected_id');
+      const btnTest = document.getElementById('btnTestYt');
+      const previewBox = document.getElementById('yt_preview_box');
+      const iframe = document.getElementById('yt_preview_iframe');
+
+      if (!url) {
+        if (detectedSpan) detectedSpan.textContent = '';
+        if (btnTest) btnTest.style.display = 'none';
+        if (previewBox) previewBox.style.display = 'none';
+        if (iframe) iframe.src = '';
+        return;
+      }
+
+      const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+      if (match) {
+        const id = match[1];
+        if (detectedSpan) detectedSpan.textContent = 'ID: ' + id;
+        if (btnTest) btnTest.style.display = 'inline-flex';
+      } else {
+        if (detectedSpan) detectedSpan.textContent = '';
+        if (btnTest) btnTest.style.display = 'none';
+        if (previewBox) previewBox.style.display = 'none';
+        if (iframe) iframe.src = '';
+      }
+    }
+
+    function toggleAdminYtTest() {
+      const input = document.getElementById('yt_url');
+      const previewBox = document.getElementById('yt_preview_box');
+      const iframe = document.getElementById('yt_preview_iframe');
+      const icon = document.getElementById('yt_btn_icon');
+      const label = document.getElementById('yt_btn_label');
+
+      if (!input || !previewBox || !iframe) return;
+
+      const url = input.value.trim();
+      const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+      if (!match) {
+        alert('Tautan YouTube belum valid.');
+        return;
+      }
+
+      const id = match[1];
+      const isVisible = previewBox.style.display === 'block';
+
+      if (isVisible) {
+        previewBox.style.display = 'none';
+        iframe.src = '';
+        if (icon) icon.textContent = '▶';
+        if (label) label.textContent = 'Tes Dengar';
+      } else {
+        previewBox.style.display = 'block';
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&controls=1';
+        if (icon) icon.textContent = '✕';
+        if (label) label.textContent = 'Tutup';
+      }
     }
 
     let bulkRowIndex = 0;
