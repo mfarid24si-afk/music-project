@@ -1519,7 +1519,8 @@
         <!-- Mode Switcher -->
         <div class="mode-toggle" style="margin-bottom: 20px;">
           <button type="button" class="mode-btn active" id="btnModeFile" onclick="setMode('file')">📁 Upload File Audio</button>
-          <button type="button" class="mode-btn" id="btnModeUrl" onclick="setMode('url')">🌐 Input Link Audio (Bisa Banyak Sekaligus)</button>
+          <button type="button" class="mode-btn" id="btnModeUrl" onclick="setMode('url')">🌐 Input Link Audio</button>
+          <button type="button" class="mode-btn" id="btnModeYoutube" onclick="setMode('youtube')">🔴 Link YouTube (Streaming Langsung)</button>
         </div>
 
         <!-- Single File Upload Form -->
@@ -1687,6 +1688,61 @@
               <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
             <span id="btnSubmitBulkText">Simpan & Terbitkan Semua ke Library (1 Lagu)</span>
+          </button>
+        </form>
+
+        <!-- YouTube Direct Streaming Form -->
+        <form method="POST" action="{{ route('admin.music.store') }}" id="formModeYoutube" style="display: none;">
+          @csrf
+
+          <div class="alert alert-info" style="margin-bottom: 18px; font-size: 13px; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5;">
+            <svg class="icon" viewBox="0 0 24 24" style="flex-shrink: 0; width: 18px; height: 18px; color: #ef4444;">
+              <polygon points="10 8 16 12 10 16 10 8"/>
+              <rect x="2" y="4" width="20" height="16" rx="4"/>
+            </svg>
+            <div>
+              <strong>Mode YouTube Streaming (0 MB Storage):</strong> Cukup masukkan link video YouTube. Audio akan otomatis distreaming langsung lewat YouTube Iframe Player resmi tanpa memakan kuota server. Cover thumbnail otomatis diambil dari YouTube!
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group" style="grid-column: span 2;">
+              <label for="yt_url">Link Video YouTube (HTTP/HTTPS) *</label>
+              <input type="url" name="youtube_url" id="yt_url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." required oninput="handleYoutubeUrlInput(this)">
+            </div>
+
+            <div class="form-group">
+              <label for="yt_title">Judul Lagu *</label>
+              <input type="text" name="title" id="yt_title" class="form-control" placeholder="contoh: Believer" required>
+            </div>
+
+            <div class="form-group">
+              <label for="yt_artist">Nama Artist / Penyanyi *</label>
+              <input type="text" name="artist" id="yt_artist" class="form-control" placeholder="contoh: Imagine Dragons" required>
+            </div>
+
+            <div class="form-group">
+              <label for="yt_album">Album (Opsional)</label>
+              <input type="text" name="album" id="yt_album" class="form-control" placeholder="contoh: Evolve">
+            </div>
+
+            <div class="form-group">
+              <label for="yt_genre">Genre (Opsional)</label>
+              <input type="text" name="genre" id="yt_genre" class="form-control" placeholder="Pop, Rock, R&B">
+            </div>
+
+            <div class="form-group" style="grid-column: span 2;">
+              <label for="yt_desc">Deskripsi / Catatan Rilis (Opsional)</label>
+              <input type="text" name="description" id="yt_desc" class="form-control" placeholder="Catatan singkat tentang lagu...">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" style="margin-top: 8px;">
+            <svg class="icon" viewBox="0 0 24 24">
+              <polygon points="10 8 16 12 10 16 10 8"/>
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+            <span>Simpan & Terbitkan Lagu YouTube</span>
           </button>
         </form>
       </div>
@@ -2348,23 +2404,29 @@
     function setMode(mode) {
       const formFile = document.getElementById('formModeFile');
       const formUrl = document.getElementById('formModeUrl');
+      const formYt = document.getElementById('formModeYoutube');
       const btnFile = document.getElementById('btnModeFile');
       const btnUrl = document.getElementById('btnModeUrl');
+      const btnYt = document.getElementById('btnModeYoutube');
       const audioInput = document.getElementById('audio');
 
-      if (mode === 'url') {
-        if (formFile) formFile.style.display = 'none';
-        if (formUrl) formUrl.style.display = 'block';
-        if (btnFile) btnFile.classList.remove('active');
-        if (btnUrl) btnUrl.classList.add('active');
-        if (audioInput) audioInput.required = false;
-      } else {
-        if (formFile) formFile.style.display = 'block';
-        if (formUrl) formUrl.style.display = 'none';
-        if (btnFile) btnFile.classList.add('active');
-        if (btnUrl) btnUrl.classList.remove('active');
-        if (audioInput) audioInput.required = true;
-      }
+      if (formFile) formFile.style.display = mode === 'file' ? 'block' : 'none';
+      if (formUrl) formUrl.style.display = mode === 'url' ? 'block' : 'none';
+      if (formYt) formYt.style.display = mode === 'youtube' ? 'block' : 'none';
+
+      if (btnFile) btnFile.classList.toggle('active', mode === 'file');
+      if (btnUrl) btnUrl.classList.toggle('active', mode === 'url');
+      if (btnYt) btnYt.classList.toggle('active', mode === 'youtube');
+
+      if (audioInput) audioInput.required = mode === 'file';
+    }
+
+    function handleYoutubeUrlInput(input) {
+      const url = input.value.trim();
+      if (!url) return;
+      const titleInput = document.getElementById('yt_title');
+      const artistInput = document.getElementById('yt_artist');
+      // Try to parse basic hints from video title or url if available
     }
 
     let bulkRowIndex = 0;

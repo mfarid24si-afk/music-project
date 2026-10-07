@@ -5,6 +5,7 @@ import { LuCheck, LuMusic, LuPause, LuPlay, LuSparkles, LuX } from 'react-icons/
 export default function SuggestSongModal({ isOpen, onClose }) {
     const { showToast } = useAudio();
 
+    const [mode, setMode] = useState('audio'); // 'audio' | 'youtube'
     const [audioUrl, setAudioUrl] = useState('');
     const [title, setTitle] = useState('');
     const [artist, setArtist] = useState('');
@@ -26,7 +27,6 @@ export default function SuggestSongModal({ isOpen, onClose }) {
         const val = e.target.value;
         setAudioUrl(val);
 
-        // Auto parse filename if title or artist is empty
         if (val && (!title || !artist)) {
             try {
                 const pathname = new URL(val).pathname;
@@ -45,6 +45,12 @@ export default function SuggestSongModal({ isOpen, onClose }) {
                 // Ignore url parse error
             }
         }
+    };
+
+    const getYoutubeId = (url) => {
+        if (!url) return null;
+        const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+        return match ? match[1] : null;
     };
 
     const togglePreview = () => {
@@ -102,7 +108,25 @@ export default function SuggestSongModal({ isOpen, onClose }) {
         e.preventDefault();
         setErrorMsg('');
 
-        if (!title.trim() || !artist.trim() || !audioUrl.trim() || !coverUrl.trim() || !youtubeUrl.trim() || !album.trim() || !genre.trim() || !description.trim()) {
+        let finalAudioUrl = audioUrl.trim();
+        let finalCoverUrl = coverUrl.trim();
+        let finalYoutubeUrl = youtubeUrl.trim();
+
+        if (mode === 'youtube') {
+            if (!finalYoutubeUrl) {
+                setErrorMsg('Harap masukkan tautan link video YouTube.');
+                return;
+            }
+            const ytId = getYoutubeId(finalYoutubeUrl);
+            if (!ytId) {
+                setErrorMsg('Format tautan YouTube tidak valid. Gunakan format youtube.com/watch?v=... atau youtu.be/...');
+                return;
+            }
+            finalAudioUrl = finalYoutubeUrl;
+            finalCoverUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        }
+
+        if (!title.trim() || !artist.trim() || !finalAudioUrl || !finalCoverUrl || !album.trim() || !genre.trim() || !description.trim()) {
             setErrorMsg('Harap lengkapi seluruh kolom formulir pengajuan lagu (semua field wajib diisi).');
             return;
         }
@@ -110,7 +134,6 @@ export default function SuggestSongModal({ isOpen, onClose }) {
         setIsSubmitting(true);
 
         try {
-            // Get CSRF token from meta or document cookie
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
             const res = await fetch('/music/suggest', {
@@ -124,12 +147,12 @@ export default function SuggestSongModal({ isOpen, onClose }) {
                 body: JSON.stringify({
                     title: title.trim(),
                     artist: artist.trim(),
-                    audio_url: audioUrl.trim(),
-                    cover_url: coverUrl.trim() || null,
-                    youtube_url: youtubeUrl.trim() || null,
-                    album: album.trim() || null,
-                    genre: genre.trim() || null,
-                    description: description.trim() || null,
+                    audio_url: finalAudioUrl,
+                    cover_url: finalCoverUrl,
+                    youtube_url: finalYoutubeUrl || null,
+                    album: album.trim(),
+                    genre: genre.trim(),
+                    description: description.trim(),
                 }),
             });
 
@@ -137,7 +160,6 @@ export default function SuggestSongModal({ isOpen, onClose }) {
 
             if (res.ok && data.success) {
                 showToast(`⏳ Lagu "${title}" berhasil diajukan! Menunggu persetujuan Admin.`, 'success');
-                // Reset form
                 setAudioUrl('');
                 setTitle('');
                 setArtist('');
@@ -156,6 +178,8 @@ export default function SuggestSongModal({ isOpen, onClose }) {
             setIsSubmitting(false);
         }
     };
+
+    const currentYtId = mode === 'youtube' ? getYoutubeId(youtubeUrl) : null;
 
     return (
         <>
@@ -190,11 +214,40 @@ export default function SuggestSongModal({ isOpen, onClose }) {
                     </button>
                 </div>
 
+                {/* Mode Selector Tabs */}
+                <div className="flex gap-2 rounded-xl border border-line-strong/30 bg-canvas p-1">
+                    <button
+                        type="button"
+                        onClick={() => { setMode('audio'); setErrorMsg(''); }}
+                        className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all ${
+                            mode === 'audio'
+                                ? 'border border-line-strong/40 bg-raised text-white shadow-sm'
+                                : 'text-on-surface-variant hover:text-white'
+                        }`}
+                    >
+                        🌐 Direct Audio URL
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => { setMode('youtube'); setErrorMsg(''); }}
+                        className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all ${
+                            mode === 'youtube'
+                                ? 'border border-danger/40 bg-danger/20 text-danger shadow-sm'
+                                : 'text-on-surface-variant hover:text-white'
+                        }`}
+                    >
+                        🔴 Link Video YouTube
+                    </button>
+                </div>
+
                 {/* Info Note */}
                 <div className="flex items-start gap-2.5 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-warning">
                     <LuSparkles className="mt-0.5 h-4 w-4 flex-shrink-0" />
                     <span>
-                        <strong>Akses Khusus Member:</strong> Masukkan direct link audio dan lengkapi seluruh informasi lagu. Semua kolom formulir wajib diisi dengan benar.
+                        {mode === 'youtube'
+                            ? <strong>Mode YouTube Streaming: Cukup masukkan tautan YouTube. Cover thumbnail akan otomatis diambil dari video YouTube tanpa memakan memori server!</strong>
+                            : <strong>Mode Audio URL: Masukkan link direct audio (.mp3) dan lengkapi data lagu. Semua kolom wajib diisi.</strong>
+                        }
                     </span>
                 </div>
 
@@ -205,47 +258,113 @@ export default function SuggestSongModal({ isOpen, onClose }) {
                 )}
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-                    {/* Audio URL Field with Quick Preview */}
-                    <div className="flex flex-col gap-1.5">
-                        <label className="font-mono text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
-                            Direct Audio URL (HTTP/HTTPS) *
-                        </label>
-                        <div className="flex gap-2">
-                            <input
-                                type="url"
-                                required
-                                value={audioUrl}
-                                onChange={handleAudioUrlChange}
-                                placeholder="https://cdn.example.com/audio/Artist - Song.mp3"
-                                className="flex-1 rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
-                            />
-                            <button
-                                type="button"
-                                onClick={togglePreview}
-                                disabled={previewLoading}
-                                title="Test putar lagu"
-                                className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
-                                    isPlayingPreview
-                                        ? 'border-primary-container bg-primary-container/20 text-primary-container'
-                                        : 'border-line-strong/30 bg-raised text-on-surface-variant hover:border-primary-container hover:text-white'
-                                }`}
-                            >
-                                {previewLoading ? (
-                                    <span className="animate-spin text-xs">⏳</span>
-                                ) : isPlayingPreview ? (
-                                    <>
-                                        <LuPause className="h-3.5 w-3.5 text-primary-container" />
-                                        <span>Stop</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <LuPlay className="h-3.5 w-3.5" />
-                                        <span>Dengar</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
+                    {mode === 'audio' ? (
+                        <>
+                            {/* Audio URL Field with Quick Preview */}
+                            <div className="flex flex-col gap-1.5">
+                                <label className="font-mono text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
+                                    Direct Audio URL (HTTP/HTTPS) *
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="url"
+                                        required
+                                        value={audioUrl}
+                                        onChange={handleAudioUrlChange}
+                                        placeholder="https://cdn.example.com/audio/Artist - Song.mp3"
+                                        className="flex-1 rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={togglePreview}
+                                        disabled={previewLoading}
+                                        title="Test putar lagu"
+                                        className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
+                                            isPlayingPreview
+                                                ? 'border-primary-container bg-primary-container/20 text-primary-container'
+                                                : 'border-line-strong/30 bg-raised text-on-surface-variant hover:border-primary-container hover:text-white'
+                                        }`}
+                                    >
+                                        {previewLoading ? (
+                                            <span className="animate-spin text-xs">⏳</span>
+                                        ) : isPlayingPreview ? (
+                                            <>
+                                                <LuPause className="h-3.5 w-3.5 text-primary-container" />
+                                                <span>Stop</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <LuPlay className="h-3.5 w-3.5" />
+                                                <span>Dengar</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Cover URL & YouTube URL Grid */}
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="font-mono text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
+                                        Cover Image URL (HTTP/HTTPS) *
+                                    </label>
+                                    <input
+                                        type="url"
+                                        required
+                                        value={coverUrl}
+                                        onChange={(e) => setCoverUrl(e.target.value)}
+                                        placeholder="https://cdn.example.com/cover.jpg"
+                                        className="rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="font-mono text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
+                                        Link Video YouTube *
+                                    </label>
+                                    <input
+                                        type="url"
+                                        required
+                                        value={youtubeUrl}
+                                        onChange={(e) => setYoutubeUrl(e.target.value)}
+                                        placeholder="https://youtube.com/watch?v=..."
+                                        className="rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
+                                    />
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* YouTube URL Field with Auto-Cover Preview */}
+                            <div className="flex flex-col gap-1.5">
+                                <label className="font-mono text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
+                                    Link Video YouTube (HTTP/HTTPS) *
+                                </label>
+                                <input
+                                    type="url"
+                                    required
+                                    value={youtubeUrl}
+                                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                                    placeholder="https://www.youtube.com/watch?v=... atau https://youtu.be/..."
+                                    className="rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
+                                />
+                            </div>
+
+                            {currentYtId && (
+                                <div className="flex items-center gap-3 rounded-xl border border-line-strong/30 bg-canvas p-2.5">
+                                    <img
+                                        src={`https://img.youtube.com/vi/${currentYtId}/hqdefault.jpg`}
+                                        alt="Thumbnail Preview"
+                                        className="h-14 w-20 rounded-lg object-cover"
+                                    />
+                                    <div className="text-xs">
+                                        <div className="font-bold text-white">Cover Otomatis Terhubung</div>
+                                        <div className="font-mono text-[10px] text-primary-container">ID: {currentYtId}</div>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
 
                     {/* Title & Artist Grid */}
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -273,37 +392,6 @@ export default function SuggestSongModal({ isOpen, onClose }) {
                                 value={artist}
                                 onChange={(e) => setArtist(e.target.value)}
                                 placeholder="contoh: Coldplay"
-                                className="rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Cover URL & YouTube URL Grid */}
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="flex flex-col gap-1.5">
-                            <label className="font-mono text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
-                                Cover Image URL (HTTP/HTTPS) *
-                            </label>
-                            <input
-                                type="url"
-                                required
-                                value={coverUrl}
-                                onChange={(e) => setCoverUrl(e.target.value)}
-                                placeholder="https://cdn.example.com/cover.jpg"
-                                className="rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                            <label className="font-mono text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
-                                Link Video YouTube *
-                            </label>
-                            <input
-                                type="url"
-                                required
-                                value={youtubeUrl}
-                                onChange={(e) => setYoutubeUrl(e.target.value)}
-                                placeholder="https://youtube.com/watch?v=..."
                                 className="rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
                             />
                         </div>

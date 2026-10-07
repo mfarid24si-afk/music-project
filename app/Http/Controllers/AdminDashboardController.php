@@ -375,11 +375,20 @@ class AdminDashboardController extends Controller
         $artist = trim($request->input('artist'));
         $audioUrl = trim((string) $request->input('audio_url', ''));
         $coverUrl = trim((string) $request->input('cover_url', ''));
+        $youtubeUrl = trim((string) $request->input('youtube_url', ''));
 
-        if (! $request->hasFile('audio') && $audioUrl === '') {
-            return back()->with('error', 'Harap upload file audio atau masukkan URL direct audio.')->withInput();
+        if (! $request->hasFile('audio') && $audioUrl === '' && $youtubeUrl === '') {
+            return back()->with('error', 'Harap upload file audio, direct URL audio, atau masukkan link video YouTube.')->withInput();
         }
 
+        if (! $request->hasFile('audio') && $audioUrl === '' && $youtubeUrl !== '') {
+            $audioUrl = $youtubeUrl;
+            if ($coverUrl === '') {
+                if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/', $youtubeUrl, $matches)) {
+                    $coverUrl = 'https://img.youtube.com/vi/'.$matches[1].'/hqdefault.jpg';
+                }
+            }
+        }
         try {
             $savedAudioName = $audioUrl;
             $fileSize = 0;

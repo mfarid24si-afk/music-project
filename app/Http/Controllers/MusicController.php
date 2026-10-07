@@ -195,6 +195,20 @@ class MusicController extends Controller
             ], 422);
         }
 
+        $youtubeUrl = trim((string) $request->input('youtube_url', ''));
+        $audioUrl = trim((string) $request->input('audio_url', ''));
+
+        // If submitting via YouTube mode: auto-fill audio_url and cover_url from YouTube
+        if ($audioUrl === '' && $youtubeUrl !== '') {
+            $audioUrl = $youtubeUrl;
+            $request->merge(['audio_url' => $audioUrl]);
+            if (! $request->filled('cover_url')) {
+                if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/', $youtubeUrl, $matches)) {
+                    $request->merge(['cover_url' => 'https://img.youtube.com/vi/'.$matches[1].'/hqdefault.jpg']);
+                }
+            }
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'artist' => 'required|string|max:255',
