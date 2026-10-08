@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
@@ -59,82 +60,84 @@ export default function MiniPlayer() {
   };
 
   return (
-    <View style={[styles.wrapper, { bottom: Math.max(insets.bottom, 8) + 56 }]}>
-      {/* Top thin progress bar */}
-      <View style={styles.progressBarBackground}>
-        <View style={[styles.progressBarFill, { width: `${progressPercent}%`, backgroundColor: accentColor }]} />
-      </View>
-
-      <TouchableOpacity
-        style={styles.container}
-        activeOpacity={0.9}
-        onPress={() => setIsNowPlayingOpen(true)}
-      >
-        {/* Cover Art */}
-        <Image
-          source={{ uri: coverUri }}
-          style={styles.cover}
-          onError={() => setImgError(true)}
-        />
-
-        {/* Title & Artist */}
-        <View style={styles.info}>
-          <Text numberOfLines={1} style={styles.title}>
-            {currentSong.title}
-          </Text>
-          <Text numberOfLines={1} style={styles.artist}>
-            {currentSong.artist}
-          </Text>
+    <View style={[styles.wrapper, { bottom: Math.max(insets.bottom, 10) + 64 }]}>
+      <BlurView intensity={80} tint="dark" style={styles.blurBackground}>
+        {/* Top thin progress bar */}
+        <View style={styles.progressBarBackground}>
+          <View style={[styles.progressBarFill, { width: `${progressPercent}%`, backgroundColor: accentColor }]} />
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.controls}>
-          {/* Dedicated Lyrics Button (Mic Icon) */}
-          <TouchableOpacity
-            onPress={handleOpenLyrics}
-            style={styles.controlBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-          >
-            <Ionicons name="mic" size={19} color="#fff" />
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.container}
+          activeOpacity={0.9}
+          onPress={() => setIsNowPlayingOpen(true)}
+        >
+          {/* Cover Art */}
+          <Image
+            source={{ uri: coverUri }}
+            style={styles.cover}
+            onError={() => setImgError(true)}
+          />
 
-          {/* Like Button */}
-          <TouchableOpacity
-            onPress={handleToggleLike}
-            style={styles.controlBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-          >
-            <Ionicons
-              name={isLiked ? 'heart' : 'heart-outline'}
-              size={21}
-              color={isLiked ? accentColor : THEME.textMuted}
-            />
-          </TouchableOpacity>
+          {/* Title & Artist */}
+          <View style={styles.info}>
+            <Text numberOfLines={1} style={styles.title}>
+              {currentSong.title}
+            </Text>
+            <Text numberOfLines={1} style={styles.artist}>
+              {currentSong.artist}
+            </Text>
+          </View>
 
-          {/* Big Play Button */}
-          <TouchableOpacity
-            onPress={handleTogglePlay}
-            style={[styles.playBtn, { backgroundColor: accentColor }]}
-            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-          >
-            <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
-              size={20}
-              color="#000"
-              style={isPlaying ? {} : { marginLeft: 2 }}
-            />
-          </TouchableOpacity>
+          {/* Action Buttons */}
+          <View style={styles.controls}>
+            {/* Dedicated Lyrics Button (Mic Icon) */}
+            <TouchableOpacity
+              onPress={handleOpenLyrics}
+              style={styles.controlBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+            >
+              <Ionicons name="mic" size={19} color="#fff" />
+            </TouchableOpacity>
 
-          {/* Next Button */}
-          <TouchableOpacity
-            onPress={handleNext}
-            style={styles.controlBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-          >
-            <Ionicons name="play-skip-forward" size={19} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
+            {/* Like Button */}
+            <TouchableOpacity
+              onPress={handleToggleLike}
+              style={styles.controlBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name={isLiked ? 'heart' : 'heart-outline'}
+                size={21}
+                color={isLiked ? accentColor : THEME.textMuted}
+              />
+            </TouchableOpacity>
+
+            {/* Big Play Button */}
+            <TouchableOpacity
+              onPress={handleTogglePlay}
+              style={[styles.playBtn, { backgroundColor: accentColor }]}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name={isPlaying ? 'pause' : 'play'}
+                size={20}
+                color="#000"
+                style={isPlaying ? {} : { marginLeft: 2 }}
+              />
+            </TouchableOpacity>
+
+            {/* Next Button */}
+            <TouchableOpacity
+              onPress={handleNext}
+              style={styles.controlBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+            >
+              <Ionicons name="play-skip-forward" size={19} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </BlurView>
     </View>
   );
 }
@@ -144,16 +147,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 10,
     right: 10,
-    backgroundColor: THEME.surface,
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.16)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  blurBackground: {
+    width: '100%',
+    backgroundColor: 'rgba(23, 24, 28, 0.75)',
   },
   progressBarBackground: {
     height: 2.5,

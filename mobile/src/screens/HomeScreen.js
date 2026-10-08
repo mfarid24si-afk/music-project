@@ -11,6 +11,7 @@ import {
   Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
@@ -162,7 +163,7 @@ export default function HomeScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Tab: TRACKS (Home Screen) */}
       {activeNavTab === 'tracks' && (
-        <>
+        <View style={styles.tabScreen}>
           <Header trackCount={safeSongs.length} />
 
           {/* Compact Filter Chips Row */}
@@ -181,7 +182,7 @@ export default function HomeScreen() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={[
                 styles.scrollContent,
-                { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 70 },
+                { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 80 },
               ]}
               refreshControl={
                 <RefreshControl
@@ -287,7 +288,7 @@ export default function HomeScreen() {
               )}
             </ScrollView>
           )}
-        </>
+        </View>
       )}
 
       {/* Tab: SEARCH SCREEN */}
@@ -308,7 +309,7 @@ export default function HomeScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
               styles.scrollContent,
-              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 70 },
+              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 80 },
             ]}
           >
             <View style={styles.listContainer}>
@@ -359,7 +360,7 @@ export default function HomeScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
               styles.scrollContent,
-              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 70 },
+              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 80 },
             ]}
             refreshControl={
               <RefreshControl
@@ -404,7 +405,7 @@ export default function HomeScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
               styles.scrollContent,
-              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 70, gap: 16 },
+              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 80, gap: 16 },
             ]}
           >
             {/* Account Status */}
@@ -541,90 +542,100 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Floating Bottom Mini Player (Floating above Bottom Navigation Bar) */}
+      {/* Floating Bottom Mini Player (Above Bottom Navigation Bar) */}
       <MiniPlayer />
 
-      {/* Bottom Navigation Bar (Spotify Mobile Style) */}
-      <View style={[styles.bottomNavBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-        <TouchableOpacity
-          style={styles.navBarItem}
-          onPress={() => handleNavTabPress('tracks')}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={activeNavTab === 'tracks' ? 'musical-notes' : 'musical-notes-outline'}
-            size={22}
-            color={activeNavTab === 'tracks' ? accentColor : THEME.textMuted}
-          />
-          <Text
-            style={[
-              styles.navBarLabel,
-              activeNavTab === 'tracks' && [styles.navBarLabelActive, { color: accentColor }],
-            ]}
+      {/* Frosted Glass Bottom Navigation Bar (Instagram & Telegram Glassmorphism) */}
+      <View style={[styles.bottomNavBarWrapper, { height: 56 + Math.max(insets.bottom, 10) }]}>
+        <BlurView intensity={90} tint="dark" style={styles.glassNavBar}>
+          <TouchableOpacity
+            style={styles.navBarItem}
+            onPress={() => handleNavTabPress('tracks')}
+            activeOpacity={0.7}
           >
-            Tracks
-          </Text>
-        </TouchableOpacity>
+            <View style={[styles.iconPill, activeNavTab === 'tracks' && { backgroundColor: accentColor + '22' }]}>
+              <Ionicons
+                name={activeNavTab === 'tracks' ? 'musical-notes' : 'musical-notes-outline'}
+                size={21}
+                color={activeNavTab === 'tracks' ? accentColor : THEME.textMuted}
+              />
+            </View>
+            <Text
+              style={[
+                styles.navBarLabel,
+                activeNavTab === 'tracks' && [styles.navBarLabelActive, { color: accentColor }],
+              ]}
+            >
+              Tracks
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navBarItem}
-          onPress={() => handleNavTabPress('search')}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={activeNavTab === 'search' ? 'search' : 'search-outline'}
-            size={22}
-            color={activeNavTab === 'search' ? accentColor : THEME.textMuted}
-          />
-          <Text
-            style={[
-              styles.navBarLabel,
-              activeNavTab === 'search' && [styles.navBarLabelActive, { color: accentColor }],
-            ]}
+          <TouchableOpacity
+            style={styles.navBarItem}
+            onPress={() => handleNavTabPress('search')}
+            activeOpacity={0.7}
           >
-            Search
-          </Text>
-        </TouchableOpacity>
+            <View style={[styles.iconPill, activeNavTab === 'search' && { backgroundColor: accentColor + '22' }]}>
+              <Ionicons
+                name={activeNavTab === 'search' ? 'search' : 'search-outline'}
+                size={21}
+                color={activeNavTab === 'search' ? accentColor : THEME.textMuted}
+              />
+            </View>
+            <Text
+              style={[
+                styles.navBarLabel,
+                activeNavTab === 'search' && [styles.navBarLabelActive, { color: accentColor }],
+              ]}
+            >
+              Search
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navBarItem}
-          onPress={() => handleNavTabPress('playlists')}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={activeNavTab === 'playlists' ? 'albums' : 'albums-outline'}
-            size={22}
-            color={activeNavTab === 'playlists' ? accentColor : THEME.textMuted}
-          />
-          <Text
-            style={[
-              styles.navBarLabel,
-              activeNavTab === 'playlists' && [styles.navBarLabelActive, { color: accentColor }],
-            ]}
+          <TouchableOpacity
+            style={styles.navBarItem}
+            onPress={() => handleNavTabPress('playlists')}
+            activeOpacity={0.7}
           >
-            Playlists
-          </Text>
-        </TouchableOpacity>
+            <View style={[styles.iconPill, activeNavTab === 'playlists' && { backgroundColor: accentColor + '22' }]}>
+              <Ionicons
+                name={activeNavTab === 'playlists' ? 'albums' : 'albums-outline'}
+                size={21}
+                color={activeNavTab === 'playlists' ? accentColor : THEME.textMuted}
+              />
+            </View>
+            <Text
+              style={[
+                styles.navBarLabel,
+                activeNavTab === 'playlists' && [styles.navBarLabelActive, { color: accentColor }],
+              ]}
+            >
+              Playlists
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navBarItem}
-          onPress={() => handleNavTabPress('settings')}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={activeNavTab === 'settings' ? 'settings-sharp' : 'settings-outline'}
-            size={22}
-            color={activeNavTab === 'settings' ? accentColor : THEME.textMuted}
-          />
-          <Text
-            style={[
-              styles.navBarLabel,
-              activeNavTab === 'settings' && [styles.navBarLabelActive, { color: accentColor }],
-            ]}
+          <TouchableOpacity
+            style={styles.navBarItem}
+            onPress={() => handleNavTabPress('settings')}
+            activeOpacity={0.7}
           >
-            Settings
-          </Text>
-        </TouchableOpacity>
+            <View style={[styles.iconPill, activeNavTab === 'settings' && { backgroundColor: accentColor + '22' }]}>
+              <Ionicons
+                name={activeNavTab === 'settings' ? 'settings-sharp' : 'settings-outline'}
+                size={21}
+                color={activeNavTab === 'settings' ? accentColor : THEME.textMuted}
+              />
+            </View>
+            <Text
+              style={[
+                styles.navBarLabel,
+                activeNavTab === 'settings' && [styles.navBarLabelActive, { color: accentColor }],
+              ]}
+            >
+              Settings
+            </Text>
+          </TouchableOpacity>
+        </BlurView>
       </View>
 
       {/* Fullscreen Vinyl Turntable Modal with Synced Lyrics & Swipe Down to Minimize */}
@@ -642,7 +653,7 @@ export default function HomeScreen() {
         onClose={() => setIsLoginOpen(false)}
       />
 
-      {/* Playlist Detail Modal (Mounted only when a playlist is selected) */}
+      {/* Playlist Detail Modal */}
       {selectedPlaylist ? (
         <PlaylistDetailModal
           visible={!!selectedPlaylist}
@@ -651,7 +662,7 @@ export default function HomeScreen() {
         />
       ) : null}
 
-      {/* Add To Playlist Modal (Mounted only when a target song is selected) */}
+      {/* Add To Playlist Modal */}
       {playlistModalSong ? (
         <AddToPlaylistModal
           visible={!!playlistModalSong}
@@ -680,8 +691,8 @@ const styles = StyleSheet.create({
   },
   tabScreenHeader: {
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingTop: 10,
+    paddingBottom: 6,
   },
   tabScreenTitle: {
     fontSize: 26,
@@ -693,7 +704,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: THEME.textMuted,
     marginTop: 2,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   scrollContent: {
     paddingHorizontal: 8,
@@ -762,8 +773,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    marginBottom: 10,
-    paddingTop: 10,
+    marginBottom: 12,
+    paddingTop: 8,
   },
   createPlBtn: {
     flexDirection: 'row',
@@ -808,25 +819,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  bottomNavBar: {
+  bottomNavBarWrapper: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: 56,
-    backgroundColor: THEME.surface,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
+  },
+  glassNavBar: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(13, 14, 17, 0.75)',
   },
   navBarItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingTop: 6,
     gap: 3,
+  },
+  iconPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   navBarLabel: {
     fontSize: 10,
