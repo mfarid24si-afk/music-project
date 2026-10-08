@@ -1,11 +1,23 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
-import { fetchSongsAPI, recordPlayStatAPI } from '../services/api';
+import {
+  fetchSongsAPI,
+  fetchPlaylistsAPI,
+  publishPlaylistAPI,
+  updatePlaylistAPI,
+  deletePlaylistAPI,
+  togglePlaylistSongAPI,
+  recordPlayStatAPI,
+  loginAPI,
+  logoutAPI,
+} from '../services/api';
+import { THEMES } from '../config';
 
 const AudioContext = createContext(null);
 
 export function AudioProvider({ children }) {
   const [songs, setSongs] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -15,37 +27,55 @@ export function AudioProvider({ children }) {
   const [favorites, setFavorites] = useState([]);
   const [repeatMode, setRepeatMode] = useState('off'); // 'off', 'all', 'one'
   const [isShuffle, setIsShuffle] = useState(false);
+  const [activeQueue, setActiveQueue] = useState([]);
+
+  // User Authentication & Profile
+  const [currentUser, setCurrentUser] = useState(null); // { id, name, email, role }
+  const [profileName, setProfileName] = useState('Listener');
+  const [activeTheme, setActiveTheme] = useState(THEMES[0]);
+
+  // Modal & Sheet visibility states
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
+  const [isLyricsOpen, setIsLyricsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null);
+  const [playlistModalSong, setPlaylistModalSong] = useState(null);
 
   const playerRef = useRef(null);
   const isSeekingRef = useRef(false);
 
   // Configure background playback for iOS & Android
-  useEffect(() => {
-    async function configureAudio() {
-      try {
-        await setAudioModeAsync({
-          playsInSilentMode: true,
-          shouldPlayInBackground: true,
-          interruptionMode: 'doNotMix',
-        });
-      } catch (err) {
-        console.warn('Audio mode config error:', err);
-      }
+  const ensureBackgroundAudioMode = async () => {
+    try {
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: true,
+        interruptionMode: 'doNotMix',
+      });
+    } catch (err) {
+      console.warn('Audio mode config error:', err);
     }
-    configureAudio();
+  };
+
+  useEffect(() => {
+    ensureBackgroundAudioMode();
   }, []);
 
-  // Fetch initial songs from Laravel API
-  const refreshSongs = async () => {
+  // Fetch initial songs & playlists from Laravel API
+  const refreshData = async () => {
     setLoading(true);
-    const data = await fetchSongsAPI();
-    setSongs(data);
+    const [songsData, playlistsData] = await Promise.all([
+      fetchSongsAPI(),
+      fetchPlaylistsAPI(),
+    ]);
+    setSongs(Array.isArray(songsData) ? songsData : []);
+    setPlaylists(Array.isArray(playlistsData) ? playlistsData : []);
     setLoading(false);
   };
 
   useEffect(() => {
-    refreshSongs();
+    refreshData();
   }, []);
 
   // Cleanup on unmount
@@ -64,6 +94,9 @@ export function AudioProvider({ children }) {
     if (!song) return;
 
     try {
+      // Re-assert background audio mode before every playback
+      await ensureBackgroundAudioMode();
+
       if (playerRef.current) {
         try {
           playerRef.current.pause();
@@ -87,7 +120,10 @@ export function AudioProvider({ children }) {
 
       const player = createAudioPlayer(
         { uri: audioUri },
-        { updateInterval: 250 }
+        {
+          updateInterval: 250,
+          keepAudioSessionActive: true,
+        }
       );
       player.loop = repeatMode === 'one';
 
@@ -121,7 +157,7 @@ export function AudioProvider({ children }) {
     }
   };
 
-  const togglePlay = () => {
+  const togglePlay = async () => {
     if (!playerRef.current) {
       if (currentSong) {
         playSong(currentSong);
@@ -135,6 +171,7 @@ export function AudioProvider({ children }) {
       if (playerRef.current.playing) {
         playerRef.current.pause();
       } else {
+        await ensureBackgroundAudioMode();
         playerRef.current.play();
       }
     } catch (err) {
@@ -169,10 +206,11 @@ export function AudioProvider({ children }) {
   };
 
   const nextSong = () => {
-    if (!currentSong || songs.length === 0) return;
+    const list = activeQueue.length > 0 ? activeQueue : songs;
+    if (!currentSong || list.length === 0) return;
 
     if (isShuffle) {
-      const remaining = songs.filter((s) => s.id !== currentSong.id);
+      const remaining = list.filter((s) => s.id !== currentSong.id);
       if (remaining.length > 0) {
         const randomSong = remaining[Math.floor(Math.random() * remaining.length)];
         playSong(randomSong);
@@ -180,30 +218,30 @@ export function AudioProvider({ children }) {
       }
     }
 
-    const currentIndex = songs.findIndex((s) => s.id === currentSong.id);
-    if (currentIndex >= 0 && currentIndex < songs.length - 1) {
-      playSong(songs[currentIndex + 1]);
+    const currentIndex = list.findIndex((s) => s.id === currentSong.id);
+    if (currentIndex >= 0 && currentIndex < list.length - 1) {
+      playSong(list[currentIndex + 1]);
     } else if (repeatMode === 'all') {
-      playSong(songs[0]);
+      playSong(list[0]);
     } else {
       setIsPlaying(false);
     }
   };
 
   const prevSong = () => {
-    if (!currentSong || songs.length === 0) return;
+    const list = activeQueue.length > 0 ? activeQueue : songs;
+    if (!currentSong || list.length === 0) return;
 
-    // If more than 3 seconds in, restart track
     if (currentTime > 3) {
       seekTo(0);
       return;
     }
 
-    const currentIndex = songs.findIndex((s) => s.id === currentSong.id);
+    const currentIndex = list.findIndex((s) => s.id === currentSong.id);
     if (currentIndex > 0) {
-      playSong(songs[currentIndex - 1]);
+      playSong(list[currentIndex - 1]);
     } else {
-      playSong(songs[songs.length - 1]);
+      playSong(list[list.length - 1]);
     }
   };
 
@@ -227,12 +265,138 @@ export function AudioProvider({ children }) {
     setIsShuffle((prev) => !prev);
   };
 
+  // User Login & Logout
+  const handleLogin = async (email, password) => {
+    const res = await loginAPI(email, password);
+    if (res && res.success && res.user) {
+      setCurrentUser(res.user);
+      setProfileName(res.user.name || 'User');
+      return { success: true };
+    }
+    return { success: false, message: res?.message || 'Login gagal.' };
+  };
+
+  const handleLogout = async () => {
+    await logoutAPI();
+    setCurrentUser(null);
+    setProfileName('Listener');
+  };
+
+  // Playlist management functions with MySQL server sync
+  const playPlaylist = (playlist) => {
+    if (!playlist) return;
+    let trackList = [];
+    if (Array.isArray(playlist.songs) && playlist.songs.length > 0) {
+      if (typeof playlist.songs[0] === 'object') {
+        trackList = playlist.songs;
+      } else {
+        trackList = playlist.songs
+          .map((id) => songs.find((s) => String(s.id) === String(id)))
+          .filter(Boolean);
+      }
+    }
+    if (trackList.length > 0) {
+      setActiveQueue(trackList);
+      playSong(trackList[0]);
+    }
+  };
+
+  const createPlaylist = async (name) => {
+    if (!name || !name.trim()) return null;
+    const author = currentUser ? currentUser.name : profileName || 'Listener';
+    const tempId = `pl_${Date.now()}`;
+    const newPl = {
+      id: tempId,
+      name: name.trim(),
+      creator_name: author,
+      songs: [],
+      cover: currentSong?.img || 'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg',
+    };
+
+    setPlaylists((prev) => [newPl, ...prev]);
+
+    try {
+      const res = await publishPlaylistAPI({
+        name: name.trim(),
+        creator_name: author,
+        songs: [],
+      });
+      if (res && res.success && res.data) {
+        const realId = String(res.data.id);
+        setPlaylists((prev) =>
+          prev.map((p) => (p.id === tempId ? { ...p, id: realId } : p))
+        );
+        newPl.id = realId;
+      }
+    } catch (e) {
+      console.warn('Sync playlist to MySQL failed:', e);
+    }
+
+    return newPl;
+  };
+
+  const updatePlaylist = async (playlistId, updates) => {
+    setPlaylists((prev) =>
+      prev.map((p) => (String(p.id) === String(playlistId) ? { ...p, ...updates } : p))
+    );
+    if (selectedPlaylist && String(selectedPlaylist.id) === String(playlistId)) {
+      setSelectedPlaylist((prev) => ({ ...prev, ...updates }));
+    }
+    if (!String(playlistId).startsWith('pl_')) {
+      await updatePlaylistAPI(playlistId, updates);
+    }
+  };
+
+  const deletePlaylist = async (playlistId) => {
+    setPlaylists((prev) => prev.filter((p) => String(p.id) !== String(playlistId)));
+    if (selectedPlaylist && String(selectedPlaylist.id) === String(playlistId)) {
+      setSelectedPlaylist(null);
+    }
+    if (!String(playlistId).startsWith('pl_')) {
+      await deletePlaylistAPI(playlistId);
+    }
+  };
+
+  const togglePlaylistSong = async (playlistId, songId) => {
+    setPlaylists((prev) =>
+      prev.map((pl) => {
+        if (String(pl.id) !== String(playlistId)) return pl;
+        const currentSongIds = Array.isArray(pl.songs)
+          ? pl.songs.map((s) => (typeof s === 'object' ? s.id : s))
+          : [];
+        const exists = currentSongIds.includes(songId);
+        const newSongs = exists
+          ? currentSongIds.filter((id) => id !== songId)
+          : [...currentSongIds, songId];
+        return { ...pl, songs: newSongs };
+      })
+    );
+
+    if (selectedPlaylist && String(selectedPlaylist.id) === String(playlistId)) {
+      setSelectedPlaylist((prev) => {
+        const currentSongIds = Array.isArray(prev.songs)
+          ? prev.songs.map((s) => (typeof s === 'object' ? s.id : s))
+          : [];
+        const exists = currentSongIds.includes(songId);
+        const newSongs = exists
+          ? currentSongIds.filter((id) => id !== songId)
+          : [...currentSongIds, songId];
+        return { ...prev, songs: newSongs };
+      });
+    }
+
+    if (!String(playlistId).startsWith('pl_')) {
+      await togglePlaylistSongAPI(playlistId, songId);
+    }
+  };
+
   return (
     <AudioContext.Provider
       value={{
         songs,
+        playlists,
         loading,
-        refreshSongs,
+        refreshData,
         currentSong,
         isPlaying,
         currentTime,
@@ -249,8 +413,30 @@ export function AudioProvider({ children }) {
         cycleRepeat,
         isShuffle,
         toggleShuffle,
+        playPlaylist,
+        createPlaylist,
+        updatePlaylist,
+        deletePlaylist,
+        togglePlaylistSong,
+        currentUser,
+        login: handleLogin,
+        logout: handleLogout,
+        profileName,
+        setProfileName,
+        activeTheme,
+        setActiveTheme,
         isNowPlayingOpen,
         setIsNowPlayingOpen,
+        isLyricsOpen,
+        setIsLyricsOpen,
+        isSettingsOpen,
+        setIsSettingsOpen,
+        isLoginOpen,
+        setIsLoginOpen,
+        selectedPlaylist,
+        setSelectedPlaylist,
+        playlistModalSong,
+        setPlaylistModalSong,
       }}
     >
       {children}

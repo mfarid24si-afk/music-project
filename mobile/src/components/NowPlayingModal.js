@@ -50,8 +50,10 @@ export default function NowPlayingModal() {
     toggleShuffle,
     isNowPlayingOpen,
     setIsNowPlayingOpen,
+    activeTheme,
   } = useAudio();
 
+  const accentColor = activeTheme?.color || THEME.accent;
   const [imgError, setImgError] = useState(false);
   const [sliderValue, setSliderValue] = useState(null);
   const [activeTab, setActiveTab] = useState('turntable'); // 'turntable' | 'lyrics'
@@ -60,6 +62,7 @@ export default function NowPlayingModal() {
 
   const spinAnim = useRef(new Animated.Value(0)).current;
   const lyricsScrollRef = useRef(null);
+  const lineYMap = useRef({});
 
   // Fetch lyrics whenever song changes
   useEffect(() => {
@@ -108,19 +111,23 @@ export default function NowPlayingModal() {
     return idx;
   }, [parsedLines, currentTime]);
 
-  // Auto-scroll lyrics
+  // Auto-scroll lyrics smoothly centered
   useEffect(() => {
     if (activeTab === 'lyrics' && lyricsScrollRef.current && activeLyricIndex >= 0) {
+      const lineY = lineYMap.current[activeLyricIndex] ?? (activeLyricIndex * 48);
+      // Target offset centers the line in the view
+      const targetY = Math.max(0, lineY - 130);
       lyricsScrollRef.current.scrollTo({
-        y: Math.max(0, activeLyricIndex * 46 - 120),
+        y: targetY,
         animated: true,
       });
     }
   }, [activeLyricIndex, activeTab]);
 
+  // Vinyl Spin Loop Animation (ensures loop continues when switching back from lyrics!)
   useEffect(() => {
     let anim;
-    if (isPlaying) {
+    if (isPlaying && activeTab === 'turntable') {
       anim = Animated.loop(
         Animated.timing(spinAnim, {
           toValue: 1,
@@ -136,7 +143,7 @@ export default function NowPlayingModal() {
     return () => {
       if (anim) anim.stop();
     };
-  }, [isPlaying]);
+  }, [isPlaying, activeTab]);
 
   const spin = spinAnim.interpolate({
     inputRange: [0, 1],
@@ -212,14 +219,14 @@ export default function NowPlayingModal() {
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-                setActiveTab(activeTab === 'turntable' ? 'lyrics' : 'turntable');
+                setActiveTab((prev) => (prev === 'turntable' ? 'lyrics' : 'turntable'));
               }}
-              style={[styles.iconBtn, activeTab === 'lyrics' && styles.iconBtnActive]}
+              style={[styles.iconBtn, activeTab === 'lyrics' && [styles.iconBtnActive, { borderColor: accentColor + '66' }]]}
             >
               <Ionicons
                 name={activeTab === 'lyrics' ? 'musical-notes' : 'mic-outline'}
                 size={22}
-                color={activeTab === 'lyrics' ? THEME.accent : '#fff'}
+                color={activeTab === 'lyrics' ? accentColor : '#fff'}
               />
             </TouchableOpacity>
           </View>
@@ -227,18 +234,19 @@ export default function NowPlayingModal() {
           {/* Telemetry Strip */}
           <View style={styles.telemetryRow}>
             <View style={styles.telemetryPill}>
-              <View style={styles.pulseDot} />
+              <View style={[styles.pulseDot, { backgroundColor: accentColor }]} />
               <Text style={styles.telemetryText}>PHONO STAGE DIRECT</Text>
             </View>
-            <View style={styles.hiresBadge}>
-              <Ionicons name="pulse" size={12} color={THEME.accent} />
-              <Text style={styles.hiresText}>96.0 kHz / 24-BIT</Text>
+            <View style={[styles.hiresBadge, { borderColor: accentColor + '55' }]}>
+              <Ionicons name="pulse" size={12} color={accentColor} />
+              <Text style={[styles.hiresText, { color: accentColor }]}>96.0 kHz / 24-BIT</Text>
             </View>
           </View>
 
           {/* Center Content: Either Turntable OR Synced Lyrics */}
-          {activeTab === 'turntable' ? (
-            <View style={styles.turntableContainer}>
+          <View style={styles.mainCenterBox}>
+            {/* Turntable Platter View */}
+            <View style={[styles.turntableContainer, { display: activeTab === 'turntable' ? 'flex' : 'none' }]}>
               <Animated.View style={[styles.vinylPlatter, { transform: [{ rotate: spin }] }]}>
                 {/* Outer Strobe Ring */}
                 <View style={styles.strobeRing}>
@@ -246,7 +254,7 @@ export default function NowPlayingModal() {
                   <View style={styles.vinylGroove1}>
                     <View style={styles.vinylGroove2}>
                       {/* Center Artwork Label */}
-                      <View style={styles.centerArtWrapper}>
+                      <View style={[styles.centerArtWrapper, { borderColor: accentColor }]}>
                         <Image source={{ uri: coverUri }} style={styles.centerArt} />
                         <View style={styles.spindleHole} />
                       </View>
@@ -255,9 +263,9 @@ export default function NowPlayingModal() {
                 </View>
               </Animated.View>
             </View>
-          ) : (
-            /* Synced Lyrics Stream View */
-            <View style={styles.lyricsContainer}>
+
+            {/* Synced Lyrics Stream View */}
+            <View style={[styles.lyricsContainer, { display: activeTab === 'lyrics' ? 'flex' : 'none' }]}>
               {lyricsLoading ? (
                 <View style={styles.lyricsCenter}>
                   <Text style={styles.lyricsMuted}>Memuat lirik dari LRCLIB...</Text>
@@ -274,6 +282,9 @@ export default function NowPlayingModal() {
                     return (
                       <TouchableOpacity
                         key={idx}
+                        onLayout={(e) => {
+                          lineYMap.current[idx] = e.nativeEvent.layout.y;
+                        }}
                         onPress={() => {
                           seekTo(line.time);
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -281,7 +292,12 @@ export default function NowPlayingModal() {
                         activeOpacity={0.7}
                         style={styles.lyricLineBox}
                       >
-                        <Text style={[styles.lyricText, isActive && styles.lyricTextActive]}>
+                        <Text
+                          style={[
+                            styles.lyricText,
+                            isActive && [styles.lyricTextActive, { color: accentColor }],
+                          ]}
+                        >
                           {line.text}
                         </Text>
                       </TouchableOpacity>
@@ -300,7 +316,7 @@ export default function NowPlayingModal() {
                 </View>
               )}
             </View>
-          )}
+          </View>
 
           {/* Song Metadata */}
           <View style={styles.metaRow}>
@@ -321,7 +337,7 @@ export default function NowPlayingModal() {
               <Ionicons
                 name={isLiked ? 'heart' : 'heart-outline'}
                 size={26}
-                color={isLiked ? THEME.accent : THEME.textMuted}
+                color={isLiked ? accentColor : THEME.textMuted}
               />
             </TouchableOpacity>
           </View>
@@ -333,9 +349,9 @@ export default function NowPlayingModal() {
               minimumValue={0}
               maximumValue={duration > 0 ? duration : 1}
               value={currentPosition}
-              minimumTrackTintColor={THEME.accent}
+              minimumTrackTintColor={accentColor}
               maximumTrackTintColor="rgba(255, 255, 255, 0.15)"
-              thumbTintColor={THEME.accent}
+              thumbTintColor={accentColor}
               onValueChange={(val) => setSliderValue(val)}
               onSlidingComplete={(val) => {
                 seekTo(val);
@@ -359,7 +375,7 @@ export default function NowPlayingModal() {
               <Ionicons
                 name="shuffle"
                 size={22}
-                color={isShuffle ? THEME.accent : THEME.textMuted}
+                color={isShuffle ? accentColor : THEME.textMuted}
               />
             </TouchableOpacity>
 
@@ -375,7 +391,7 @@ export default function NowPlayingModal() {
             {/* Big Play / Pause */}
             <TouchableOpacity
               onPress={handleTogglePlay}
-              style={styles.bigPlayBtn}
+              style={[styles.bigPlayBtn, { backgroundColor: accentColor }]}
               activeOpacity={0.8}
             >
               <Ionicons
@@ -404,9 +420,9 @@ export default function NowPlayingModal() {
               <Ionicons
                 name="repeat"
                 size={22}
-                color={repeatMode !== 'off' ? THEME.accent : THEME.textMuted}
+                color={repeatMode !== 'off' ? accentColor : THEME.textMuted}
               />
-              {repeatMode === 'one' && <Text style={styles.repeatBadge}>1</Text>}
+              {repeatMode === 'one' && <Text style={[styles.repeatBadge, { color: accentColor }]}>1</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -456,10 +472,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconBtnActive: {
-    backgroundColor: 'rgba(204, 242, 40, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: THEME.borderAccent,
   },
   telemetryRow: {
     flexDirection: 'row',
@@ -483,7 +498,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: THEME.accent,
   },
   telemetryText: {
     fontSize: 9,
@@ -497,40 +511,43 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: 'rgba(204, 242, 40, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: THEME.borderAccent,
   },
   hiresText: {
     fontSize: 9,
     fontWeight: '800',
-    color: THEME.accent,
     letterSpacing: 0.5,
+  },
+  mainCenterBox: {
+    marginVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   turntableContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
   },
   lyricsContainer: {
-    height: TURNTABLE_SIZE + 20,
-    marginVertical: 10,
+    width: '100%',
+    height: TURNTABLE_SIZE + 40,
     backgroundColor: THEME.surface,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: THEME.border,
-    padding: 16,
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    overflow: 'hidden',
   },
   lyricsScroll: {
     flex: 1,
   },
   lyricsContent: {
-    paddingVertical: 20,
-    gap: 16,
+    paddingVertical: 140, // Generous padding so any line can be centered!
+    gap: 18,
   },
   lyricsCenter: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -548,18 +565,19 @@ const styles = StyleSheet.create({
   },
   lyricLineBox: {
     paddingVertical: 4,
+    alignItems: 'center',
   },
   lyricText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.35)',
+    color: 'rgba(255, 255, 255, 0.3)',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 26,
   },
   lyricTextActive: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    color: THEME.accent,
+    lineHeight: 32,
     transform: [{ scale: 1.05 }],
   },
   vinylPlatter: {
@@ -610,7 +628,6 @@ const styles = StyleSheet.create({
     borderRadius: (TURNTABLE_SIZE * 0.45) / 2,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: THEME.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -693,7 +710,6 @@ const styles = StyleSheet.create({
     right: 6,
     fontSize: 9,
     fontWeight: '800',
-    color: THEME.accent,
   },
   mainNavBtn: {
     width: 48,
@@ -705,13 +721,12 @@ const styles = StyleSheet.create({
     width: 66,
     height: 66,
     borderRadius: 33,
-    backgroundColor: THEME.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: THEME.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
     elevation: 8,
   },
 });

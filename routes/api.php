@@ -3,6 +3,7 @@
 use App\Http\Controllers\MusicController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // Standard REST API Endpoints
@@ -20,7 +21,55 @@ Route::get('/app-version', function () {
         'notes' => 'Pembaruan performa dan stabilitas pemutar musik Spotirid.',
     ]);
 });
+Route::post('/login', function (Request $request) {
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required|string',
+    ]);
 
+    if (Auth::attempt($credentials)) {
+        $user = Auth::user();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login berhasil!',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role ?? (str_starts_with(strtolower($user->email), 'admin') ? 'admin' : 'user'),
+            ],
+        ]);
+    }
+
+    return response()->json([
+        'success' => false,
+        'message' => 'Email atau password yang Anda masukkan tidak sesuai.',
+    ], 401);
+});
+
+Route::post('/logout', function (Request $request) {
+    Auth::logout();
+
+    return response()->json(['success' => true, 'message' => 'Logout berhasil.']);
+});
+
+Route::get('/user', function (Request $request) {
+    $user = Auth::user();
+    if (! $user) {
+        return response()->json(['authenticated' => false, 'user' => null]);
+    }
+
+    return response()->json([
+        'authenticated' => true,
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role ?? (str_starts_with(strtolower($user->email), 'admin') ? 'admin' : 'user'),
+        ],
+    ]);
+});
 
 // Community Shared Playlists Endpoints
 Route::get('/playlists', [MusicController::class, 'getPlaylists']);

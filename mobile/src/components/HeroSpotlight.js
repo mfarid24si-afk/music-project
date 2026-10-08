@@ -16,9 +16,11 @@ export default function HeroSpotlight() {
     favorites,
     toggleFavorite,
     setIsNowPlayingOpen,
+    activeTheme,
   } = useAudio();
 
   const spinAnim = useRef(new Animated.Value(0)).current;
+  const accentColor = activeTheme?.color || THEME.accent;
 
   // Use currently playing song or default to first song in archive
   const displaySong = currentSong || (Array.isArray(songs) && songs.length > 0 ? songs[0] : null);
@@ -66,14 +68,14 @@ export default function HeroSpotlight() {
     <View style={styles.card}>
       {/* Top Banner Tag */}
       <View style={styles.topBadgeRow}>
-        <View style={styles.hiresPill}>
-          <View style={styles.pulseDot} />
-          <Text style={styles.hiresText}>HIGH RESOLUTION MASTER • 24-BIT</Text>
+        <View style={[styles.hiresPill, { borderColor: accentColor + '66' }]}>
+          <View style={[styles.pulseDot, { backgroundColor: accentColor }]} />
+          <Text style={[styles.hiresText, { color: accentColor }]}>HIGH RESOLUTION MASTER • 24-BIT</Text>
         </View>
         <Text style={styles.editorialLabel}>EDITORIAL SELECTION</Text>
       </View>
 
-      {/* Center Showcase: Vinyl + Album Sleeve */}
+      {/* Center Showcase: Vinyl peeking anchored behind Album Sleeve */}
       <TouchableOpacity
         style={styles.showcase}
         activeOpacity={0.9}
@@ -84,24 +86,26 @@ export default function HeroSpotlight() {
           setIsNowPlayingOpen(true);
         }}
       >
-        {/* Spinning Vinyl Disc peeking out to the right */}
-        <Animated.View style={[styles.vinylDisc, { transform: [{ rotate: spin }] }]}>
-          <View style={styles.vinylGroove1}>
-            <View style={styles.vinylGroove2}>
-              <View style={styles.vinylCenterLabel}>
-                <View style={styles.vinylCenterHole} />
+        <View style={styles.recordCombo}>
+          {/* Spinning Vinyl Disc behind the sleeve */}
+          <Animated.View style={[styles.vinylDisc, { transform: [{ rotate: spin }] }]}>
+            <View style={styles.vinylGroove1}>
+              <View style={styles.vinylGroove2}>
+                <View style={[styles.vinylCenterLabel, { backgroundColor: accentColor }]}>
+                  <View style={styles.vinylCenterHole} />
+                </View>
               </View>
             </View>
-          </View>
-        </Animated.View>
+          </Animated.View>
 
-        {/* Album Artwork Jacket */}
-        <View style={styles.coverWrapper}>
-          <Image source={{ uri: coverUri }} style={styles.coverImage} />
-          <View style={styles.coverOverlayBadge}>
-            <Text style={styles.coverBadgeText}>
-              {isCurrentlyPlayingThis ? 'NOW PLAYING' : 'EDITORIAL PICK'}
-            </Text>
+          {/* Album Cover Jacket on top */}
+          <View style={styles.coverWrapper}>
+            <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
+            <View style={styles.coverOverlayBadge}>
+              <Text style={[styles.coverBadgeText, { color: accentColor }]}>
+                {isCurrentlyPlayingThis ? 'NOW PLAYING' : 'EDITORIAL PICK'}
+              </Text>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -126,12 +130,12 @@ export default function HeroSpotlight() {
             <Ionicons
               name={isLiked ? 'heart' : 'heart-outline'}
               size={24}
-              color={isLiked ? THEME.accent : THEME.textMuted}
+              color={isLiked ? accentColor : THEME.textMuted}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.playBtn}
+            style={[styles.playBtn, { backgroundColor: accentColor }]}
             onPress={handlePlayPress}
             activeOpacity={0.8}
           >
@@ -153,7 +157,8 @@ export default function HeroSpotlight() {
 
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: 16,
+    marginHorizontal: 12,
+    marginTop: 8,
     marginBottom: 20,
     backgroundColor: THEME.surface,
     borderRadius: 20,
@@ -179,21 +184,18 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: 'rgba(204, 242, 40, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: THEME.borderAccent,
   },
   pulseDot: {
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: THEME.accent,
   },
   hiresText: {
     fontSize: 9,
     fontWeight: '800',
-    color: THEME.accent,
     letterSpacing: 0.5,
   },
   editorialLabel: {
@@ -203,16 +205,23 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   showcase: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 180,
+    height: 170,
     marginVertical: 4,
+  },
+  recordCombo: {
+    width: 220,
+    height: 160,
     position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   coverWrapper: {
-    width: 160,
-    height: 160,
+    position: 'absolute',
+    left: 8,
+    width: 152,
+    height: 152,
     borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: THEME.elevated,
@@ -220,10 +229,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.15)',
     zIndex: 2,
     shadowColor: '#000',
-    shadowOffset: { width: -4, height: 8 },
-    shadowOpacity: 0.7,
-    shadowRadius: 14,
-    elevation: 10,
+    shadowOffset: { width: -2, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    elevation: 8,
   },
   coverImage: {
     width: '100%',
@@ -243,56 +252,55 @@ const styles = StyleSheet.create({
   coverBadgeText: {
     fontSize: 8,
     fontWeight: '800',
-    color: THEME.accent,
     letterSpacing: 0.5,
   },
   vinylDisc: {
     position: 'absolute',
-    right: 32,
-    width: 154,
-    height: 154,
-    borderRadius: 77,
+    left: 68,
+    width: 142,
+    height: 142,
+    borderRadius: 71,
     backgroundColor: '#050507',
-    borderWidth: 3,
+    borderWidth: 2.5,
     borderColor: '#1e2025',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 10,
+    elevation: 4,
   },
   vinylGroove1: {
-    width: 124,
-    height: 124,
-    borderRadius: 62,
+    width: 114,
+    height: 114,
+    borderRadius: 57,
     borderWidth: 1,
     borderColor: '#23262d',
     alignItems: 'center',
     justifyContent: 'center',
   },
   vinylGroove2: {
-    width: 94,
-    height: 94,
-    borderRadius: 47,
+    width: 86,
+    height: 86,
+    borderRadius: 43,
     borderWidth: 1,
     borderColor: '#2b2e38',
     alignItems: 'center',
     justifyContent: 'center',
   },
   vinylCenterLabel: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: THEME.accent,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
   },
   vinylCenterHole: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#000',
   },
   metaContainer: {
@@ -333,12 +341,11 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     borderRadius: 22,
-    backgroundColor: THEME.accent,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: THEME.accent,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,

@@ -5,9 +5,21 @@ import { THEME } from '../config';
 
 const DEFAULT_COVER = 'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
 
-export default function SongItem({ song, isCurrent, isPlaying, isLiked, onPlay, onToggleLike }) {
+export default function SongItem({
+  song,
+  isCurrent,
+  isPlaying,
+  isLiked,
+  onPlay,
+  onToggleLike,
+  onAddToPlaylist,
+  activeTheme,
+}) {
   const [imgError, setImgError] = useState(false);
-  const coverUri = !imgError && (song.img || song.cover_image) ? (song.img || song.cover_image) : DEFAULT_COVER;
+  const accentColor = activeTheme?.color || THEME.accent;
+  const coverUri = !imgError && (song?.img || song?.cover_image)
+    ? (song?.img || song?.cover_image)
+    : DEFAULT_COVER;
 
   return (
     <TouchableOpacity
@@ -23,7 +35,7 @@ export default function SongItem({ song, isCurrent, isPlaying, isLiked, onPlay, 
           onError={() => setImgError(true)}
         />
         {isCurrent && isPlaying && (
-          <View style={styles.playingOverlay}>
+          <View style={[styles.playingOverlay, { backgroundColor: accentColor + 'dd' }]}>
             <Ionicons name="volume-high" size={16} color="#000" />
           </View>
         )}
@@ -33,27 +45,39 @@ export default function SongItem({ song, isCurrent, isPlaying, isLiked, onPlay, 
       <View style={styles.info}>
         <Text
           numberOfLines={1}
-          style={[styles.title, isCurrent && styles.titleCurrent]}
+          style={[styles.title, isCurrent && { color: accentColor, fontWeight: '700' }]}
         >
-          {song.title}
+          {String(song?.title || 'Unknown Title')}
         </Text>
         <Text numberOfLines={1} style={styles.artist}>
-          {song.artist} {song.album ? `• ${song.album}` : ''}
+          {String(song?.artist || 'Unknown Artist')} {song?.album ? `• ${song.album}` : ''}
         </Text>
       </View>
 
-      {/* Like Button */}
-      <TouchableOpacity
-        onPress={onToggleLike}
-        style={styles.likeBtn}
-        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-      >
-        <Ionicons
-          name={isLiked ? 'heart' : 'heart-outline'}
-          size={20}
-          color={isLiked ? THEME.accent : THEME.textMuted}
-        />
-      </TouchableOpacity>
+      {/* Action Buttons: Add to Playlist & Like */}
+      <View style={styles.actions}>
+        {onAddToPlaylist && (
+          <TouchableOpacity
+            onPress={onAddToPlaylist}
+            style={styles.actionBtn}
+            hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+          >
+            <Ionicons name="add-circle-outline" size={20} color={THEME.textMuted} />
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          onPress={onToggleLike}
+          style={styles.actionBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+        >
+          <Ionicons
+            name={isLiked ? 'heart' : 'heart-outline'}
+            size={20}
+            color={isLiked ? accentColor : THEME.textMuted}
+          />
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -67,7 +91,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   rowCurrent: {
-    backgroundColor: 'rgba(204, 242, 40, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
   },
   coverWrapper: {
     width: 50,
@@ -87,7 +111,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(204, 242, 40, 0.85)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -103,15 +126,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 4,
   },
-  titleCurrent: {
-    color: THEME.accent,
-    fontWeight: '700',
-  },
   artist: {
     fontSize: 12,
     color: THEME.textMuted,
   },
-  likeBtn: {
-    padding: 6,
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionBtn: {
+    padding: 4,
   },
 });

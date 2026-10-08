@@ -18,7 +18,6 @@ export default function SwipeModal({
   onClose,
   children,
   height = '90%',
-  title = null,
 }) {
   const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -39,7 +38,7 @@ export default function SwipeModal({
   const handleClose = () => {
     Animated.timing(translateY, {
       toValue: SCREEN_HEIGHT,
-      duration: 220,
+      duration: 200,
       useNativeDriver: true,
     }).start(() => {
       onClose();
@@ -48,9 +47,9 @@ export default function SwipeModal({
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return gestureState.dy > 8 && Math.abs(gestureState.dx) < 15;
+        return gestureState.dy > 5 && Math.abs(gestureState.dx) < 20;
       },
       onPanResponderMove: (_, gestureState) => {
         if (gestureState.dy > 0) {
@@ -58,7 +57,8 @@ export default function SwipeModal({
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 100 || gestureState.vy > 0.6) {
+        // Lower threshold (50px or slight flick velocity) makes closing effortless
+        if (gestureState.dy > 50 || gestureState.vy > 0.35) {
           handleClose();
         } else {
           Animated.spring(translateY, {
@@ -95,8 +95,12 @@ export default function SwipeModal({
             { transform: [{ translateY }] },
           ]}
         >
-          {/* Draggable Header Handle Bar */}
-          <View style={styles.dragHandleArea} {...panResponder.panHandlers}>
+          {/* Large Draggable Header Handle Bar */}
+          <View
+            style={styles.dragHandleArea}
+            {...panResponder.panHandlers}
+            hitSlop={{ top: 16, bottom: 16, left: 30, right: 30 }}
+          >
             <View style={styles.dragBar} />
           </View>
 
@@ -128,16 +132,16 @@ const styles = StyleSheet.create({
   },
   dragHandleArea: {
     width: '100%',
-    height: 36,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   dragBar: {
-    width: 44,
+    width: 48,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   content: {
     flex: 1,

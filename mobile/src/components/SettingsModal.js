@@ -15,8 +15,18 @@ import { useAudio } from '../context/AudioContext';
 import { THEMES, THEME, APP_BASE_URL } from '../config';
 
 export default function SettingsModal({ visible, onClose }) {
-  const { profileName, setProfileName, activeTheme, setActiveTheme } = useAudio();
+  const {
+    profileName,
+    setProfileName,
+    activeTheme,
+    setActiveTheme,
+    currentUser,
+    logout,
+    setIsLoginOpen,
+  } = useAudio();
+
   const [nameInput, setNameInput] = useState(profileName || 'Listener');
+  const accentColor = activeTheme?.color || THEME.accent;
 
   const handleSaveName = () => {
     if (nameInput.trim()) {
@@ -30,15 +40,20 @@ export default function SettingsModal({ visible, onClose }) {
     setActiveTheme(t);
   };
 
+  const handleLogoutPress = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    await logout();
+  };
+
   const currentThemeId = activeTheme?.id || 'default';
 
   return (
-    <SwipeModal visible={visible} onClose={onClose} height="85%">
+    <SwipeModal visible={visible} onClose={onClose} height="88%">
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.headerRow}>
           <View style={styles.headerTitleBox}>
-            <Ionicons name="settings-sharp" size={20} color={activeTheme?.color || THEME.accent} />
+            <Ionicons name="settings-sharp" size={20} color={accentColor} />
             <Text style={styles.headerTitle}>Pengaturan Player</Text>
           </View>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -47,27 +62,75 @@ export default function SettingsModal({ visible, onClose }) {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          {/* Account & Authentication Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>STATUS AKUN</Text>
+            {currentUser ? (
+              <View style={styles.card}>
+                <View style={styles.userRow}>
+                  <View style={[styles.avatar, { backgroundColor: accentColor }]}>
+                    <Text style={styles.avatarText}>
+                      {(currentUser.name || 'U').charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.userInfo}>
+                    <Text style={styles.userName}>{currentUser.name}</Text>
+                    <Text style={styles.userEmail}>{currentUser.email}</Text>
+                    <View style={styles.roleBadge}>
+                      <Text style={styles.roleText}>
+                        {(currentUser.role || 'MEMBER').toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.logoutBtn}
+                  onPress={handleLogoutPress}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="log-out-outline" size={16} color="#ef4444" />
+                  <Text style={styles.logoutBtnText}>Keluar dari Akun</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.card}>
+                <Text style={styles.guestTitle}>Anda masuk sebagai Tamu (Guest)</Text>
+                <Text style={styles.guestSubtitle}>
+                  Login dengan akun Anda untuk sinkronisasi playlist dan pengajuan lagu.
+                </Text>
+                <TouchableOpacity
+                  style={[styles.loginBtn, { backgroundColor: accentColor }]}
+                  onPress={() => {
+                    onClose();
+                    setIsLoginOpen(true);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="log-in-outline" size={18} color="#000" />
+                  <Text style={styles.loginBtnText}>Masuk ke Akun</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
           {/* Profile Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>PROFIL PENDENGAR</Text>
+            <Text style={styles.sectionLabel}>NAMA PANGGILAN</Text>
             <View style={styles.card}>
-              <Text style={styles.fieldLabel}>Nama Listener</Text>
               <View style={styles.inputRow}>
                 <TextInput
                   style={styles.textInput}
                   value={nameInput}
                   onChangeText={setNameInput}
-                  placeholder="Masukkan nama Anda..."
+                  placeholder="Nama sapaan..."
                   placeholderTextColor={THEME.textMuted}
                   maxLength={30}
                 />
-                <TouchableOpacity style={[styles.saveBtn, { backgroundColor: activeTheme?.color || THEME.accent }]} onPress={handleSaveName}>
+                <TouchableOpacity style={[styles.saveBtn, { backgroundColor: accentColor }]} onPress={handleSaveName}>
                   <Text style={styles.saveBtnText}>Simpan</Text>
                 </TouchableOpacity>
               </View>
-              <Text style={styles.hintText}>
-                Nama yang tampil pada sambutan beranda player musik Anda.
-              </Text>
             </View>
           </View>
 
@@ -104,7 +167,7 @@ export default function SettingsModal({ visible, onClose }) {
 
           {/* Audio Engine Specs */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>SPESIFIKASI AUDIO ENGINE</Text>
+            <Text style={styles.sectionLabel}>AUDIO SPECIFICATIONS</Text>
             <View style={styles.card}>
               <View style={styles.specRow}>
                 <Text style={styles.specKey}>Audio Architecture</Text>
@@ -112,12 +175,12 @@ export default function SettingsModal({ visible, onClose }) {
               </View>
               <View style={styles.specRow}>
                 <Text style={styles.specKey}>Resolution</Text>
-                <Text style={[styles.specValue, { color: activeTheme?.color || THEME.accent }]}>
+                <Text style={[styles.specValue, { color: accentColor }]}>
                   24-Bit / 96.0 kHz FLAC/WAV
                 </Text>
               </View>
               <View style={styles.specRow}>
-                <Text style={styles.specKey}>Background Playback</Text>
+                <Text style={styles.specKey}>Background Audio</Text>
                 <Text style={styles.specValue}>Aktif (iOS Lockscreen / Android)</Text>
               </View>
               <View style={[styles.specRow, { borderBottomWidth: 0 }]}>
@@ -137,7 +200,7 @@ export default function SettingsModal({ visible, onClose }) {
               activeOpacity={0.8}
             >
               <Ionicons name="shield-checkmark" size={18} color="#000" />
-              <Text style={styles.adminBtnText}>Masuk ke Admin Portal Spotirid</Text>
+              <Text style={styles.adminBtnText}>Buka Web Admin Portal Spotirid</Text>
               <Ionicons name="open-outline" size={16} color="#000" style={{ marginLeft: 'auto' }} />
             </TouchableOpacity>
           </View>
@@ -195,11 +258,90 @@ const styles = StyleSheet.create({
     borderColor: THEME.border,
     padding: 16,
   },
-  fieldLabel: {
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#000',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  userEmail: {
+    fontSize: 12,
+    color: THEME.textMuted,
+    marginTop: 2,
+  },
+  roleBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  roleText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+  },
+  logoutBtnText: {
     fontSize: 12,
     fontWeight: '700',
+    color: '#fca5a5',
+  },
+  guestTitle: {
+    fontSize: 14,
+    fontWeight: '700',
     color: '#fff',
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  guestSubtitle: {
+    fontSize: 12,
+    color: THEME.textMuted,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  loginBtn: {
+    height: 42,
+    borderRadius: 21,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  loginBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#000',
   },
   inputRow: {
     flexDirection: 'row',
@@ -227,12 +369,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#000',
-  },
-  hintText: {
-    fontSize: 11,
-    color: THEME.textMuted,
-    marginTop: 8,
-    lineHeight: 16,
   },
   themesGrid: {
     gap: 8,

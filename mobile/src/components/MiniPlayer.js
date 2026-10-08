@@ -20,13 +20,16 @@ export default function MiniPlayer() {
     favorites,
     toggleFavorite,
     setIsNowPlayingOpen,
+    setIsLyricsOpen,
+    activeTheme,
   } = useAudio();
 
   const [imgError, setImgError] = useState(false);
 
   if (!currentSong) return null;
 
-  const isLiked = favorites.includes(currentSong.id);
+  const accentColor = activeTheme?.color || THEME.accent;
+  const isLiked = Array.isArray(favorites) && favorites.includes(currentSong.id);
   const coverUri = !imgError && (currentSong.img || currentSong.cover_image)
     ? (currentSong.img || currentSong.cover_image)
     : DEFAULT_COVER;
@@ -50,11 +53,16 @@ export default function MiniPlayer() {
     nextSong();
   };
 
+  const handleOpenLyrics = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setIsLyricsOpen(true);
+  };
+
   return (
     <View style={[styles.wrapper, { bottom: Math.max(insets.bottom, 10) }]}>
       {/* Top thin progress bar */}
       <View style={styles.progressBarBackground}>
-        <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+        <View style={[styles.progressBarFill, { width: `${progressPercent}%`, backgroundColor: accentColor }]} />
       </View>
 
       <TouchableOpacity
@@ -81,22 +89,33 @@ export default function MiniPlayer() {
 
         {/* Action Buttons */}
         <View style={styles.controls}>
+          {/* Dedicated Lyrics Button (Mic Icon) */}
+          <TouchableOpacity
+            onPress={handleOpenLyrics}
+            style={styles.controlBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+          >
+            <Ionicons name="mic" size={19} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Like Button */}
           <TouchableOpacity
             onPress={handleToggleLike}
             style={styles.controlBtn}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
           >
             <Ionicons
               name={isLiked ? 'heart' : 'heart-outline'}
-              size={22}
-              color={isLiked ? THEME.accent : THEME.textMuted}
+              size={21}
+              color={isLiked ? accentColor : THEME.textMuted}
             />
           </TouchableOpacity>
 
+          {/* Big Play Button */}
           <TouchableOpacity
             onPress={handleTogglePlay}
-            style={styles.playBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={[styles.playBtn, { backgroundColor: accentColor }]}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
           >
             <Ionicons
               name={isPlaying ? 'pause' : 'play'}
@@ -106,12 +125,13 @@ export default function MiniPlayer() {
             />
           </TouchableOpacity>
 
+          {/* Next Button */}
           <TouchableOpacity
             onPress={handleNext}
             style={styles.controlBtn}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
           >
-            <Ionicons name="play-skip-forward" size={20} color="#fff" />
+            <Ionicons name="play-skip-forward" size={19} color="#fff" />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -128,7 +148,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.5,
@@ -142,12 +162,11 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: THEME.accent,
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 10,
     minHeight: 56,
   },
@@ -177,11 +196,11 @@ const styles = StyleSheet.create({
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   controlBtn: {
-    width: 38,
-    height: 38,
+    width: 34,
+    height: 34,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -189,10 +208,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: THEME.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: THEME.accent,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
