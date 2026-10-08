@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
 import { THEME } from '../config';
 
 const DEFAULT_COVER = 'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
 
 export default function MiniPlayer() {
+  const insets = useSafeAreaInsets();
   const {
     currentSong,
     isPlaying,
-    positionMillis,
-    durationMillis,
+    currentTime,
+    duration,
     togglePlay,
     nextSong,
     favorites,
@@ -28,12 +31,27 @@ export default function MiniPlayer() {
     ? (currentSong.img || currentSong.cover_image)
     : DEFAULT_COVER;
 
-  const progressPercent = durationMillis > 0
-    ? Math.min(100, Math.max(0, (positionMillis / durationMillis) * 100))
+  const progressPercent = duration > 0
+    ? Math.min(100, Math.max(0, (currentTime / duration) * 100))
     : 0;
 
+  const handleToggleLike = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    toggleFavorite(currentSong.id);
+  };
+
+  const handleTogglePlay = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    togglePlay();
+  };
+
+  const handleNext = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    nextSong();
+  };
+
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, { bottom: Math.max(insets.bottom, 10) }]}>
       {/* Top thin progress bar */}
       <View style={styles.progressBarBackground}>
         <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
@@ -64,9 +82,9 @@ export default function MiniPlayer() {
         {/* Action Buttons */}
         <View style={styles.controls}>
           <TouchableOpacity
-            onPress={() => toggleFavorite(currentSong.id)}
+            onPress={handleToggleLike}
             style={styles.controlBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <Ionicons
               name={isLiked ? 'heart' : 'heart-outline'}
@@ -76,7 +94,7 @@ export default function MiniPlayer() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={togglePlay}
+            onPress={handleTogglePlay}
             style={styles.playBtn}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -84,13 +102,14 @@ export default function MiniPlayer() {
               name={isPlaying ? 'pause' : 'play'}
               size={20}
               color="#000"
+              style={isPlaying ? {} : { marginLeft: 2 }}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={nextSong}
+            onPress={handleNext}
             style={styles.controlBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <Ionicons name="play-skip-forward" size={20} color="#fff" />
           </TouchableOpacity>
@@ -103,9 +122,8 @@ export default function MiniPlayer() {
 const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    left: 8,
-    right: 8,
-    bottom: 8,
+    left: 10,
+    right: 10,
     backgroundColor: THEME.surface,
     borderRadius: 14,
     overflow: 'hidden',
@@ -113,8 +131,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
     elevation: 8,
   },
   progressBarBackground: {
@@ -130,7 +148,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingVertical: 10,
+    minHeight: 56,
   },
   cover: {
     width: 44,
@@ -148,6 +167,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#fff',
+    letterSpacing: -0.2,
   },
   artist: {
     fontSize: 12,
@@ -157,20 +177,23 @@ const styles = StyleSheet.create({
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   controlBtn: {
-    padding: 6,
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   playBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: THEME.accent,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: THEME.accent,
-    shadowOffset: { width: 0, height: 0 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 4,

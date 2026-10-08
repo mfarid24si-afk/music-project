@@ -9,7 +9,7 @@ export async function fetchSongsAPI() {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return data.data || [];
+    return Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
   } catch (error) {
     console.warn('Gagal memuat lagu dari server:', error);
     return [];
@@ -25,7 +25,7 @@ export async function fetchPlaylistsAPI() {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return data.data || [];
+    return Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
   } catch (error) {
     console.warn('Gagal memuat playlist dari server:', error);
     return [];
@@ -44,5 +44,18 @@ export async function recordPlayStatAPI(songId) {
     });
   } catch (err) {
     // Non-critical, swallow error
+  }
+}
+
+// Synced lyrics from lrclib.net (same as web app)
+export async function fetchLyricsFromAPI(artist, title) {
+  try {
+    const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    return null;
   }
 }

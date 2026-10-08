@@ -3,8 +3,9 @@ import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { THEME } from '../config';
 
 const CHIPS = [
-  { id: 'all', label: 'Semua' },
-  { id: 'favorites', label: 'Favorit ❤️' },
+  { id: 'all', label: 'All Sessions' },
+  { id: 'favorites', label: 'Favorites' },
+  { id: 'lossless', label: 'Lossless Only' },
   { id: 'Pop', label: 'Pop' },
   { id: 'Rock', label: 'Rock' },
   { id: 'Dance', label: 'Dance' },
@@ -41,19 +42,26 @@ export default function FilterChips({ activeFilter, onSelectFilter }) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 14,
+    height: 44,
+    maxHeight: 44,
+    flexGrow: 0,
+    marginBottom: 12,
   },
   scrollContent: {
     paddingHorizontal: 16,
     gap: 8,
+    alignItems: 'center',
+    height: 44,
   },
   chip: {
+    height: 34,
     paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: 17,
     backgroundColor: THEME.surface,
     borderWidth: 1,
     borderColor: THEME.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chipActive: {
     backgroundColor: THEME.accent,

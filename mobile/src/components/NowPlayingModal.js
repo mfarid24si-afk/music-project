@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,31 +7,37 @@ import {
   Modal,
   StyleSheet,
   Dimensions,
+  Animated,
+  Easing,
+  ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
+import { fetchLyricsFromAPI } from '../services/api';
 import { THEME } from '../config';
 
-const { width } = Dimensions.get('window');
-const COVER_SIZE = Math.min(width - 64, 340);
+const { width, height } = Dimensions.get('window');
+const TURNTABLE_SIZE = Math.min(width - 64, height * 0.35, 300);
 const DEFAULT_COVER = 'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
 
-function formatSeconds(millis) {
-  if (!millis || isNaN(millis)) return '0:00';
-  const totalSeconds = Math.floor(millis / 1000);
+function formatSeconds(sec) {
+  if (!sec || isNaN(sec)) return '0:00';
+  const totalSeconds = Math.floor(sec);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
 export default function NowPlayingModal() {
+  const insets = useSafeAreaInsets();
   const {
     currentSong,
     isPlaying,
-    positionMillis,
-    durationMillis,
+    currentTime,
+    duration,
     togglePlay,
     seekTo,
     nextSong,
@@ -48,15 +54,133 @@ export default function NowPlayingModal() {
 
   const [imgError, setImgError] = useState(false);
   const [sliderValue, setSliderValue] = useState(null);
+  const [activeTab, setActiveTab] = useState('turntable'); // 'turntable' | 'lyrics'
+  const [lyricsData, setLyricsData] = useState(null);
+  const [lyricsLoading, setLyricsLoading] = useState(false);
+
+  const spinAnim = useRef(new Animated.Value(0)).current;
+  const lyricsScrollRef = useRef(null);
+
+  // Fetch lyrics whenever song changes
+  useEffect(() => {
+    if (!currentSong) return;
+    let isCancelled = false;
+
+    async function loadLyrics() {
+      setLyricsLoading(true);
+      const data = await fetchLyricsFromAPI(currentSong.artist, currentSong.title);
+      if (!isCancelled) {
+        setLyricsData(data);
+        setLyricsLoading(false);
+      }
+    }
+
+    loadLyrics();
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentSong?.id]);
+
+  // Parse LRC Synced lyrics
+  const parsedLines = useMemo(() => {
+    if (!lyricsData || !lyricsData.syncedLyrics) return null;
+    const lines = [];
+    for (const rawLine of lyricsData.syncedLyrics.split('\n')) {
+      if (!rawLine.trim()) continue;
+      const match = rawLine.match(/^\[(\d+):(\d+)(?:[.,](\d+))?\](.*)/);
+      if (!match) continue;
+      const m = parseInt(match[1], 10);
+      const s = parseInt(match[2], 10);
+      let ms = match[3] ? parseInt(match[3], 10) : 0;
+      if (match[3] && match[3].length === 2) ms *= 10;
+      lines.push({ time: m * 60 + s + ms / 1000, text: match[4].trim() });
+    }
+    return lines.length > 0 ? lines : null;
+  }, [lyricsData]);
+
+  // Find active lyric index
+  const activeLyricIndex = useMemo(() => {
+    if (!parsedLines) return -1;
+    let idx = -1;
+    for (let i = 0; i < parsedLines.length; i++) {
+      if (currentTime >= parsedLines[i].time) idx = i;
+    }
+    return idx;
+  }, [parsedLines, currentTime]);
+
+  // Auto-scroll lyrics
+  useEffect(() => {
+    if (activeTab === 'lyrics' && lyricsScrollRef.current && activeLyricIndex >= 0) {
+      lyricsScrollRef.current.scrollTo({
+        y: Math.max(0, activeLyricIndex * 46 - 120),
+        animated: true,
+      });
+    }
+  }, [activeLyricIndex, activeTab]);
+
+  useEffect(() => {
+    let anim;
+    if (isPlaying) {
+      anim = Animated.loop(
+        Animated.timing(spinAnim, {
+          toValue: 1,
+          duration: 8000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      );
+      anim.start();
+    } else {
+      spinAnim.stopAnimation();
+    }
+    return () => {
+      if (anim) anim.stop();
+    };
+  }, [isPlaying]);
+
+  const spin = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   if (!currentSong) return null;
 
-  const isLiked = favorites.includes(currentSong.id);
+  const isLiked = Array.isArray(favorites) && favorites.includes(currentSong.id);
   const coverUri = !imgError && (currentSong.img || currentSong.cover_image)
     ? (currentSong.img || currentSong.cover_image)
     : DEFAULT_COVER;
 
-  const currentPosition = sliderValue !== null ? sliderValue : positionMillis;
+  const currentPosition = sliderValue !== null ? sliderValue : currentTime;
+
+  const handleTogglePlay = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    togglePlay();
+  };
+
+  const handleNext = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    nextSong();
+  };
+
+  const handlePrev = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    prevSong();
+  };
+
+  const handleToggleLike = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    toggleFavorite(currentSong.id);
+  };
+
+  const handleShuffle = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    toggleShuffle();
+  };
+
+  const handleRepeat = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    cycleRepeat();
+  };
 
   return (
     <Modal
@@ -65,8 +189,8 @@ export default function NowPlayingModal() {
       presentationStyle="fullScreen"
       onRequestClose={() => setIsNowPlayingOpen(false)}
     >
-      <View style={styles.backdrop}>
-        <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.backdrop, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 20) }]}>
+        <View style={styles.container}>
           {/* Top Bar */}
           <View style={styles.topBar}>
             <TouchableOpacity
@@ -78,27 +202,105 @@ export default function NowPlayingModal() {
             </TouchableOpacity>
 
             <View style={styles.topTitleBox}>
-              <Text style={styles.topSubtitle}>MEMUTAR DARI SERVER</Text>
+              <Text style={styles.topSubtitle}>DECK: AETHER ORBIT MK-IV</Text>
               <Text style={styles.topTitle} numberOfLines={1}>
                 {currentSong.album || 'Spotirid Archive'}
               </Text>
             </View>
 
-            <View style={styles.iconBtn}>
-              <Ionicons name="ellipsis-horizontal" size={24} color={THEME.textMuted} />
+            {/* Mode Switcher: Turntable vs Lyrics */}
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                setActiveTab(activeTab === 'turntable' ? 'lyrics' : 'turntable');
+              }}
+              style={[styles.iconBtn, activeTab === 'lyrics' && styles.iconBtnActive]}
+            >
+              <Ionicons
+                name={activeTab === 'lyrics' ? 'musical-notes' : 'mic-outline'}
+                size={22}
+                color={activeTab === 'lyrics' ? THEME.accent : '#fff'}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Telemetry Strip */}
+          <View style={styles.telemetryRow}>
+            <View style={styles.telemetryPill}>
+              <View style={styles.pulseDot} />
+              <Text style={styles.telemetryText}>PHONO STAGE DIRECT</Text>
+            </View>
+            <View style={styles.hiresBadge}>
+              <Ionicons name="pulse" size={12} color={THEME.accent} />
+              <Text style={styles.hiresText}>96.0 kHz / 24-BIT</Text>
             </View>
           </View>
 
-          {/* Album Cover */}
-          <View style={styles.coverContainer}>
-            <View style={styles.coverWrapper}>
-              <Image
-                source={{ uri: coverUri }}
-                style={styles.cover}
-                onError={() => setImgError(true)}
-              />
+          {/* Center Content: Either Turntable OR Synced Lyrics */}
+          {activeTab === 'turntable' ? (
+            <View style={styles.turntableContainer}>
+              <Animated.View style={[styles.vinylPlatter, { transform: [{ rotate: spin }] }]}>
+                {/* Outer Strobe Ring */}
+                <View style={styles.strobeRing}>
+                  {/* Grooves */}
+                  <View style={styles.vinylGroove1}>
+                    <View style={styles.vinylGroove2}>
+                      {/* Center Artwork Label */}
+                      <View style={styles.centerArtWrapper}>
+                        <Image source={{ uri: coverUri }} style={styles.centerArt} />
+                        <View style={styles.spindleHole} />
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </Animated.View>
             </View>
-          </View>
+          ) : (
+            /* Synced Lyrics Stream View */
+            <View style={styles.lyricsContainer}>
+              {lyricsLoading ? (
+                <View style={styles.lyricsCenter}>
+                  <Text style={styles.lyricsMuted}>Memuat lirik dari LRCLIB...</Text>
+                </View>
+              ) : parsedLines ? (
+                <ScrollView
+                  ref={lyricsScrollRef}
+                  style={styles.lyricsScroll}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.lyricsContent}
+                >
+                  {parsedLines.map((line, idx) => {
+                    const isActive = idx === activeLyricIndex;
+                    return (
+                      <TouchableOpacity
+                        key={idx}
+                        onPress={() => {
+                          seekTo(line.time);
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                        }}
+                        activeOpacity={0.7}
+                        style={styles.lyricLineBox}
+                      >
+                        <Text style={[styles.lyricText, isActive && styles.lyricTextActive]}>
+                          {line.text}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              ) : (
+                <View style={styles.lyricsCenter}>
+                  <Ionicons name="mic-off-outline" size={36} color={THEME.textMuted} />
+                  <Text style={styles.lyricsEmptyTitle}>Lirik Tidak Tersedia</Text>
+                  <Text style={styles.lyricsMuted}>
+                    {lyricsData?.plainLyrics
+                      ? lyricsData.plainLyrics
+                      : 'Lirik tersinkronisasi belum ditemukan untuk lagu ini.'}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Song Metadata */}
           <View style={styles.metaRow}>
@@ -112,7 +314,7 @@ export default function NowPlayingModal() {
             </View>
 
             <TouchableOpacity
-              onPress={() => toggleFavorite(currentSong.id)}
+              onPress={handleToggleLike}
               hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
               style={styles.likeBtn}
             >
@@ -129,11 +331,11 @@ export default function NowPlayingModal() {
             <Slider
               style={styles.slider}
               minimumValue={0}
-              maximumValue={durationMillis > 0 ? durationMillis : 1}
+              maximumValue={duration > 0 ? duration : 1}
               value={currentPosition}
               minimumTrackTintColor={THEME.accent}
-              maximumTrackTintColor="rgba(255, 255, 255, 0.2)"
-              thumbTintColor="#fff"
+              maximumTrackTintColor="rgba(255, 255, 255, 0.15)"
+              thumbTintColor={THEME.accent}
               onValueChange={(val) => setSliderValue(val)}
               onSlidingComplete={(val) => {
                 seekTo(val);
@@ -142,7 +344,7 @@ export default function NowPlayingModal() {
             />
             <View style={styles.timeRow}>
               <Text style={styles.timeText}>{formatSeconds(currentPosition)}</Text>
-              <Text style={styles.timeText}>{formatSeconds(durationMillis)}</Text>
+              <Text style={styles.timeText}>{formatSeconds(duration)}</Text>
             </View>
           </View>
 
@@ -150,9 +352,9 @@ export default function NowPlayingModal() {
           <View style={styles.controlsRow}>
             {/* Shuffle */}
             <TouchableOpacity
-              onPress={toggleShuffle}
+              onPress={handleShuffle}
               style={styles.secondaryBtn}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Ionicons
                 name="shuffle"
@@ -163,16 +365,16 @@ export default function NowPlayingModal() {
 
             {/* Prev */}
             <TouchableOpacity
-              onPress={prevSong}
+              onPress={handlePrev}
               style={styles.mainNavBtn}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Ionicons name="play-skip-back" size={28} color="#fff" />
             </TouchableOpacity>
 
             {/* Big Play / Pause */}
             <TouchableOpacity
-              onPress={togglePlay}
+              onPress={handleTogglePlay}
               style={styles.bigPlayBtn}
               activeOpacity={0.8}
             >
@@ -186,28 +388,28 @@ export default function NowPlayingModal() {
 
             {/* Next */}
             <TouchableOpacity
-              onPress={nextSong}
+              onPress={handleNext}
               style={styles.mainNavBtn}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Ionicons name="play-skip-forward" size={28} color="#fff" />
             </TouchableOpacity>
 
             {/* Repeat */}
             <TouchableOpacity
-              onPress={cycleRepeat}
+              onPress={handleRepeat}
               style={styles.secondaryBtn}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Ionicons
-                name={repeatMode === 'one' ? 'repeat' : 'repeat'}
+                name="repeat"
                 size={22}
                 color={repeatMode !== 'off' ? THEME.accent : THEME.textMuted}
               />
               {repeatMode === 'one' && <Text style={styles.repeatBadge}>1</Text>}
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </View>
       </View>
     </Modal>
   );
@@ -218,17 +420,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: THEME.bg,
   },
-  safeArea: {
+  container: {
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: 'space-between',
-    paddingBottom: 24,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 8,
+    paddingTop: 4,
   },
   topTitleBox: {
     alignItems: 'center',
@@ -236,10 +437,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
   },
   topSubtitle: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    fontWeight: '800',
     color: THEME.textMuted,
-    letterSpacing: 0.8,
+    letterSpacing: 1,
   },
   topTitle: {
     fontSize: 13,
@@ -249,35 +450,188 @@ const styles = StyleSheet.create({
   },
   iconBtn: {
     padding: 6,
-    width: 40,
-    alignItems: 'center',
-  },
-  coverContainer: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 18,
   },
-  coverWrapper: {
-    width: COVER_SIZE,
-    height: COVER_SIZE,
+  iconBtnActive: {
+    backgroundColor: 'rgba(204, 242, 40, 0.12)',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: THEME.borderAccent,
+  },
+  telemetryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  telemetryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: THEME.elevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: THEME.accent,
+  },
+  telemetryText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 0.6,
+  },
+  hiresBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(204, 242, 40, 0.1)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: THEME.borderAccent,
+  },
+  hiresText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: THEME.accent,
+    letterSpacing: 0.5,
+  },
+  turntableContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+  },
+  lyricsContainer: {
+    height: TURNTABLE_SIZE + 20,
+    marginVertical: 10,
+    backgroundColor: THEME.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: THEME.border,
+    padding: 16,
+    justifyContent: 'center',
+  },
+  lyricsScroll: {
+    flex: 1,
+  },
+  lyricsContent: {
+    paddingVertical: 20,
+    gap: 16,
+  },
+  lyricsCenter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    gap: 8,
+  },
+  lyricsEmptyTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  lyricsMuted: {
+    fontSize: 12,
+    color: THEME.textMuted,
+    textAlign: 'center',
+  },
+  lyricLineBox: {
+    paddingVertical: 4,
+  },
+  lyricText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.35)',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  lyricTextActive: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: THEME.accent,
+    transform: [{ scale: 1.05 }],
+  },
+  vinylPlatter: {
+    width: TURNTABLE_SIZE,
+    height: TURNTABLE_SIZE,
+    borderRadius: TURNTABLE_SIZE / 2,
+    backgroundColor: '#07080a',
+    borderWidth: 4,
+    borderColor: '#1e2025',
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.8,
     shadowRadius: 24,
     elevation: 16,
   },
-  cover: {
+  strobeRing: {
+    width: TURNTABLE_SIZE - 16,
+    height: TURNTABLE_SIZE - 16,
+    borderRadius: (TURNTABLE_SIZE - 16) / 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vinylGroove1: {
+    width: TURNTABLE_SIZE - 48,
+    height: TURNTABLE_SIZE - 48,
+    borderRadius: (TURNTABLE_SIZE - 48) / 2,
+    borderWidth: 1.5,
+    borderColor: '#191b22',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vinylGroove2: {
+    width: TURNTABLE_SIZE - 90,
+    height: TURNTABLE_SIZE - 90,
+    borderRadius: (TURNTABLE_SIZE - 90) / 2,
+    borderWidth: 1.5,
+    borderColor: '#242731',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerArtWrapper: {
+    width: TURNTABLE_SIZE * 0.45,
+    height: TURNTABLE_SIZE * 0.45,
+    borderRadius: (TURNTABLE_SIZE * 0.45) / 2,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: THEME.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerArt: {
     width: '100%',
     height: '100%',
+  },
+  spindleHole: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#000',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   titleBox: {
     flex: 1,
@@ -288,17 +642,21 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#fff',
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   songArtist: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500',
     color: THEME.textMuted,
   },
   likeBtn: {
-    padding: 6,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sliderContainer: {
-    marginVertical: 10,
+    marginVertical: 6,
   },
   slider: {
     width: '100%',
@@ -319,11 +677,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 2,
+    marginBottom: 10,
   },
   secondaryBtn: {
-    padding: 10,
+    width: 44,
+    height: 44,
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
@@ -331,18 +690,21 @@ const styles = StyleSheet.create({
   repeatBadge: {
     position: 'absolute',
     top: 6,
-    right: 4,
+    right: 6,
     fontSize: 9,
     fontWeight: '800',
     color: THEME.accent,
   },
   mainNavBtn: {
-    padding: 10,
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bigPlayBtn: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     backgroundColor: THEME.accent,
     alignItems: 'center',
     justifyContent: 'center',

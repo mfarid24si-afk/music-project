@@ -1,24 +1,31 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
-  FlatList,
+  ScrollView,
   RefreshControl,
   StyleSheet,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import FilterChips from '../components/FilterChips';
+import HeroSpotlight from '../components/HeroSpotlight';
+import SongCard from '../components/SongCard';
 import SongItem from '../components/SongItem';
 import MiniPlayer from '../components/MiniPlayer';
 import NowPlayingModal from '../components/NowPlayingModal';
+import UpdateModal from '../components/UpdateModal';
+import { checkAppUpdateAPI } from '../services/versionChecker';
 import { THEME } from '../config';
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const {
     songs,
     loading,
@@ -32,83 +39,147 @@ export default function HomeScreen() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  const [updateInfo, setUpdateInfo] = useState(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  // Check for app updates on mount
+  useEffect(() => {
+    async function checkForUpdates() {
+      const info = await checkAppUpdateAPI();
+      if (info && info.hasUpdate) {
+        setUpdateInfo(info);
+        setShowUpdateModal(true);
+      }
+    }
+    checkForUpdates();
+  }, []);
+
+  const handleToggleView = (mode) => {
+    if (mode !== viewMode) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      setViewMode(mode);
+    }
+  };
+
+  const handleFilterSelect = (filterId) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setActiveFilter(filterId);
+  };
+
+  const safeSongs = Array.isArray(songs) ? songs : [];
+  const safeFavorites = Array.isArray(favorites) ? favorites : [];
 
   const filteredSongs = useMemo(() => {
-    let result = [...songs];
+    let result = [...safeSongs];
 
     // Filter query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (s) =>
-          (s.title && s.title.toLowerCase().includes(q)) ||
-          (s.artist && s.artist.toLowerCase().includes(q)) ||
-          (s.album && s.album.toLowerCase().includes(q)) ||
-          (s.genre && s.genre.toLowerCase().includes(q))
-      );
+      result = result.filter((s) => {
+        const title = String(s?.title || '').toLowerCase();
+        const artist = String(s?.artist || '').toLowerCase();
+        const album = String(s?.album || '').toLowerCase();
+        const genre = String(s?.genre || '').toLowerCase();
+        return title.includes(q) || artist.includes(q) || album.includes(q) || genre.includes(q);
+      });
     }
 
     // Filter Chips
     if (activeFilter === 'favorites') {
-      result = result.filter((s) => favorites.includes(s.id));
+      result = result.filter((s) => safeFavorites.includes(s.id));
+    } else if (activeFilter === 'lossless') {
+      result = result.filter((s) => {
+        const raw = String(s?.rawSrc || s?.audio_file || s?.src || '').toLowerCase();
+        const genre = String(s?.genre || '').toLowerCase();
+        return raw.includes('.flac') || raw.includes('.wav') || genre.includes('rock');
+      });
     } else if (activeFilter !== 'all') {
       result = result.filter((s) =>
-        s.genre && s.genre.toLowerCase().includes(activeFilter.toLowerCase())
+        String(s?.genre || '').toLowerCase().includes(activeFilter.toLowerCase())
       );
     }
 
     return result;
-  }, [songs, searchQuery, activeFilter, favorites]);
+  }, [safeSongs, searchQuery, activeFilter, safeFavorites]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Header trackCount={songs.length} />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <Header trackCount={safeSongs.length} />
+
       <SearchBar
         value={searchQuery}
         onChangeText={setSearchQuery}
         onClear={() => setSearchQuery('')}
       />
+
       <FilterChips
         activeFilter={activeFilter}
-        onSelectFilter={setActiveFilter}
+        onSelectFilter={handleFilterSelect}
       />
 
-      {loading && songs.length === 0 ? (
+      {loading && safeSongs.length === 0 ? (
         <View style={styles.centerBox}>
           <ActivityIndicator size="large" color={THEME.accent} />
           <Text style={styles.loadingText}>Menghubungkan ke Spotirid Server...</Text>
         </View>
       ) : (
-        <FlatList
-          data={filteredSongs}
-          keyExtractor={(item) => String(item.id)}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
           contentContainerStyle={[
-            styles.listContent,
-            currentSong ? { paddingBottom: 110 } : { paddingBottom: 24 },
+            styles.scrollContent,
+            { paddingBottom: currentSong ? insets.bottom + 100 : insets.bottom + 30 },
           ]}
           refreshControl={
             <RefreshControl
               refreshing={loading}
               onRefresh={refreshSongs}
               tintColor={THEME.accent}
-              colors={[THEME.accent]}
             />
           }
-          renderItem={({ item }) => {
-            const isCurrent = currentSong && currentSong.id === item.id;
-            const isLiked = favorites.includes(item.id);
-            return (
-              <SongItem
-                song={item}
-                isCurrent={isCurrent}
-                isPlaying={isPlaying}
-                isLiked={isLiked}
-                onPlay={() => playSong(item)}
-                onToggleLike={() => toggleFavorite(item.id)}
-              />
-            );
-          }}
-          ListEmptyComponent={
+        >
+          {/* Bento Spotlight (Featured Vinyl) */}
+          {!searchQuery && activeFilter === 'all' ? <HeroSpotlight /> : null}
+
+          {/* Section Header with View Toggle (Grid / List) */}
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <Text style={styles.sectionTitle}>Essential Tracks</Text>
+              <View style={styles.countBadge}>
+                <Text style={styles.countText}>{filteredSongs.length} TRACKS</Text>
+              </View>
+            </View>
+
+            {/* Grid / List Mode Switcher */}
+            <View style={styles.toggleGroup}>
+              <TouchableOpacity
+                onPress={() => handleToggleView('grid')}
+                style={[styles.toggleBtn, viewMode === 'grid' && styles.toggleBtnActive]}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name="grid"
+                  size={14}
+                  color={viewMode === 'grid' ? '#000' : THEME.textMuted}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => handleToggleView('list')}
+                style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name="list"
+                  size={15}
+                  color={viewMode === 'list' ? '#000' : THEME.textMuted}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Empty State */}
+          {filteredSongs.length === 0 ? (
             <View style={styles.emptyBox}>
               <Ionicons name="musical-notes-outline" size={48} color={THEME.textMuted} />
               <Text style={styles.emptyTitle}>Tidak ada lagu ditemukan</Text>
@@ -120,26 +191,131 @@ export default function HomeScreen() {
                   : 'Tarik ke bawah untuk memuat ulang daftar'}
               </Text>
             </View>
-          }
-        />
+          ) : viewMode === 'grid' ? (
+            /* 2-Column Grid Layout */
+            <View style={styles.gridContainer}>
+              {filteredSongs.map((item) => {
+                const isCurrent = currentSong && currentSong.id === item.id;
+                const isLiked = safeFavorites.includes(item.id);
+                return (
+                  <SongCard
+                    key={String(item.id)}
+                    song={item}
+                    isCurrent={isCurrent}
+                    isPlaying={isPlaying}
+                    isLiked={isLiked}
+                    onPlay={() => playSong(item)}
+                    onToggleLike={() => toggleFavorite(item.id)}
+                  />
+                );
+              })}
+            </View>
+          ) : (
+            /* List Layout */
+            <View style={styles.listContainer}>
+              {filteredSongs.map((item) => {
+                const isCurrent = currentSong && currentSong.id === item.id;
+                const isLiked = safeFavorites.includes(item.id);
+                return (
+                  <SongItem
+                    key={String(item.id)}
+                    song={item}
+                    isCurrent={isCurrent}
+                    isPlaying={isPlaying}
+                    isLiked={isLiked}
+                    onPlay={() => playSong(item)}
+                    onToggleLike={() => toggleFavorite(item.id)}
+                  />
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
       )}
 
       {/* Floating Bottom Mini Player (Spotify Style) */}
       <MiniPlayer />
 
-      {/* Fullscreen Now Playing Modal */}
+      {/* Fullscreen Vinyl Turntable Modal with Synced Lyrics */}
       <NowPlayingModal />
-    </SafeAreaView>
+
+      {/* In-App Update Modal (Android & iOS) */}
+      <UpdateModal
+        visible={showUpdateModal}
+        updateInfo={updateInfo}
+        onClose={() => setShowUpdateModal(false)}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: THEME.bg,
   },
-  listContent: {
+  scrollContent: {
+    paddingHorizontal: 8,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+  },
+  listContainer: {
     paddingHorizontal: 4,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    paddingTop: 4,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: -0.3,
+  },
+  countBadge: {
+    backgroundColor: THEME.elevated,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: THEME.border,
+  },
+  countText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: THEME.textMuted,
+    letterSpacing: 0.4,
+  },
+  toggleGroup: {
+    flexDirection: 'row',
+    backgroundColor: THEME.surface,
+    borderRadius: 8,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: THEME.border,
+  },
+  toggleBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleBtnActive: {
+    backgroundColor: THEME.accent,
   },
   centerBox: {
     flex: 1,

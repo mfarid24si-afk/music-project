@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { fetchSongsAPI, recordPlayStatAPI } from '../services/api';
 
 const AudioContext = createContext(null);
@@ -9,27 +9,25 @@ export function AudioProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [positionMillis, setPositionMillis] = useState(0);
-  const [durationMillis, setDurationMillis] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0); // in seconds
+  const [duration, setDuration] = useState(0); // in seconds
   const [isBuffering, setIsBuffering] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [repeatMode, setRepeatMode] = useState('off'); // 'off', 'all', 'one'
   const [isShuffle, setIsShuffle] = useState(false);
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
 
-  const soundRef = useRef(null);
+  const playerRef = useRef(null);
   const isSeekingRef = useRef(false);
 
-  // Configure Audio Mode for background playback on iOS & Android
+  // Configure background playback for iOS & Android
   useEffect(() => {
     async function configureAudio() {
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          staysActiveInBackground: true,
-          playsInSilentModeIOS: true,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: 'doNotMix',
         });
       } catch (err) {
         console.warn('Audio mode config error:', err);
@@ -53,45 +51,30 @@ export function AudioProvider({ children }) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (soundRef.current) {
-        soundRef.current.unloadAsync().catch(() => {});
+      if (playerRef.current) {
+        try {
+          playerRef.current.pause();
+          playerRef.current.remove();
+        } catch (e) {}
       }
     };
   }, []);
-
-  const onPlaybackStatusUpdate = (status) => {
-    if (!status.isLoaded) {
-      if (status.error) {
-        console.warn(`Playback Error: ${status.error}`);
-      }
-      return;
-    }
-
-    if (!isSeekingRef.current) {
-      setPositionMillis(status.positionMillis || 0);
-      setDurationMillis(status.durationMillis || 0);
-    }
-    setIsPlaying(status.isPlaying);
-    setIsBuffering(status.isBuffering);
-
-    if (status.didJustFinish && !status.isLooping) {
-      handleSongFinished();
-    }
-  };
 
   const playSong = async (song) => {
     if (!song) return;
 
     try {
-      if (soundRef.current) {
-        await soundRef.current.stopAsync().catch(() => {});
-        await soundRef.current.unloadAsync().catch(() => {});
-        soundRef.current = null;
+      if (playerRef.current) {
+        try {
+          playerRef.current.pause();
+          playerRef.current.remove();
+        } catch (e) {}
+        playerRef.current = null;
       }
 
       setCurrentSong(song);
-      setPositionMillis(0);
-      setDurationMillis(0);
+      setCurrentTime(0);
+      setDuration(0);
       setIsPlaying(true);
       setIsBuffering(true);
 
@@ -102,13 +85,34 @@ export function AudioProvider({ children }) {
         return;
       }
 
-      const { sound } = await Audio.Sound.createAsync(
+      const player = createAudioPlayer(
         { uri: audioUri },
-        { shouldPlay: true, isLooping: repeatMode === 'one' },
-        onPlaybackStatusUpdate
+        { updateInterval: 250 }
       );
+      player.loop = repeatMode === 'one';
 
-      soundRef.current = sound;
+      player.addListener('playbackStatusUpdate', (status) => {
+        if (!isSeekingRef.current) {
+          setCurrentTime(status.currentTime || 0);
+          setDuration(status.duration || 0);
+        }
+        setIsPlaying(status.playing);
+        setIsBuffering(status.isBuffering);
+
+        if (status.didJustFinish && !player.loop) {
+          handleSongFinished();
+        }
+      });
+
+      player.setActiveForLockScreen(true, {
+        title: song.title,
+        artist: song.artist,
+        albumTitle: song.album || 'Spotirid Archive',
+        artworkUrl: song.img || song.cover_image,
+      });
+
+      player.play();
+      playerRef.current = player;
       recordPlayStatAPI(song.id);
     } catch (error) {
       console.warn('Gagal memutar lagu:', error);
@@ -117,44 +121,47 @@ export function AudioProvider({ children }) {
     }
   };
 
-  const togglePlay = async () => {
-    if (!soundRef.current) {
+  const togglePlay = () => {
+    if (!playerRef.current) {
       if (currentSong) {
-        await playSong(currentSong);
+        playSong(currentSong);
       } else if (songs.length > 0) {
-        await playSong(songs[0]);
+        playSong(songs[0]);
       }
       return;
     }
 
     try {
-      if (isPlaying) {
-        await soundRef.current.pauseAsync();
+      if (playerRef.current.playing) {
+        playerRef.current.pause();
       } else {
-        await soundRef.current.playAsync();
+        playerRef.current.play();
       }
     } catch (err) {
       console.warn('Toggle play error:', err);
     }
   };
 
-  const seekTo = async (millis) => {
-    if (!soundRef.current) return;
+  const seekTo = (seconds) => {
+    if (!playerRef.current) return;
     try {
       isSeekingRef.current = true;
-      setPositionMillis(millis);
-      await soundRef.current.setPositionAsync(millis);
+      setCurrentTime(seconds);
+      playerRef.current.seekTo(seconds);
     } catch (err) {
       console.warn('Seek error:', err);
     } finally {
-      isSeekingRef.current = false;
+      setTimeout(() => {
+        isSeekingRef.current = false;
+      }, 300);
     }
   };
 
   const handleSongFinished = () => {
     if (repeatMode === 'one') {
-      if (soundRef.current) {
-        soundRef.current.replayAsync().catch(() => {});
+      if (playerRef.current) {
+        playerRef.current.seekTo(0);
+        playerRef.current.play();
       }
       return;
     }
@@ -187,7 +194,7 @@ export function AudioProvider({ children }) {
     if (!currentSong || songs.length === 0) return;
 
     // If more than 3 seconds in, restart track
-    if (positionMillis > 3000) {
+    if (currentTime > 3) {
       seekTo(0);
       return;
     }
@@ -209,8 +216,8 @@ export function AudioProvider({ children }) {
   const cycleRepeat = () => {
     setRepeatMode((prev) => {
       const next = prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off';
-      if (soundRef.current) {
-        soundRef.current.setIsLoopingAsync(next === 'one').catch(() => {});
+      if (playerRef.current) {
+        playerRef.current.loop = next === 'one';
       }
       return next;
     });
@@ -228,8 +235,8 @@ export function AudioProvider({ children }) {
         refreshSongs,
         currentSong,
         isPlaying,
-        positionMillis,
-        durationMillis,
+        currentTime,
+        duration,
         isBuffering,
         playSong,
         togglePlay,

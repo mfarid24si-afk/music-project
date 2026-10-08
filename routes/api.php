@@ -12,6 +12,15 @@ Route::post('/music/play-stat', [MusicController::class, 'playStat']);
 Route::match(['post', 'put'], '/music/{id}', [MusicController::class, 'update'])->whereNumber('id');
 Route::delete('/music/{id}', [MusicController::class, 'destroy'])->whereNumber('id');
 Route::post('/music/suggest', [MusicController::class, 'suggestSong'])->middleware(['web', 'auth']);
+Route::get('/app-version', function () {
+    return response()->json([
+        'latest_version' => '1.0.0',
+        'download_url' => 'https://expo.dev/accounts/spyvy19/projects/spotirid/builds/61c9db00-6693-464d-8717-20c0cc014aa1',
+        'is_mandatory' => false,
+        'notes' => 'Pembaruan performa dan stabilitas pemutar musik Spotirid.',
+    ]);
+});
+
 
 // Community Shared Playlists Endpoints
 Route::get('/playlists', [MusicController::class, 'getPlaylists']);
