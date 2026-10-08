@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  RefreshControl,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  TextInput,
-  Linking,
+    View,
+    Text,
+    ScrollView,
+    RefreshControl,
+    StyleSheet,
+    ActivityIndicator,
+    TouchableOpacity,
+    TextInput,
+    Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -33,996 +33,1277 @@ import { checkAppUpdateAPI } from '../services/versionChecker';
 import { THEMES, THEME, APP_BASE_URL } from '../config';
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
-  const {
-    songs,
-    playlists,
-    loading,
-    refreshData,
-    currentSong,
-    isPlaying,
-    playSong,
-    playPlaylist,
-    favorites,
-    toggleFavorite,
-    activeTheme,
-    setActiveTheme,
-    profileName,
-    setProfileName,
-    currentUser,
-    logout,
-    isLyricsOpen,
-    setIsLyricsOpen,
-    isLoginOpen,
-    setIsLoginOpen,
-    selectedPlaylist,
-    setSelectedPlaylist,
-    playlistModalSong,
-    setPlaylistModalSong,
-  } = useAudio();
+    const insets = useSafeAreaInsets();
+    const {
+        songs,
+        playlists,
+        loading,
+        refreshData,
+        currentSong,
+        isPlaying,
+        playSong,
+        playPlaylist,
+        favorites,
+        toggleFavorite,
+        activeTheme,
+        setActiveTheme,
+        profileName,
+        setProfileName,
+        currentUser,
+        logout,
+        isLyricsOpen,
+        setIsLyricsOpen,
+        isLoginOpen,
+        setIsLoginOpen,
+        selectedPlaylist,
+        setSelectedPlaylist,
+        playlistModalSong,
+        setPlaylistModalSong,
+    } = useAudio();
 
-  const accentColor = activeTheme?.color || THEME.accent;
+    const accentColor = activeTheme?.color || THEME.accent;
 
-  // Active Bottom Navigation Tab: 'tracks' | 'search' | 'playlists' | 'settings'
-  const [activeNavTab, setActiveNavTab] = useState('tracks');
+    // Active Bottom Navigation Tab: 'tracks' | 'search' | 'playlists' | 'settings'
+    const [activeNavTab, setActiveNavTab] = useState('tracks');
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
-  const [nameInput, setNameInput] = useState(profileName || 'Listener');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilter, setActiveFilter] = useState('all');
+    const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+    const [nameInput, setNameInput] = useState(profileName || 'Listener');
 
-  const [updateInfo, setUpdateInfo] = useState(null);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [updateInfo, setUpdateInfo] = useState(null);
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
 
-  // Check for app updates on mount
-  useEffect(() => {
-    async function checkForUpdates() {
-      const info = await checkAppUpdateAPI();
-      if (info && info.hasUpdate) {
-        setUpdateInfo(info);
-        setShowUpdateModal(true);
-      }
-    }
-    checkForUpdates();
-  }, []);
-
-  const handleNavTabPress = (tab) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    setActiveNavTab(tab);
-  };
-
-  const handleToggleView = (mode) => {
-    if (mode !== viewMode) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-      setViewMode(mode);
-    }
-  };
-
-  const handleFilterSelect = (filterId) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    setActiveFilter(filterId);
-  };
-
-  const safeSongs = Array.isArray(songs) ? songs : [];
-  const safePlaylists = Array.isArray(playlists) ? playlists : [];
-  const safeFavorites = Array.isArray(favorites) ? favorites : [];
-
-  const filteredSongs = useMemo(() => {
-    let result = [...safeSongs];
-
-    // Filter query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter((s) => {
-        const title = String(s?.title || '').toLowerCase();
-        const artist = String(s?.artist || '').toLowerCase();
-        const album = String(s?.album || '').toLowerCase();
-        const genre = String(s?.genre || '').toLowerCase();
-        return title.includes(q) || artist.includes(q) || album.includes(q) || genre.includes(q);
-      });
-    }
-
-    // Filter Chips
-    if (activeFilter === 'favorites') {
-      result = result.filter((s) => safeFavorites.includes(s.id));
-    } else if (activeFilter === 'lossless') {
-      result = result.filter((s) => {
-        const raw = String(s?.rawSrc || s?.audio_file || s?.src || '').toLowerCase();
-        const genre = String(s?.genre || '').toLowerCase();
-        return raw.includes('.flac') || raw.includes('.wav') || genre.includes('rock');
-      });
-    } else if (activeFilter !== 'all') {
-      result = result.filter((s) =>
-        String(s?.genre || '').toLowerCase().includes(activeFilter.toLowerCase())
-      );
-    }
-
-    return result;
-  }, [safeSongs, searchQuery, activeFilter, safeFavorites]);
-
-  const handleSaveProfileName = () => {
-    if (nameInput.trim()) {
-      setProfileName(nameInput.trim());
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    }
-  };
-
-  const handleSelectTheme = (t) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    setActiveTheme(t);
-  };
-
-  const handleLogoutPress = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-    await logout();
-  };
-
-  const currentThemeId = activeTheme?.id || 'default';
-
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Tab: TRACKS (Beranda Lagu) */}
-      {activeNavTab === 'tracks' && (
-        <View style={styles.tabScreen}>
-          <Header trackCount={safeSongs.length} />
-
-          {/* Filter Chips Row */}
-          <FilterChips
-            activeFilter={activeFilter}
-            onSelectFilter={handleFilterSelect}
-          />
-
-          {loading && safeSongs.length === 0 ? (
-            <View style={styles.centerBox}>
-              <ActivityIndicator size="large" color={accentColor} />
-              <Text style={styles.loadingText}>Menghubungkan ke Server Spotirid...</Text>
-            </View>
-          ) : (
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={[
-                styles.scrollContent,
-                { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 80 },
-              ]}
-              refreshControl={
-                <RefreshControl
-                  refreshing={loading}
-                  onRefresh={refreshData}
-                  tintColor={accentColor}
-                />
-              }
-            >
-              {/* Bento Spotlight (Featured Vinyl) */}
-              {activeFilter === 'all' && <HeroSpotlight />}
-
-              {/* Section Header with View Toggle (Grid / List) */}
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
-                  <Text style={styles.sectionTitle}>Lagu Pilihan</Text>
-                  <View style={styles.countBadge}>
-                    <Text style={styles.countText}>{filteredSongs.length} LAGU</Text>
-                  </View>
-                </View>
-
-                {/* Grid / List Mode Switcher */}
-                <View style={styles.toggleGroup}>
-                  <TouchableOpacity
-                    onPress={() => handleToggleView('grid')}
-                    style={[
-                      styles.toggleBtn,
-                      viewMode === 'grid' && [styles.toggleBtnActive, { backgroundColor: accentColor }],
-                    ]}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Ionicons
-                      name="grid"
-                      size={14}
-                      color={viewMode === 'grid' ? '#000' : THEME.textMuted}
-                    />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => handleToggleView('list')}
-                    style={[
-                      styles.toggleBtn,
-                      viewMode === 'list' && [styles.toggleBtnActive, { backgroundColor: accentColor }],
-                    ]}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Ionicons
-                      name="list"
-                      size={15}
-                      color={viewMode === 'list' ? '#000' : THEME.textMuted}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Tracks Display */}
-              {filteredSongs.length === 0 ? (
-                <View style={styles.emptyBox}>
-                  <Ionicons name="musical-notes-outline" size={48} color={THEME.textMuted} />
-                  <Text style={styles.emptyTitle}>Tidak ada lagu ditemukan</Text>
-                  <Text style={styles.emptySubtitle}>Belum ada lagu untuk filter ini</Text>
-                </View>
-              ) : viewMode === 'grid' ? (
-                <View style={styles.gridContainer}>
-                  {filteredSongs.map((item) => {
-                    const isCurrent = currentSong && currentSong.id === item.id;
-                    const isLiked = safeFavorites.includes(item.id);
-                    return (
-                      <SongCard
-                        key={String(item.id)}
-                        song={item}
-                        isCurrent={isCurrent}
-                        isPlaying={isPlaying}
-                        isLiked={isLiked}
-                        onPlay={() => playSong(item)}
-                        onToggleLike={() => toggleFavorite(item.id)}
-                        onAddToPlaylist={() => setPlaylistModalSong(item)}
-                        activeTheme={activeTheme}
-                      />
-                    );
-                  })}
-                </View>
-              ) : (
-                <View style={styles.listContainer}>
-                  {filteredSongs.map((item) => {
-                    const isCurrent = currentSong && currentSong.id === item.id;
-                    const isLiked = safeFavorites.includes(item.id);
-                    return (
-                      <SongItem
-                        key={String(item.id)}
-                        song={item}
-                        isCurrent={isCurrent}
-                        isPlaying={isPlaying}
-                        isLiked={isLiked}
-                        onPlay={() => playSong(item)}
-                        onToggleLike={() => toggleFavorite(item.id)}
-                        onAddToPlaylist={() => setPlaylistModalSong(item)}
-                        activeTheme={activeTheme}
-                      />
-                    );
-                  })}
-                </View>
-              )}
-            </ScrollView>
-          )}
-        </View>
-      )}
-
-      {/* Tab: PENCARIAN (Search Screen) */}
-      {activeNavTab === 'search' && (
-        <View style={styles.tabScreen}>
-          <View style={styles.tabScreenHeader}>
-            <Text style={styles.tabScreenTitle}>Pencarian</Text>
-            <Text style={styles.tabScreenSub}>Cari judul lagu, artis, atau album...</Text>
-          </View>
-
-          <SearchBar
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onClear={() => setSearchQuery('')}
-          />
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 80 },
-            ]}
-          >
-            <View style={styles.listContainer}>
-              {filteredSongs.map((item) => {
-                const isCurrent = currentSong && currentSong.id === item.id;
-                const isLiked = safeFavorites.includes(item.id);
-                return (
-                  <SongItem
-                    key={String(item.id)}
-                    song={item}
-                    isCurrent={isCurrent}
-                    isPlaying={isPlaying}
-                    isLiked={isLiked}
-                    onPlay={() => playSong(item)}
-                    onToggleLike={() => toggleFavorite(item.id)}
-                    onAddToPlaylist={() => setPlaylistModalSong(item)}
-                    activeTheme={activeTheme}
-                  />
-                );
-              })}
-            </View>
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Tab: PLAYLIST (Playlists Screen) */}
-      {activeNavTab === 'playlists' && (
-        <View style={styles.tabScreen}>
-          <View style={styles.playlistHeaderRow}>
-            <View>
-              <Text style={styles.tabScreenTitle}>Koleksi Playlist</Text>
-              <Text style={styles.tabScreenSub}>Daftar playlist yang siap didengarkan</Text>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.createPlBtn, { backgroundColor: accentColor }]}
-              onPress={() =>
-                setPlaylistModalSong({ id: 0, title: 'Playlist Baru', artist: 'Kustom' })
-              }
-              activeOpacity={0.8}
-            >
-              <Ionicons name="add" size={16} color="#000" />
-              <Text style={styles.createPlText}>Buat Playlist</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 80 },
-            ]}
-            refreshControl={
-              <RefreshControl
-                refreshing={loading}
-                onRefresh={refreshData}
-                tintColor={accentColor}
-              />
+    // Check for app updates on mount
+    useEffect(() => {
+        async function checkForUpdates() {
+            const info = await checkAppUpdateAPI();
+            if (info && info.hasUpdate) {
+                setUpdateInfo(info);
+                setShowUpdateModal(true);
             }
-          >
-            {safePlaylists.length === 0 ? (
-              <View style={styles.emptyBox}>
-                <Ionicons name="albums-outline" size={48} color={THEME.textMuted} />
-                <Text style={styles.emptyTitle}>Belum ada playlist</Text>
-                <Text style={styles.emptySubtitle}>Buat playlist pertamamu sekarang!</Text>
-              </View>
-            ) : (
-              <View style={styles.gridContainer}>
-                {safePlaylists.map((pl) => (
-                  <PlaylistCard
-                    key={String(pl.id)}
-                    playlist={pl}
-                    onOpen={() => setSelectedPlaylist(pl)}
-                    onPlayAll={() => playPlaylist(pl)}
-                    activeTheme={activeTheme}
-                  />
-                ))}
-              </View>
-            )}
-          </ScrollView>
-        </View>
-      )}
+        }
+        void checkForUpdates();
+    }, []);
 
-      {/* Tab: PENGATURAN (Settings Screen) */}
-      {activeNavTab === 'settings' && (
-        <View style={styles.tabScreen}>
-          <View style={styles.tabScreenHeader}>
-            <Text style={styles.tabScreenTitle}>Pengaturan</Text>
-            <Text style={styles.tabScreenSub}>Pengaturan profil, tema warna, dan sistem</Text>
-          </View>
+    const handleNavTabPress = (tab) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        setActiveNavTab(tab);
+    };
 
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 80, gap: 16 },
-            ]}
-          >
-            {/* Account Status */}
-            <View style={styles.settingsSection}>
-              <Text style={styles.settingsSectionLabel}>STATUS AKUN</Text>
-              {currentUser ? (
-                <View style={styles.card}>
-                  <View style={styles.userRow}>
-                    <View style={[styles.avatar, { backgroundColor: accentColor }]}>
-                      <Text style={styles.avatarText}>
-                        {(currentUser.name || 'U').charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                    <View style={styles.userInfo}>
-                      <Text style={styles.userName}>{currentUser.name}</Text>
-                      <Text style={styles.userEmail}>{currentUser.email}</Text>
-                      <View style={styles.roleBadge}>
-                        <Text style={styles.roleText}>
-                          {(currentUser.role || 'MEMBER').toUpperCase()}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
+    const handleToggleView = (mode) => {
+        if (mode !== viewMode) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+                () => {},
+            );
+            setViewMode(mode);
+        }
+    };
 
-                  <TouchableOpacity
-                    style={styles.logoutBtn}
-                    onPress={handleLogoutPress}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="log-out-outline" size={16} color="#ef4444" />
-                    <Text style={styles.logoutBtnText}>Keluar dari Akun</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <View style={styles.card}>
-                  <Text style={styles.guestTitle}>Anda masuk sebagai Tamu (Guest)</Text>
-                  <Text style={styles.guestSubtitle}>
-                    Login dengan akun Anda untuk sinkronisasi playlist dan pengajuan lagu.
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.loginBtn, { backgroundColor: accentColor }]}
-                    onPress={() => setIsLoginOpen(true)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="log-in-outline" size={18} color="#000" />
-                    <Text style={styles.loginBtnText}>Masuk ke Akun</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
+    const handleFilterSelect = (filterId) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        setActiveFilter(filterId);
+    };
 
-            {/* Profile Name */}
-            <View style={styles.settingsSection}>
-              <Text style={styles.settingsSectionLabel}>NAMA PANGGILAN</Text>
-              <View style={styles.card}>
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={styles.textInput}
-                    value={nameInput}
-                    onChangeText={setNameInput}
-                    placeholder="Nama sapaan..."
-                    placeholderTextColor={THEME.textMuted}
-                    maxLength={30}
-                  />
-                  <TouchableOpacity
-                    style={[styles.saveBtn, { backgroundColor: accentColor }]}
-                    onPress={handleSaveProfileName}
-                  >
-                    <Text style={styles.saveBtnText}>Simpan</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
+    const safeSongs = Array.isArray(songs) ? songs : [];
+    const safePlaylists = Array.isArray(playlists) ? playlists : [];
+    const safeFavorites = Array.isArray(favorites) ? favorites : [];
 
-            {/* Theme Selector */}
-            <View style={styles.settingsSection}>
-              <Text style={styles.settingsSectionLabel}>TEMA & AKSEN WARNA</Text>
-              <View style={styles.card}>
-                <View style={styles.themesGrid}>
-                  {THEMES.map((t) => {
-                    const isSelected = currentThemeId === t.id;
-                    return (
-                      <TouchableOpacity
-                        key={t.id}
-                        style={[
-                          styles.themeItem,
-                          isSelected && {
-                            borderColor: t.color,
-                            backgroundColor: 'rgba(255,255,255,0.06)',
-                          },
-                        ]}
-                        onPress={() => handleSelectTheme(t)}
-                        activeOpacity={0.7}
-                      >
-                        <View style={[styles.colorDot, { backgroundColor: t.color }]} />
-                        <Text
-                          style={[
-                            styles.themeName,
-                            isSelected && { color: '#fff', fontWeight: '800' },
-                          ]}
+    const filteredSongs = useMemo(() => {
+        let result = [...safeSongs];
+
+        // Filter query
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter((s) => {
+                const title = String(s?.title || '').toLowerCase();
+                const artist = String(s?.artist || '').toLowerCase();
+                const album = String(s?.album || '').toLowerCase();
+                const genre = String(s?.genre || '').toLowerCase();
+                return (
+                    title.includes(q) ||
+                    artist.includes(q) ||
+                    album.includes(q) ||
+                    genre.includes(q)
+                );
+            });
+        }
+
+        // Filter Chips
+        if (activeFilter === 'favorites') {
+            result = result.filter((s) => safeFavorites.includes(s.id));
+        } else if (activeFilter === 'lossless') {
+            result = result.filter((s) => {
+                const raw = String(
+                    s?.rawSrc || s?.audio_file || s?.src || '',
+                ).toLowerCase();
+                const genre = String(s?.genre || '').toLowerCase();
+                return (
+                    raw.includes('.flac') ||
+                    raw.includes('.wav') ||
+                    genre.includes('rock')
+                );
+            });
+        } else if (activeFilter !== 'all') {
+            result = result.filter((s) =>
+                String(s?.genre || '')
+                    .toLowerCase()
+                    .includes(activeFilter.toLowerCase()),
+            );
+        }
+
+        return result;
+    }, [safeSongs, searchQuery, activeFilter, safeFavorites]);
+
+    const handleSaveProfileName = () => {
+        if (nameInput.trim()) {
+            setProfileName(nameInput.trim());
+            Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success,
+            ).catch(() => {});
+        }
+    };
+
+    const handleSelectTheme = (t) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        setActiveTheme(t);
+    };
+
+    const handleLogoutPress = async () => {
+        Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Warning,
+        ).catch(() => {});
+        await logout();
+    };
+
+    const currentThemeId = activeTheme?.id || 'default';
+
+    return (
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+            {/* Tab: TRACKS (Beranda Lagu) */}
+            {activeNavTab === 'tracks' && (
+                <View style={styles.tabScreen}>
+                    <Header trackCount={safeSongs.length} />
+
+                    {/* Filter Chips Row */}
+                    <FilterChips
+                        activeFilter={activeFilter}
+                        onSelectFilter={handleFilterSelect}
+                    />
+
+                    {loading && safeSongs.length === 0 ? (
+                        <View style={styles.centerBox}>
+                            <ActivityIndicator
+                                size="large"
+                                color={accentColor}
+                            />
+                            <Text style={styles.loadingText}>
+                                Menghubungkan ke Server Spotirid...
+                            </Text>
+                        </View>
+                    ) : (
+                        <ScrollView
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={[
+                                styles.scrollContent,
+                                {
+                                    paddingBottom: currentSong
+                                        ? insets.bottom + 140
+                                        : insets.bottom + 80,
+                                },
+                            ]}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={loading}
+                                    onRefresh={refreshData}
+                                    tintColor={accentColor}
+                                />
+                            }
                         >
-                          {t.name}
-                        </Text>
-                        {isSelected && (
-                          <Ionicons
-                            name="checkmark-circle"
-                            size={16}
-                            color={t.color}
-                            style={styles.checkIcon}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
+                            {/* Bento Spotlight (Featured Vinyl) */}
+                            {activeFilter === 'all' && <HeroSpotlight />}
+
+                            {/* Section Header with View Toggle (Grid / List) */}
+                            <View style={styles.sectionHeader}>
+                                <View style={styles.sectionTitleRow}>
+                                    <Text style={styles.sectionTitle}>
+                                        Lagu Pilihan
+                                    </Text>
+                                    <View style={styles.countBadge}>
+                                        <Text style={styles.countText}>
+                                            {filteredSongs.length} LAGU
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                {/* Grid / List Mode Switcher */}
+                                <View style={styles.toggleGroup}>
+                                    <TouchableOpacity
+                                        onPress={() => handleToggleView('grid')}
+                                        style={[
+                                            styles.toggleBtn,
+                                            viewMode === 'grid' && [
+                                                styles.toggleBtnActive,
+                                                {
+                                                    backgroundColor:
+                                                        accentColor,
+                                                },
+                                            ],
+                                        ]}
+                                        hitSlop={{
+                                            top: 8,
+                                            bottom: 8,
+                                            left: 8,
+                                            right: 8,
+                                        }}
+                                    >
+                                        <Ionicons
+                                            name="grid"
+                                            size={14}
+                                            color={
+                                                viewMode === 'grid'
+                                                    ? '#000'
+                                                    : THEME.textMuted
+                                            }
+                                        />
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        onPress={() => handleToggleView('list')}
+                                        style={[
+                                            styles.toggleBtn,
+                                            viewMode === 'list' && [
+                                                styles.toggleBtnActive,
+                                                {
+                                                    backgroundColor:
+                                                        accentColor,
+                                                },
+                                            ],
+                                        ]}
+                                        hitSlop={{
+                                            top: 8,
+                                            bottom: 8,
+                                            left: 8,
+                                            right: 8,
+                                        }}
+                                    >
+                                        <Ionicons
+                                            name="list"
+                                            size={15}
+                                            color={
+                                                viewMode === 'list'
+                                                    ? '#000'
+                                                    : THEME.textMuted
+                                            }
+                                        />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            {/* Tracks Display */}
+                            {filteredSongs.length === 0 ? (
+                                <View style={styles.emptyBox}>
+                                    <Ionicons
+                                        name="musical-notes-outline"
+                                        size={48}
+                                        color={THEME.textMuted}
+                                    />
+                                    <Text style={styles.emptyTitle}>
+                                        Tidak ada lagu ditemukan
+                                    </Text>
+                                    <Text style={styles.emptySubtitle}>
+                                        Belum ada lagu untuk filter ini
+                                    </Text>
+                                </View>
+                            ) : viewMode === 'grid' ? (
+                                <View style={styles.gridContainer}>
+                                    {filteredSongs.map((item) => {
+                                        const isCurrent =
+                                            currentSong &&
+                                            currentSong.id === item.id;
+                                        const isLiked = safeFavorites.includes(
+                                            item.id,
+                                        );
+                                        return (
+                                            <SongCard
+                                                key={String(item.id)}
+                                                song={item}
+                                                isCurrent={isCurrent}
+                                                isPlaying={isPlaying}
+                                                isLiked={isLiked}
+                                                onPlay={() => playSong(item)}
+                                                onToggleLike={() =>
+                                                    toggleFavorite(item.id)
+                                                }
+                                                onAddToPlaylist={() =>
+                                                    setPlaylistModalSong(item)
+                                                }
+                                                activeTheme={activeTheme}
+                                            />
+                                        );
+                                    })}
+                                </View>
+                            ) : (
+                                <View style={styles.listContainer}>
+                                    {filteredSongs.map((item) => {
+                                        const isCurrent =
+                                            currentSong &&
+                                            currentSong.id === item.id;
+                                        const isLiked = safeFavorites.includes(
+                                            item.id,
+                                        );
+                                        return (
+                                            <SongItem
+                                                key={String(item.id)}
+                                                song={item}
+                                                isCurrent={isCurrent}
+                                                isPlaying={isPlaying}
+                                                isLiked={isLiked}
+                                                onPlay={() => playSong(item)}
+                                                onToggleLike={() =>
+                                                    toggleFavorite(item.id)
+                                                }
+                                                onAddToPlaylist={() =>
+                                                    setPlaylistModalSong(item)
+                                                }
+                                                activeTheme={activeTheme}
+                                            />
+                                        );
+                                    })}
+                                </View>
+                            )}
+                        </ScrollView>
+                    )}
                 </View>
-              </View>
+            )}
+
+            {/* Tab: PENCARIAN (Search Screen) */}
+            {activeNavTab === 'search' && (
+                <View style={styles.tabScreen}>
+                    <View style={styles.tabScreenHeader}>
+                        <Text style={styles.tabScreenTitle}>Pencarian</Text>
+                        <Text style={styles.tabScreenSub}>
+                            Cari judul lagu, artis, atau album...
+                        </Text>
+                    </View>
+
+                    <SearchBar
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onClear={() => setSearchQuery('')}
+                    />
+
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={[
+                            styles.scrollContent,
+                            {
+                                paddingBottom: currentSong
+                                    ? insets.bottom + 140
+                                    : insets.bottom + 80,
+                            },
+                        ]}
+                    >
+                        <View style={styles.listContainer}>
+                            {filteredSongs.map((item) => {
+                                const isCurrent =
+                                    currentSong && currentSong.id === item.id;
+                                const isLiked = safeFavorites.includes(item.id);
+                                return (
+                                    <SongItem
+                                        key={String(item.id)}
+                                        song={item}
+                                        isCurrent={isCurrent}
+                                        isPlaying={isPlaying}
+                                        isLiked={isLiked}
+                                        onPlay={() => playSong(item)}
+                                        onToggleLike={() =>
+                                            toggleFavorite(item.id)
+                                        }
+                                        onAddToPlaylist={() =>
+                                            setPlaylistModalSong(item)
+                                        }
+                                        activeTheme={activeTheme}
+                                    />
+                                );
+                            })}
+                        </View>
+                    </ScrollView>
+                </View>
+            )}
+
+            {/* Tab: PLAYLIST (Playlists Screen) */}
+            {activeNavTab === 'playlists' && (
+                <View style={styles.tabScreen}>
+                    <View style={styles.playlistHeaderRow}>
+                        <View>
+                            <Text style={styles.tabScreenTitle}>
+                                Koleksi Playlist
+                            </Text>
+                            <Text style={styles.tabScreenSub}>
+                                Daftar playlist yang siap didengarkan
+                            </Text>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.createPlBtn,
+                                { backgroundColor: accentColor },
+                            ]}
+                            onPress={() =>
+                                setPlaylistModalSong({
+                                    id: 0,
+                                    title: 'Playlist Baru',
+                                    artist: 'Kustom',
+                                })
+                            }
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="add" size={16} color="#000" />
+                            <Text style={styles.createPlText}>
+                                Buat Playlist
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={[
+                            styles.scrollContent,
+                            {
+                                paddingBottom: currentSong
+                                    ? insets.bottom + 140
+                                    : insets.bottom + 80,
+                            },
+                        ]}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={loading}
+                                onRefresh={refreshData}
+                                tintColor={accentColor}
+                            />
+                        }
+                    >
+                        {safePlaylists.length === 0 ? (
+                            <View style={styles.emptyBox}>
+                                <Ionicons
+                                    name="albums-outline"
+                                    size={48}
+                                    color={THEME.textMuted}
+                                />
+                                <Text style={styles.emptyTitle}>
+                                    Belum ada playlist
+                                </Text>
+                                <Text style={styles.emptySubtitle}>
+                                    Buat playlist pertamamu sekarang!
+                                </Text>
+                            </View>
+                        ) : (
+                            <View style={styles.gridContainer}>
+                                {safePlaylists.map((pl) => (
+                                    <PlaylistCard
+                                        key={String(pl.id)}
+                                        playlist={pl}
+                                        onOpen={() => setSelectedPlaylist(pl)}
+                                        onPlayAll={() => playPlaylist(pl)}
+                                        activeTheme={activeTheme}
+                                    />
+                                ))}
+                            </View>
+                        )}
+                    </ScrollView>
+                </View>
+            )}
+
+            {/* Tab: PENGATURAN (Settings Screen) */}
+            {activeNavTab === 'settings' && (
+                <View style={styles.tabScreen}>
+                    <View style={styles.tabScreenHeader}>
+                        <Text style={styles.tabScreenTitle}>Pengaturan</Text>
+                        <Text style={styles.tabScreenSub}>
+                            Pengaturan profil, tema warna, dan sistem
+                        </Text>
+                    </View>
+
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={[
+                            styles.scrollContent,
+                            {
+                                paddingBottom: currentSong
+                                    ? insets.bottom + 140
+                                    : insets.bottom + 80,
+                                gap: 16,
+                            },
+                        ]}
+                    >
+                        {/* Account Status */}
+                        <View style={styles.settingsSection}>
+                            <Text style={styles.settingsSectionLabel}>
+                                STATUS AKUN
+                            </Text>
+                            {currentUser ? (
+                                <View style={styles.card}>
+                                    <View style={styles.userRow}>
+                                        <View
+                                            style={[
+                                                styles.avatar,
+                                                {
+                                                    backgroundColor:
+                                                        accentColor,
+                                                },
+                                            ]}
+                                        >
+                                            <Text style={styles.avatarText}>
+                                                {(currentUser.name || 'U')
+                                                    .charAt(0)
+                                                    .toUpperCase()}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.userInfo}>
+                                            <Text style={styles.userName}>
+                                                {currentUser.name}
+                                            </Text>
+                                            <Text style={styles.userEmail}>
+                                                {currentUser.email}
+                                            </Text>
+                                            <View style={styles.roleBadge}>
+                                                <Text style={styles.roleText}>
+                                                    {(
+                                                        currentUser.role ||
+                                                        'MEMBER'
+                                                    ).toUpperCase()}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                    <TouchableOpacity
+                                        style={styles.logoutBtn}
+                                        onPress={handleLogoutPress}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons
+                                            name="log-out-outline"
+                                            size={16}
+                                            color="#ef4444"
+                                        />
+                                        <Text style={styles.logoutBtnText}>
+                                            Keluar dari Akun
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <View style={styles.card}>
+                                    <Text style={styles.guestTitle}>
+                                        Anda masuk sebagai Tamu (Guest)
+                                    </Text>
+                                    <Text style={styles.guestSubtitle}>
+                                        Login dengan akun Anda untuk
+                                        sinkronisasi playlist dan pengajuan
+                                        lagu.
+                                    </Text>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.loginBtn,
+                                            { backgroundColor: accentColor },
+                                        ]}
+                                        onPress={() => setIsLoginOpen(true)}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Ionicons
+                                            name="log-in-outline"
+                                            size={18}
+                                            color="#000"
+                                        />
+                                        <Text style={styles.loginBtnText}>
+                                            Masuk ke Akun
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+
+                        {/* Profile Name */}
+                        <View style={styles.settingsSection}>
+                            <Text style={styles.settingsSectionLabel}>
+                                NAMA PANGGILAN
+                            </Text>
+                            <View style={styles.card}>
+                                <View style={styles.inputRow}>
+                                    <TextInput
+                                        style={styles.textInput}
+                                        value={nameInput}
+                                        onChangeText={setNameInput}
+                                        placeholder="Nama sapaan..."
+                                        placeholderTextColor={THEME.textMuted}
+                                        maxLength={30}
+                                    />
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.saveBtn,
+                                            { backgroundColor: accentColor },
+                                        ]}
+                                        onPress={handleSaveProfileName}
+                                    >
+                                        <Text style={styles.saveBtnText}>
+                                            Simpan
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Theme Selector */}
+                        <View style={styles.settingsSection}>
+                            <Text style={styles.settingsSectionLabel}>
+                                TEMA & AKSEN WARNA
+                            </Text>
+                            <View style={styles.card}>
+                                <View style={styles.themesGrid}>
+                                    {THEMES.map((t) => {
+                                        const isSelected =
+                                            currentThemeId === t.id;
+                                        return (
+                                            <TouchableOpacity
+                                                key={t.id}
+                                                style={[
+                                                    styles.themeItem,
+                                                    isSelected && {
+                                                        borderColor: t.color,
+                                                        backgroundColor:
+                                                            'rgba(255,255,255,0.06)',
+                                                    },
+                                                ]}
+                                                onPress={() =>
+                                                    handleSelectTheme(t)
+                                                }
+                                                activeOpacity={0.7}
+                                            >
+                                                <View
+                                                    style={[
+                                                        styles.colorDot,
+                                                        {
+                                                            backgroundColor:
+                                                                t.color,
+                                                        },
+                                                    ]}
+                                                />
+                                                <Text
+                                                    style={[
+                                                        styles.themeName,
+                                                        isSelected && {
+                                                            color: '#fff',
+                                                            fontWeight: '800',
+                                                        },
+                                                    ]}
+                                                >
+                                                    {t.name}
+                                                </Text>
+                                                {isSelected && (
+                                                    <Ionicons
+                                                        name="checkmark-circle"
+                                                        size={16}
+                                                        color={t.color}
+                                                        style={styles.checkIcon}
+                                                    />
+                                                )}
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Web Admin Portal Shortcut */}
+                        <View style={styles.settingsSection}>
+                            <TouchableOpacity
+                                style={styles.adminBtn}
+                                onPress={() => {
+                                    Linking.openURL(
+                                        `${APP_BASE_URL}/admin/login`,
+                                    ).catch(() => {});
+                                }}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons
+                                    name="shield-checkmark"
+                                    size={18}
+                                    color="#000"
+                                />
+                                <Text style={styles.adminBtnText}>
+                                    Buka Web Admin Portal Spotirid
+                                </Text>
+                                <Ionicons
+                                    name="open-outline"
+                                    size={16}
+                                    color="#000"
+                                    style={{ marginLeft: 'auto' }}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollView>
+                </View>
+            )}
+
+            {/* Floating Bottom Mini Player (Above Bottom Navigation Bar) */}
+            <MiniPlayer />
+
+            {/* Frosted Glass Bottom Navigation Bar (Instagram & Telegram Glassmorphism) */}
+            <View
+                style={[
+                    styles.bottomNavBarWrapper,
+                    { height: 56 + Math.max(insets.bottom, 10) },
+                ]}
+            >
+                <BlurView intensity={90} tint="dark" style={styles.glassNavBar}>
+                    <TouchableOpacity
+                        style={styles.navBarItem}
+                        onPress={() => handleNavTabPress('tracks')}
+                        activeOpacity={0.7}
+                    >
+                        <View
+                            style={[
+                                styles.iconPill,
+                                activeNavTab === 'tracks' && {
+                                    backgroundColor: accentColor + '22',
+                                },
+                            ]}
+                        >
+                            <Ionicons
+                                name={
+                                    activeNavTab === 'tracks'
+                                        ? 'musical-notes'
+                                        : 'musical-notes-outline'
+                                }
+                                size={21}
+                                color={
+                                    activeNavTab === 'tracks'
+                                        ? accentColor
+                                        : THEME.textMuted
+                                }
+                            />
+                        </View>
+                        <Text
+                            style={[
+                                styles.navBarLabel,
+                                activeNavTab === 'tracks' && [
+                                    styles.navBarLabelActive,
+                                    { color: accentColor },
+                                ],
+                            ]}
+                        >
+                            Lagu
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.navBarItem}
+                        onPress={() => handleNavTabPress('search')}
+                        activeOpacity={0.7}
+                    >
+                        <View
+                            style={[
+                                styles.iconPill,
+                                activeNavTab === 'search' && {
+                                    backgroundColor: accentColor + '22',
+                                },
+                            ]}
+                        >
+                            <Ionicons
+                                name={
+                                    activeNavTab === 'search'
+                                        ? 'search'
+                                        : 'search-outline'
+                                }
+                                size={21}
+                                color={
+                                    activeNavTab === 'search'
+                                        ? accentColor
+                                        : THEME.textMuted
+                                }
+                            />
+                        </View>
+                        <Text
+                            style={[
+                                styles.navBarLabel,
+                                activeNavTab === 'search' && [
+                                    styles.navBarLabelActive,
+                                    { color: accentColor },
+                                ],
+                            ]}
+                        >
+                            Pencarian
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.navBarItem}
+                        onPress={() => handleNavTabPress('playlists')}
+                        activeOpacity={0.7}
+                    >
+                        <View
+                            style={[
+                                styles.iconPill,
+                                activeNavTab === 'playlists' && {
+                                    backgroundColor: accentColor + '22',
+                                },
+                            ]}
+                        >
+                            <Ionicons
+                                name={
+                                    activeNavTab === 'playlists'
+                                        ? 'albums'
+                                        : 'albums-outline'
+                                }
+                                size={21}
+                                color={
+                                    activeNavTab === 'playlists'
+                                        ? accentColor
+                                        : THEME.textMuted
+                                }
+                            />
+                        </View>
+                        <Text
+                            style={[
+                                styles.navBarLabel,
+                                activeNavTab === 'playlists' && [
+                                    styles.navBarLabelActive,
+                                    { color: accentColor },
+                                ],
+                            ]}
+                        >
+                            Playlist
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.navBarItem}
+                        onPress={() => handleNavTabPress('settings')}
+                        activeOpacity={0.7}
+                    >
+                        <View
+                            style={[
+                                styles.iconPill,
+                                activeNavTab === 'settings' && {
+                                    backgroundColor: accentColor + '22',
+                                },
+                            ]}
+                        >
+                            <Ionicons
+                                name={
+                                    activeNavTab === 'settings'
+                                        ? 'settings-sharp'
+                                        : 'settings-outline'
+                                }
+                                size={21}
+                                color={
+                                    activeNavTab === 'settings'
+                                        ? accentColor
+                                        : THEME.textMuted
+                                }
+                            />
+                        </View>
+                        <Text
+                            style={[
+                                styles.navBarLabel,
+                                activeNavTab === 'settings' && [
+                                    styles.navBarLabelActive,
+                                    { color: accentColor },
+                                ],
+                            ]}
+                        >
+                            Pengaturan
+                        </Text>
+                    </TouchableOpacity>
+                </BlurView>
             </View>
 
-            {/* Web Admin Portal Shortcut */}
-            <View style={styles.settingsSection}>
-              <TouchableOpacity
-                style={styles.adminBtn}
-                onPress={() => {
-                  Linking.openURL(`${APP_BASE_URL}/admin/login`).catch(() => {});
-                }}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="shield-checkmark" size={18} color="#000" />
-                <Text style={styles.adminBtnText}>Buka Web Admin Portal Spotirid</Text>
-                <Ionicons name="open-outline" size={16} color="#000" style={{ marginLeft: 'auto' }} />
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
+            {/* Fullscreen Vinyl Turntable Modal with Synced Lyrics & Swipe Down to Minimize */}
+            <NowPlayingModal />
+
+            {/* Synced Lyrics Sheet Modal */}
+            <LyricsModal
+                visible={isLyricsOpen}
+                onClose={() => setIsLyricsOpen(false)}
+            />
+
+            {/* Login Modal */}
+            <LoginModal
+                visible={isLoginOpen}
+                onClose={() => setIsLoginOpen(false)}
+            />
+
+            {/* Playlist Detail Modal */}
+            {selectedPlaylist ? (
+                <PlaylistDetailModal
+                    visible={!!selectedPlaylist}
+                    playlist={selectedPlaylist}
+                    onClose={() => setSelectedPlaylist(null)}
+                />
+            ) : null}
+
+            {/* Add To Playlist Modal */}
+            {playlistModalSong ? (
+                <AddToPlaylistModal
+                    visible={!!playlistModalSong}
+                    song={playlistModalSong}
+                    onClose={() => setPlaylistModalSong(null)}
+                />
+            ) : null}
+
+            {/* In-App Update Modal (Android & iOS) */}
+            <UpdateModal
+                visible={showUpdateModal}
+                updateInfo={updateInfo}
+                onClose={() => setShowUpdateModal(false)}
+            />
         </View>
-      )}
-
-      {/* Floating Bottom Mini Player (Above Bottom Navigation Bar) */}
-      <MiniPlayer />
-
-      {/* Frosted Glass Bottom Navigation Bar (Instagram & Telegram Glassmorphism) */}
-      <View style={[styles.bottomNavBarWrapper, { height: 56 + Math.max(insets.bottom, 10) }]}>
-        <BlurView intensity={90} tint="dark" style={styles.glassNavBar}>
-          <TouchableOpacity
-            style={styles.navBarItem}
-            onPress={() => handleNavTabPress('tracks')}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.iconPill, activeNavTab === 'tracks' && { backgroundColor: accentColor + '22' }]}>
-              <Ionicons
-                name={activeNavTab === 'tracks' ? 'musical-notes' : 'musical-notes-outline'}
-                size={21}
-                color={activeNavTab === 'tracks' ? accentColor : THEME.textMuted}
-              />
-            </View>
-            <Text
-              style={[
-                styles.navBarLabel,
-                activeNavTab === 'tracks' && [styles.navBarLabelActive, { color: accentColor }],
-              ]}
-            >
-              Lagu
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.navBarItem}
-            onPress={() => handleNavTabPress('search')}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.iconPill, activeNavTab === 'search' && { backgroundColor: accentColor + '22' }]}>
-              <Ionicons
-                name={activeNavTab === 'search' ? 'search' : 'search-outline'}
-                size={21}
-                color={activeNavTab === 'search' ? accentColor : THEME.textMuted}
-              />
-            </View>
-            <Text
-              style={[
-                styles.navBarLabel,
-                activeNavTab === 'search' && [styles.navBarLabelActive, { color: accentColor }],
-              ]}
-            >
-              Pencarian
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.navBarItem}
-            onPress={() => handleNavTabPress('playlists')}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.iconPill, activeNavTab === 'playlists' && { backgroundColor: accentColor + '22' }]}>
-              <Ionicons
-                name={activeNavTab === 'playlists' ? 'albums' : 'albums-outline'}
-                size={21}
-                color={activeNavTab === 'playlists' ? accentColor : THEME.textMuted}
-              />
-            </View>
-            <Text
-              style={[
-                styles.navBarLabel,
-                activeNavTab === 'playlists' && [styles.navBarLabelActive, { color: accentColor }],
-              ]}
-            >
-              Playlist
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.navBarItem}
-            onPress={() => handleNavTabPress('settings')}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.iconPill, activeNavTab === 'settings' && { backgroundColor: accentColor + '22' }]}>
-              <Ionicons
-                name={activeNavTab === 'settings' ? 'settings-sharp' : 'settings-outline'}
-                size={21}
-                color={activeNavTab === 'settings' ? accentColor : THEME.textMuted}
-              />
-            </View>
-            <Text
-              style={[
-                styles.navBarLabel,
-                activeNavTab === 'settings' && [styles.navBarLabelActive, { color: accentColor }],
-              ]}
-            >
-              Pengaturan
-            </Text>
-          </TouchableOpacity>
-        </BlurView>
-      </View>
-
-      {/* Fullscreen Vinyl Turntable Modal with Synced Lyrics & Swipe Down to Minimize */}
-      <NowPlayingModal />
-
-      {/* Synced Lyrics Sheet Modal */}
-      <LyricsModal
-        visible={isLyricsOpen}
-        onClose={() => setIsLyricsOpen(false)}
-      />
-
-      {/* Login Modal */}
-      <LoginModal
-        visible={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-      />
-
-      {/* Playlist Detail Modal */}
-      {selectedPlaylist ? (
-        <PlaylistDetailModal
-          visible={!!selectedPlaylist}
-          playlist={selectedPlaylist}
-          onClose={() => setSelectedPlaylist(null)}
-        />
-      ) : null}
-
-      {/* Add To Playlist Modal */}
-      {playlistModalSong ? (
-        <AddToPlaylistModal
-          visible={!!playlistModalSong}
-          song={playlistModalSong}
-          onClose={() => setPlaylistModalSong(null)}
-        />
-      ) : null}
-
-      {/* In-App Update Modal (Android & iOS) */}
-      <UpdateModal
-        visible={showUpdateModal}
-        updateInfo={updateInfo}
-        onClose={() => setShowUpdateModal(false)}
-      />
-    </View>
-  );
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: THEME.bg,
-  },
-  tabScreen: {
-    flex: 1,
-  },
-  tabScreenHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 6,
-  },
-  tabScreenTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#fff',
-    letterSpacing: -0.5,
-  },
-  tabScreenSub: {
-    fontSize: 12,
-    color: THEME.textMuted,
-    marginTop: 2,
-    marginBottom: 6,
-  },
-  scrollContent: {
-    paddingHorizontal: 8,
-    paddingTop: 4,
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-  },
-  listContainer: {
-    paddingHorizontal: 4,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    marginBottom: 12,
-    paddingTop: 8,
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#fff',
-    letterSpacing: -0.3,
-  },
-  countBadge: {
-    backgroundColor: THEME.elevated,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: THEME.border,
-  },
-  countText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: THEME.textMuted,
-    letterSpacing: 0.4,
-  },
-  toggleGroup: {
-    flexDirection: 'row',
-    backgroundColor: THEME.surface,
-    borderRadius: 8,
-    padding: 2,
-    borderWidth: 1,
-    borderColor: THEME.border,
-  },
-  toggleBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toggleBtnActive: {},
-  playlistHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    paddingTop: 8,
-  },
-  createPlBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  createPlText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#000',
-  },
-  centerBox: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 13,
-    color: THEME.textMuted,
-    fontWeight: '500',
-  },
-  emptyBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-    gap: 8,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  emptySubtitle: {
-    fontSize: 12,
-    color: THEME.textMuted,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  bottomNavBarWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.12)',
-    overflow: 'hidden',
-  },
-  glassNavBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: 'rgba(13, 14, 17, 0.75)',
-  },
-  navBarItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 6,
-    gap: 3,
-  },
-  iconPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navBarLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: THEME.textMuted,
-  },
-  navBarLabelActive: {
-    fontWeight: '800',
-  },
-  settingsSection: {
-    gap: 8,
-  },
-  settingsSectionLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: THEME.textMuted,
-    letterSpacing: 0.8,
-  },
-  card: {
-    backgroundColor: THEME.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: THEME.border,
-    padding: 16,
-  },
-  userRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#000',
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#fff',
-  },
-  userEmail: {
-    fontSize: 12,
-    color: THEME.textMuted,
-    marginTop: 2,
-  },
-  roleBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  roleText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#fff',
-  },
-  logoutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.25)',
-  },
-  logoutBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#fca5a5',
-  },
-  guestTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  guestSubtitle: {
-    fontSize: 12,
-    color: THEME.textMuted,
-    lineHeight: 18,
-    marginBottom: 14,
-  },
-  loginBtn: {
-    height: 42,
-    borderRadius: 21,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  loginBtnText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#000',
-  },
-  inputRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  textInput: {
-    flex: 1,
-    height: 42,
-    backgroundColor: THEME.elevated,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: THEME.border,
-    paddingHorizontal: 12,
-    color: '#fff',
-    fontSize: 14,
-  },
-  saveBtn: {
-    height: 42,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveBtnText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#000',
-  },
-  themesGrid: {
-    gap: 8,
-  },
-  themeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    backgroundColor: THEME.elevated,
-  },
-  colorDot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    marginRight: 12,
-  },
-  themeName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: THEME.textMuted,
-    flex: 1,
-  },
-  checkIcon: {
-    marginLeft: 8,
-  },
-  adminBtn: {
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  adminBtnText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#000',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: THEME.bg,
+    },
+    tabScreen: {
+        flex: 1,
+    },
+    tabScreenHeader: {
+        paddingHorizontal: 16,
+        paddingTop: 10,
+        paddingBottom: 6,
+    },
+    tabScreenTitle: {
+        fontSize: 26,
+        fontWeight: '800',
+        color: '#fff',
+        letterSpacing: -0.5,
+    },
+    tabScreenSub: {
+        fontSize: 12,
+        color: THEME.textMuted,
+        marginTop: 2,
+        marginBottom: 6,
+    },
+    scrollContent: {
+        paddingHorizontal: 8,
+        paddingTop: 4,
+    },
+    gridContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        paddingHorizontal: 8,
+    },
+    listContainer: {
+        paddingHorizontal: 4,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 12,
+        marginBottom: 12,
+        paddingTop: 8,
+    },
+    sectionTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: '#fff',
+        letterSpacing: -0.3,
+    },
+    countBadge: {
+        backgroundColor: THEME.elevated,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: THEME.border,
+    },
+    countText: {
+        fontSize: 9,
+        fontWeight: '700',
+        color: THEME.textMuted,
+        letterSpacing: 0.4,
+    },
+    toggleGroup: {
+        flexDirection: 'row',
+        backgroundColor: THEME.surface,
+        borderRadius: 8,
+        padding: 2,
+        borderWidth: 1,
+        borderColor: THEME.border,
+    },
+    toggleBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 6,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    toggleBtnActive: {},
+    playlistHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        marginBottom: 12,
+        paddingTop: 8,
+    },
+    createPlBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    createPlText: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: '#000',
+    },
+    centerBox: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+    },
+    loadingText: {
+        fontSize: 13,
+        color: THEME.textMuted,
+        fontWeight: '500',
+    },
+    emptyBox: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 48,
+        paddingHorizontal: 24,
+        gap: 8,
+    },
+    emptyTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#fff',
+    },
+    emptySubtitle: {
+        fontSize: 12,
+        color: THEME.textMuted,
+        textAlign: 'center',
+        lineHeight: 18,
+    },
+    bottomNavBarWrapper: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255, 255, 255, 0.12)',
+        overflow: 'hidden',
+    },
+    glassNavBar: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        backgroundColor: 'rgba(13, 14, 17, 0.75)',
+    },
+    navBarItem: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: 6,
+        gap: 3,
+    },
+    iconPill: {
+        paddingHorizontal: 12,
+        paddingVertical: 3,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    navBarLabel: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: THEME.textMuted,
+    },
+    navBarLabelActive: {
+        fontWeight: '800',
+    },
+    settingsSection: {
+        gap: 8,
+    },
+    settingsSectionLabel: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: THEME.textMuted,
+        letterSpacing: 0.8,
+    },
+    card: {
+        backgroundColor: THEME.surface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: THEME.border,
+        padding: 16,
+    },
+    userRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 12,
+    },
+    avatar: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    avatarText: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: '#000',
+    },
+    userInfo: {
+        flex: 1,
+    },
+    userName: {
+        fontSize: 16,
+        fontWeight: '800',
+        color: '#fff',
+    },
+    userEmail: {
+        fontSize: 12,
+        color: THEME.textMuted,
+        marginTop: 2,
+    },
+    roleBadge: {
+        alignSelf: 'flex-start',
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+        marginTop: 4,
+    },
+    roleText: {
+        fontSize: 9,
+        fontWeight: '800',
+        color: '#fff',
+    },
+    logoutBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 10,
+        borderRadius: 10,
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.25)',
+    },
+    logoutBtnText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#fca5a5',
+    },
+    guestTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#fff',
+        marginBottom: 4,
+    },
+    guestSubtitle: {
+        fontSize: 12,
+        color: THEME.textMuted,
+        lineHeight: 18,
+        marginBottom: 14,
+    },
+    loginBtn: {
+        height: 42,
+        borderRadius: 21,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    loginBtnText: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#000',
+    },
+    inputRow: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    textInput: {
+        flex: 1,
+        height: 42,
+        backgroundColor: THEME.elevated,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: THEME.border,
+        paddingHorizontal: 12,
+        color: '#fff',
+        fontSize: 14,
+    },
+    saveBtn: {
+        height: 42,
+        paddingHorizontal: 16,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    saveBtnText: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#000',
+    },
+    themesGrid: {
+        gap: 8,
+    },
+    themeItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: 'transparent',
+        backgroundColor: THEME.elevated,
+    },
+    colorDot: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        marginRight: 12,
+    },
+    themeName: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: THEME.textMuted,
+        flex: 1,
+    },
+    checkIcon: {
+        marginLeft: 8,
+    },
+    adminBtn: {
+        height: 46,
+        borderRadius: 23,
+        backgroundColor: '#fff',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        gap: 8,
+    },
+    adminBtnText: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#000',
+    },
 });

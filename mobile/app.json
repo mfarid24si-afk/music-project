@@ -1,51 +1,49 @@
 {
-  "expo": {
-    "name": "Spotirid",
-    "slug": "spotirid",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0d0e11",
-    "ios": {
-      "supportsTablet": true,
-      "infoPlist": {
-        "UIBackgroundModes": [
-          "audio"
-        ]
-      }
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
-        "android.permission.WAKE_LOCK"
-      ],
-      "package": "com.spyvy19.spotirid"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      [
-        "expo-audio",
-        {
-          "enableBackgroundPlayback": true
+    "expo": {
+        "name": "Spotirid",
+        "slug": "spotirid",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "userInterfaceStyle": "dark",
+        "backgroundColor": "#0d0e11",
+        "ios": {
+            "supportsTablet": true,
+            "infoPlist": {
+                "UIBackgroundModes": ["audio"]
+            }
+        },
+        "android": {
+            "adaptiveIcon": {
+                "backgroundColor": "#E6F4FE",
+                "foregroundImage": "./assets/android-icon-foreground.png",
+                "backgroundImage": "./assets/android-icon-background.png",
+                "monochromeImage": "./assets/android-icon-monochrome.png"
+            },
+            "permissions": [
+                "android.permission.RECORD_AUDIO",
+                "android.permission.MODIFY_AUDIO_SETTINGS",
+                "android.permission.FOREGROUND_SERVICE",
+                "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+                "android.permission.WAKE_LOCK"
+            ],
+            "package": "com.spyvy19.spotirid"
+        },
+        "web": {
+            "favicon": "./assets/favicon.png"
+        },
+        "plugins": [
+            [
+                "expo-audio",
+                {
+                    "enableBackgroundPlayback": true
+                }
+            ]
+        ],
+        "extra": {
+            "eas": {
+                "projectId": "d52b63ff-8a4c-4f4c-ab46-eefd693b1f68"
+            }
         }
-      ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "d52b63ff-8a4c-4f4c-ab46-eefd693b1f68"
-      }
     }
-  }
 }
