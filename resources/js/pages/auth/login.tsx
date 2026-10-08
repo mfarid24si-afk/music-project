@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -22,6 +23,10 @@ export default function Login({
     canResetPassword,
     canRegister = false,
 }: Props) {
+    useEffect(() => {
+        window.location.replace('/admin/login');
+    }, []);
+
     return (
         <>
             <Head title="Log in" />

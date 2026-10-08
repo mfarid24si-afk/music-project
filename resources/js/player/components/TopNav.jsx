@@ -132,7 +132,7 @@ export default function TopNav({
                     <>
                         {/* Single Unified Login Button for Guests */}
                         <a
-                            href={getPortalUrl('login')}
+                            href={getPortalUrl('admin/login')}
                             className="flex h-9 items-center gap-1.5 rounded-full border border-line-strong/30 bg-raised px-4 text-xs font-bold text-white transition-all hover:border-primary-container hover:bg-chip hover:text-primary-container shadow-sm"
                             title="Masuk ke Akun"
                         >

@@ -1712,7 +1712,7 @@
                 <span id="yt_detected_id" style="font-size: 11px; font-family: var(--font-mono); color: var(--accent);"></span>
               </div>
               <div style="display: flex; gap: 8px;">
-                <input type="url" name="youtube_url" id="yt_url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." required oninput="handleYoutubeUrlInput(this)" style="flex: 1;">
+                <input type="url" name="youtube_url" id="yt_url" class="form-control" placeholder="https://www.youtube.com/watch?v=... atau https://music.youtube.com/watch?v=..." required oninput="handleYoutubeUrlInput(this)" style="flex: 1;">
                 <button type="button" class="btn-ghost" id="btnTestYt" onclick="toggleAdminYtTest()" style="display: none; padding: 0 14px; height: 42px; font-size: 12px; font-weight: 700; color: var(--danger); border-color: rgba(239, 68, 68, 0.4);" title="Test Putar Suara YouTube">
                   <span id="yt_btn_icon">▶</span>
                   <span id="yt_btn_label">Tes Dengar</span>

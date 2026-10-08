@@ -121,7 +121,7 @@ export default function SuggestSongModal({ isOpen, onClose }) {
             }
             const ytId = getYoutubeId(finalYoutubeUrl);
             if (!ytId) {
-                setErrorMsg('Format tautan YouTube tidak valid. Gunakan format youtube.com/watch?v=... atau youtu.be/...');
+                setErrorMsg('Format tautan tidak valid. Gunakan format youtube.com, music.youtube.com, atau youtu.be');
                 return;
             }
             finalAudioUrl = finalYoutubeUrl;
@@ -358,7 +358,7 @@ export default function SuggestSongModal({ isOpen, onClose }) {
                                             setYoutubeUrl(e.target.value);
                                             setIsPlayingYtPreview(false);
                                         }}
-                                        placeholder="https://www.youtube.com/watch?v=... atau https://youtu.be/..."
+                                        placeholder="https://youtube.com/watch?v=... atau https://music.youtube.com/watch?v=..."
                                         className="flex-1 rounded-xl border border-line-strong/40 bg-canvas px-3.5 py-2.5 text-xs text-white placeholder:text-text-muted focus:border-primary-container focus:outline-none"
                                     />
                                     {currentYtId && (

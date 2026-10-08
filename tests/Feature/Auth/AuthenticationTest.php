@@ -4,10 +4,20 @@ use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 
-test('login screen can be rendered', function () {
+test('login screen can be rendered with admin login view', function () {
     $response = $this->get(route('login'));
 
     $response->assertOk();
+    $response->assertViewIs('admin.login');
+    $response->assertSee('Administrator Portal');
+});
+
+test('admin login screen can be rendered directly', function () {
+    $response = $this->get(route('admin.login'));
+
+    $response->assertOk();
+    $response->assertViewIs('admin.login');
+    $response->assertSee('Administrator Portal');
 });
 
 test('users can authenticate using the login screen', function () {
