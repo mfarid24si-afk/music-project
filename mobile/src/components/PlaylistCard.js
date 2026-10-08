@@ -9,11 +9,20 @@ export default function PlaylistCard({ playlist, onOpen, onPlayAll, activeTheme 
   const accentColor = activeTheme?.color || THEME.accent;
   const coverUri = playlist.cover || playlist.custom_cover || DEFAULT_COVER;
   const songCount = Array.isArray(playlist.songs) ? playlist.songs.length : (playlist.song_count || 0);
+  const isPending = playlist.status === 'pending';
 
   return (
     <TouchableOpacity style={styles.card} onPress={onOpen} activeOpacity={0.8}>
       <View style={styles.imageBox}>
         <Image source={{ uri: coverUri }} style={styles.image} />
+
+        {/* Pending Badge */}
+        {isPending && (
+          <View style={styles.pendingBadge}>
+            <Text style={styles.pendingText}>PENDING</Text>
+          </View>
+        )}
+
         {/* Play Floating Button */}
         <TouchableOpacity
           style={[styles.playBtn, { backgroundColor: accentColor }]}
@@ -63,6 +72,21 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+  },
+  pendingBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: 'rgba(234, 179, 8, 0.9)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  pendingText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#000',
+    letterSpacing: 0.5,
   },
   playBtn: {
     position: 'absolute',

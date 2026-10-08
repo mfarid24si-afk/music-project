@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  Animated,
+  TextInput,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,13 +24,12 @@ import PlaylistCard from '../components/PlaylistCard';
 import MiniPlayer from '../components/MiniPlayer';
 import NowPlayingModal from '../components/NowPlayingModal';
 import LyricsModal from '../components/LyricsModal';
-import SettingsModal from '../components/SettingsModal';
 import LoginModal from '../components/LoginModal';
 import PlaylistDetailModal from '../components/PlaylistDetailModal';
 import AddToPlaylistModal from '../components/AddToPlaylistModal';
 import UpdateModal from '../components/UpdateModal';
 import { checkAppUpdateAPI } from '../services/versionChecker';
-import { THEME } from '../config';
+import { THEMES, THEME, APP_BASE_URL } from '../config';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -45,10 +45,13 @@ export default function HomeScreen() {
     favorites,
     toggleFavorite,
     activeTheme,
+    setActiveTheme,
+    profileName,
+    setProfileName,
+    currentUser,
+    logout,
     isLyricsOpen,
     setIsLyricsOpen,
-    isSettingsOpen,
-    setIsSettingsOpen,
     isLoginOpen,
     setIsLoginOpen,
     selectedPlaylist,
@@ -59,26 +62,16 @@ export default function HomeScreen() {
 
   const accentColor = activeTheme?.color || THEME.accent;
 
-  // Search Bar Toggle State (starts closed by default, clean & uncluttered)
-  const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const searchAnim = useRef(new Animated.Value(0)).current;
+  // Active Bottom Navigation Tab: 'tracks' | 'search' | 'playlists' | 'settings'
+  const [activeNavTab, setActiveNavTab] = useState('tracks');
 
-  const [mainTab, setMainTab] = useState('tracks'); // 'tracks' | 'playlists'
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  const [nameInput, setNameInput] = useState(profileName || 'Listener');
+
   const [updateInfo, setUpdateInfo] = useState(null);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-
-  // Animate search bar slide in/out
-  useEffect(() => {
-    Animated.spring(searchAnim, {
-      toValue: isSearchVisible ? 1 : 0,
-      friction: 9,
-      tension: 60,
-      useNativeDriver: false,
-    }).start();
-  }, [isSearchVisible]);
 
   // Check for app updates on mount
   useEffect(() => {
@@ -92,16 +85,9 @@ export default function HomeScreen() {
     checkForUpdates();
   }, []);
 
-  const handleToggleSearch = () => {
+  const handleNavTabPress = (tab) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    setIsSearchVisible((prev) => !prev);
-  };
-
-  const handleToggleMainTab = (tab) => {
-    if (tab !== mainTab) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-      setMainTab(tab);
-    }
+    setActiveNavTab(tab);
   };
 
   const handleToggleView = (mode) => {
@@ -153,126 +139,60 @@ export default function HomeScreen() {
     return result;
   }, [safeSongs, searchQuery, activeFilter, safeFavorites]);
 
-  const searchMaxHeight = searchAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 60],
-  });
+  const handleSaveProfileName = () => {
+    if (nameInput.trim()) {
+      setProfileName(nameInput.trim());
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    }
+  };
 
-  const searchOpacity = searchAnim.interpolate({
-    inputRange: [0, 0.3, 1],
-    outputRange: [0, 0, 1],
-  });
+  const handleSelectTheme = (t) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setActiveTheme(t);
+  };
+
+  const handleLogoutPress = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    await logout();
+  };
+
+  const currentThemeId = activeTheme?.id || 'default';
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Top Header */}
-      <Header
-        trackCount={safeSongs.length}
-        isMenuExpanded={isSearchVisible}
-        onToggleMenu={handleToggleSearch}
-      />
+      {/* Tab: TRACKS (Home Screen) */}
+      {activeNavTab === 'tracks' && (
+        <>
+          <Header trackCount={safeSongs.length} />
 
-      {/* Main Tab Switcher: Tracks vs Playlists */}
-      <View style={styles.topControlSection}>
-        <View style={styles.tabBar}>
-          <TouchableOpacity
-            style={[
-              styles.tabItem,
-              mainTab === 'tracks' && [styles.tabItemActive, { borderColor: accentColor }],
-            ]}
-            onPress={() => handleToggleMainTab('tracks')}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="musical-notes"
-              size={14}
-              color={mainTab === 'tracks' ? accentColor : THEME.textMuted}
-            />
-            <Text
-              style={[
-                styles.tabLabel,
-                mainTab === 'tracks' && { color: '#fff', fontWeight: '800' },
-              ]}
-            >
-              Tracks
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.tabItem,
-              mainTab === 'playlists' && [styles.tabItemActive, { borderColor: accentColor }],
-            ]}
-            onPress={() => handleToggleMainTab('playlists')}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="albums"
-              size={14}
-              color={mainTab === 'playlists' ? accentColor : THEME.textMuted}
-            />
-            <Text
-              style={[
-                styles.tabLabel,
-                mainTab === 'playlists' && { color: '#fff', fontWeight: '800' },
-              ]}
-            >
-              Playlists ({safePlaylists.length})
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Collapsible Search Bar: smoothly expands when search icon is tapped */}
-        <Animated.View
-          style={[
-            styles.animatedSearchWrapper,
-            {
-              maxHeight: searchMaxHeight,
-              opacity: searchOpacity,
-            },
-          ]}
-        >
-          <SearchBar
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onClear={() => setSearchQuery('')}
-          />
-        </Animated.View>
-
-        {/* Filter Chips: Compact horizontal pills with strict height and safe margins */}
-        {mainTab === 'tracks' && (
+          {/* Compact Filter Chips Row */}
           <FilterChips
             activeFilter={activeFilter}
             onSelectFilter={handleFilterSelect}
           />
-        )}
-      </View>
 
-      {/* Main Content Area */}
-      {loading && safeSongs.length === 0 ? (
-        <View style={styles.centerBox}>
-          <ActivityIndicator size="large" color={accentColor} />
-          <Text style={styles.loadingText}>Menghubungkan ke Spotirid Server...</Text>
-        </View>
-      ) : (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: currentSong ? insets.bottom + 100 : insets.bottom + 30 },
-          ]}
-          refreshControl={
-            <RefreshControl
-              refreshing={loading}
-              onRefresh={refreshData}
-              tintColor={accentColor}
-            />
-          }
-        >
-          {mainTab === 'tracks' ? (
-            <>
+          {loading && safeSongs.length === 0 ? (
+            <View style={styles.centerBox}>
+              <ActivityIndicator size="large" color={accentColor} />
+              <Text style={styles.loadingText}>Menghubungkan ke Spotirid Server...</Text>
+            </View>
+          ) : (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[
+                styles.scrollContent,
+                { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 70 },
+              ]}
+              refreshControl={
+                <RefreshControl
+                  refreshing={loading}
+                  onRefresh={refreshData}
+                  tintColor={accentColor}
+                />
+              }
+            >
               {/* Bento Spotlight (Featured Vinyl) */}
-              {!searchQuery && activeFilter === 'all' ? <HeroSpotlight /> : null}
+              {activeFilter === 'all' && <HeroSpotlight />}
 
               {/* Section Header with View Toggle (Grid / List) */}
               <View style={styles.sectionHeader}>
@@ -317,21 +237,14 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              {/* Empty State */}
+              {/* Tracks Display */}
               {filteredSongs.length === 0 ? (
                 <View style={styles.emptyBox}>
                   <Ionicons name="musical-notes-outline" size={48} color={THEME.textMuted} />
                   <Text style={styles.emptyTitle}>Tidak ada lagu ditemukan</Text>
-                  <Text style={styles.emptySubtitle}>
-                    {searchQuery
-                      ? `Tidak ada hasil untuk "${searchQuery}"`
-                      : activeFilter === 'favorites'
-                      ? 'Belum ada lagu yang ditambahkan ke favorit'
-                      : 'Tarik ke bawah untuk memuat ulang daftar'}
-                  </Text>
+                  <Text style={styles.emptySubtitle}>Belum ada lagu untuk filter ini</Text>
                 </View>
               ) : viewMode === 'grid' ? (
-                /* 2-Column Grid Layout */
                 <View style={styles.gridContainer}>
                   {filteredSongs.map((item) => {
                     const isCurrent = currentSong && currentSong.id === item.id;
@@ -352,7 +265,6 @@ export default function HomeScreen() {
                   })}
                 </View>
               ) : (
-                /* List Layout */
                 <View style={styles.listContainer}>
                   {filteredSongs.map((item) => {
                     const isCurrent = currentSong && currentSong.id === item.id;
@@ -373,68 +285,355 @@ export default function HomeScreen() {
                   })}
                 </View>
               )}
-            </>
-          ) : (
-            /* Playlists Tab Content */
-            <View style={styles.playlistsSection}>
-              <View style={styles.playlistHeaderRow}>
-                <View>
-                  <Text style={styles.sectionTitle}>Community Playlists</Text>
-                  <Text style={styles.playlistSub}>Koleksi kurasi playlist publik & kustom</Text>
-                </View>
+            </ScrollView>
+          )}
+        </>
+      )}
 
-                <TouchableOpacity
-                  style={[styles.createPlBtn, { backgroundColor: accentColor }]}
-                  onPress={() =>
-                    setPlaylistModalSong({ id: 0, title: 'New Playlist', artist: 'Custom' })
-                  }
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="add" size={16} color="#000" />
-                  <Text style={styles.createPlText}>Buat</Text>
-                </TouchableOpacity>
+      {/* Tab: SEARCH SCREEN */}
+      {activeNavTab === 'search' && (
+        <View style={styles.tabScreen}>
+          <View style={styles.tabScreenHeader}>
+            <Text style={styles.tabScreenTitle}>Search</Text>
+            <Text style={styles.tabScreenSub}>Cari lagu, artis, album, atau genre</Text>
+          </View>
+
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onClear={() => setSearchQuery('')}
+          />
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 70 },
+            ]}
+          >
+            <View style={styles.listContainer}>
+              {filteredSongs.map((item) => {
+                const isCurrent = currentSong && currentSong.id === item.id;
+                const isLiked = safeFavorites.includes(item.id);
+                return (
+                  <SongItem
+                    key={String(item.id)}
+                    song={item}
+                    isCurrent={isCurrent}
+                    isPlaying={isPlaying}
+                    isLiked={isLiked}
+                    onPlay={() => playSong(item)}
+                    onToggleLike={() => toggleFavorite(item.id)}
+                    onAddToPlaylist={() => setPlaylistModalSong(item)}
+                    activeTheme={activeTheme}
+                  />
+                );
+              })}
+            </View>
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Tab: PLAYLISTS SCREEN */}
+      {activeNavTab === 'playlists' && (
+        <View style={styles.tabScreen}>
+          <View style={styles.playlistHeaderRow}>
+            <View>
+              <Text style={styles.tabScreenTitle}>Playlists</Text>
+              <Text style={styles.tabScreenSub}>Koleksi playlist komunitas & kustom</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.createPlBtn, { backgroundColor: accentColor }]}
+              onPress={() =>
+                setPlaylistModalSong({ id: 0, title: 'New Playlist', artist: 'Custom' })
+              }
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add" size={16} color="#000" />
+              <Text style={styles.createPlText}>Buat Playlist</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 70 },
+            ]}
+            refreshControl={
+              <RefreshControl
+                refreshing={loading}
+                onRefresh={refreshData}
+                tintColor={accentColor}
+              />
+            }
+          >
+            {safePlaylists.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <Ionicons name="albums-outline" size={48} color={THEME.textMuted} />
+                <Text style={styles.emptyTitle}>Belum ada playlist</Text>
+                <Text style={styles.emptySubtitle}>Buat playlist pertamamu sekarang!</Text>
               </View>
+            ) : (
+              <View style={styles.gridContainer}>
+                {safePlaylists.map((pl) => (
+                  <PlaylistCard
+                    key={String(pl.id)}
+                    playlist={pl}
+                    onOpen={() => setSelectedPlaylist(pl)}
+                    onPlayAll={() => playPlaylist(pl)}
+                    activeTheme={activeTheme}
+                  />
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      )}
 
-              {safePlaylists.length === 0 ? (
-                <View style={styles.emptyBox}>
-                  <Ionicons name="albums-outline" size={48} color={THEME.textMuted} />
-                  <Text style={styles.emptyTitle}>Belum ada playlist</Text>
-                  <Text style={styles.emptySubtitle}>Buat playlist pertamamu sekarang!</Text>
+      {/* Tab: SETTINGS SCREEN */}
+      {activeNavTab === 'settings' && (
+        <View style={styles.tabScreen}>
+          <View style={styles.tabScreenHeader}>
+            <Text style={styles.tabScreenTitle}>Settings</Text>
+            <Text style={styles.tabScreenSub}>Pengaturan profil, tema, dan sistem</Text>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: currentSong ? insets.bottom + 140 : insets.bottom + 70, gap: 16 },
+            ]}
+          >
+            {/* Account Status */}
+            <View style={styles.settingsSection}>
+              <Text style={styles.settingsSectionLabel}>STATUS AKUN</Text>
+              {currentUser ? (
+                <View style={styles.card}>
+                  <View style={styles.userRow}>
+                    <View style={[styles.avatar, { backgroundColor: accentColor }]}>
+                      <Text style={styles.avatarText}>
+                        {(currentUser.name || 'U').charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.userInfo}>
+                      <Text style={styles.userName}>{currentUser.name}</Text>
+                      <Text style={styles.userEmail}>{currentUser.email}</Text>
+                      <View style={styles.roleBadge}>
+                        <Text style={styles.roleText}>
+                          {(currentUser.role || 'MEMBER').toUpperCase()}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.logoutBtn}
+                    onPress={handleLogoutPress}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="log-out-outline" size={16} color="#ef4444" />
+                    <Text style={styles.logoutBtnText}>Keluar dari Akun</Text>
+                  </TouchableOpacity>
                 </View>
               ) : (
-                <View style={styles.gridContainer}>
-                  {safePlaylists.map((pl) => (
-                    <PlaylistCard
-                      key={String(pl.id)}
-                      playlist={pl}
-                      onOpen={() => setSelectedPlaylist(pl)}
-                      onPlayAll={() => playPlaylist(pl)}
-                      activeTheme={activeTheme}
-                    />
-                  ))}
+                <View style={styles.card}>
+                  <Text style={styles.guestTitle}>Anda masuk sebagai Tamu (Guest)</Text>
+                  <Text style={styles.guestSubtitle}>
+                    Login dengan akun Anda untuk sinkronisasi playlist dan pengajuan lagu.
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.loginBtn, { backgroundColor: accentColor }]}
+                    onPress={() => setIsLoginOpen(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="log-in-outline" size={18} color="#000" />
+                    <Text style={styles.loginBtnText}>Masuk ke Akun</Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </View>
-          )}
-        </ScrollView>
+
+            {/* Profile Name */}
+            <View style={styles.settingsSection}>
+              <Text style={styles.settingsSectionLabel}>NAMA PANGGILAN</Text>
+              <View style={styles.card}>
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={nameInput}
+                    onChangeText={setNameInput}
+                    placeholder="Nama sapaan..."
+                    placeholderTextColor={THEME.textMuted}
+                    maxLength={30}
+                  />
+                  <TouchableOpacity
+                    style={[styles.saveBtn, { backgroundColor: accentColor }]}
+                    onPress={handleSaveProfileName}
+                  >
+                    <Text style={styles.saveBtnText}>Simpan</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Theme Selector */}
+            <View style={styles.settingsSection}>
+              <Text style={styles.settingsSectionLabel}>TEMA & AKSEN WARNA</Text>
+              <View style={styles.card}>
+                <View style={styles.themesGrid}>
+                  {THEMES.map((t) => {
+                    const isSelected = currentThemeId === t.id;
+                    return (
+                      <TouchableOpacity
+                        key={t.id}
+                        style={[
+                          styles.themeItem,
+                          isSelected && {
+                            borderColor: t.color,
+                            backgroundColor: 'rgba(255,255,255,0.06)',
+                          },
+                        ]}
+                        onPress={() => handleSelectTheme(t)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[styles.colorDot, { backgroundColor: t.color }]} />
+                        <Text
+                          style={[
+                            styles.themeName,
+                            isSelected && { color: '#fff', fontWeight: '800' },
+                          ]}
+                        >
+                          {t.name}
+                        </Text>
+                        {isSelected && (
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={16}
+                            color={t.color}
+                            style={styles.checkIcon}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+
+            {/* Web Admin Portal Shortcut */}
+            <View style={styles.settingsSection}>
+              <TouchableOpacity
+                style={styles.adminBtn}
+                onPress={() => {
+                  Linking.openURL(`${APP_BASE_URL}/admin/login`).catch(() => {});
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="shield-checkmark" size={18} color="#000" />
+                <Text style={styles.adminBtnText}>Buka Web Admin Portal Spotirid</Text>
+                <Ionicons name="open-outline" size={16} color="#000" style={{ marginLeft: 'auto' }} />
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
       )}
 
-      {/* Floating Bottom Mini Player (Spotify Style) */}
+      {/* Floating Bottom Mini Player (Floating above Bottom Navigation Bar) */}
       <MiniPlayer />
 
-      {/* Fullscreen Vinyl Turntable Modal */}
+      {/* Bottom Navigation Bar (Spotify Mobile Style) */}
+      <View style={[styles.bottomNavBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+        <TouchableOpacity
+          style={styles.navBarItem}
+          onPress={() => handleNavTabPress('tracks')}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name={activeNavTab === 'tracks' ? 'musical-notes' : 'musical-notes-outline'}
+            size={22}
+            color={activeNavTab === 'tracks' ? accentColor : THEME.textMuted}
+          />
+          <Text
+            style={[
+              styles.navBarLabel,
+              activeNavTab === 'tracks' && [styles.navBarLabelActive, { color: accentColor }],
+            ]}
+          >
+            Tracks
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navBarItem}
+          onPress={() => handleNavTabPress('search')}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name={activeNavTab === 'search' ? 'search' : 'search-outline'}
+            size={22}
+            color={activeNavTab === 'search' ? accentColor : THEME.textMuted}
+          />
+          <Text
+            style={[
+              styles.navBarLabel,
+              activeNavTab === 'search' && [styles.navBarLabelActive, { color: accentColor }],
+            ]}
+          >
+            Search
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navBarItem}
+          onPress={() => handleNavTabPress('playlists')}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name={activeNavTab === 'playlists' ? 'albums' : 'albums-outline'}
+            size={22}
+            color={activeNavTab === 'playlists' ? accentColor : THEME.textMuted}
+          />
+          <Text
+            style={[
+              styles.navBarLabel,
+              activeNavTab === 'playlists' && [styles.navBarLabelActive, { color: accentColor }],
+            ]}
+          >
+            Playlists
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navBarItem}
+          onPress={() => handleNavTabPress('settings')}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name={activeNavTab === 'settings' ? 'settings-sharp' : 'settings-outline'}
+            size={22}
+            color={activeNavTab === 'settings' ? accentColor : THEME.textMuted}
+          />
+          <Text
+            style={[
+              styles.navBarLabel,
+              activeNavTab === 'settings' && [styles.navBarLabelActive, { color: accentColor }],
+            ]}
+          >
+            Settings
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Fullscreen Vinyl Turntable Modal with Synced Lyrics & Swipe Down to Minimize */}
       <NowPlayingModal />
 
       {/* Synced Lyrics Sheet Modal */}
       <LyricsModal
         visible={isLyricsOpen}
         onClose={() => setIsLyricsOpen(false)}
-      />
-
-      {/* Settings Modal (Theme, Profile, Audio Engine) */}
-      <SettingsModal
-        visible={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
       />
 
       {/* Login Modal */}
@@ -476,40 +675,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: THEME.bg,
   },
-  topControlSection: {
-    paddingBottom: 4,
+  tabScreen: {
+    flex: 1,
   },
-  tabBar: {
-    flexDirection: 'row',
+  tabScreenHeader: {
     paddingHorizontal: 16,
-    marginBottom: 8,
-    gap: 8,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
-  tabItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: THEME.surface,
-    borderWidth: 1,
-    borderColor: THEME.border,
+  tabScreenTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: -0.5,
   },
-  tabItemActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  tabLabel: {
+  tabScreenSub: {
     fontSize: 12,
-    fontWeight: '600',
     color: THEME.textMuted,
-  },
-  animatedSearchWrapper: {
-    overflow: 'hidden',
+    marginTop: 2,
+    marginBottom: 8,
   },
   scrollContent: {
     paddingHorizontal: 8,
-    paddingTop: 8,
+    paddingTop: 4,
   },
   gridContainer: {
     flexDirection: 'row',
@@ -569,29 +757,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   toggleBtnActive: {},
-  playlistsSection: {
-    paddingHorizontal: 8,
-  },
   playlistHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    marginBottom: 14,
-    marginTop: 4,
-  },
-  playlistSub: {
-    fontSize: 12,
-    color: THEME.textMuted,
-    marginTop: 2,
+    paddingHorizontal: 16,
+    marginBottom: 10,
+    paddingTop: 10,
   },
   createPlBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   createPlText: {
     fontSize: 12,
@@ -620,11 +800,209 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
+    marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 12,
     color: THEME.textMuted,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  bottomNavBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 56,
+    backgroundColor: THEME.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  navBarItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    gap: 3,
+  },
+  navBarLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: THEME.textMuted,
+  },
+  navBarLabelActive: {
+    fontWeight: '800',
+  },
+  settingsSection: {
+    gap: 8,
+  },
+  settingsSectionLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: THEME.textMuted,
+    letterSpacing: 0.8,
+  },
+  card: {
+    backgroundColor: THEME.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: THEME.border,
+    padding: 16,
+  },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#000',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  userEmail: {
+    fontSize: 12,
+    color: THEME.textMuted,
+    marginTop: 2,
+  },
+  roleBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  roleText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+  },
+  logoutBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fca5a5',
+  },
+  guestTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  guestSubtitle: {
+    fontSize: 12,
+    color: THEME.textMuted,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  loginBtn: {
+    height: 42,
+    borderRadius: 21,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  loginBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#000',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  textInput: {
+    flex: 1,
+    height: 42,
+    backgroundColor: THEME.elevated,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: THEME.border,
+    paddingHorizontal: 12,
+    color: '#fff',
+    fontSize: 14,
+  },
+  saveBtn: {
+    height: 42,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#000',
+  },
+  themesGrid: {
+    gap: 8,
+  },
+  themeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    backgroundColor: THEME.elevated,
+  },
+  colorDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    marginRight: 12,
+  },
+  themeName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: THEME.textMuted,
+    flex: 1,
+  },
+  checkIcon: {
+    marginLeft: 8,
+  },
+  adminBtn: {
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  adminBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#000',
   },
 });

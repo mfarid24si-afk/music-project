@@ -59,7 +59,7 @@ export default function MiniPlayer() {
   };
 
   return (
-    <View style={[styles.wrapper, { bottom: Math.max(insets.bottom, 10) }]}>
+    <View style={[styles.wrapper, { bottom: Math.max(insets.bottom, 8) + 56 }]}>
       {/* Top thin progress bar */}
       <View style={styles.progressBarBackground}>
         <View style={[styles.progressBarFill, { width: `${progressPercent}%`, backgroundColor: accentColor }]} />

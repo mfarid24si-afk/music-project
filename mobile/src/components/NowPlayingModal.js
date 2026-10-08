@@ -10,6 +10,7 @@ import {
   Animated,
   Easing,
   ScrollView,
+  PanResponder,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,8 +62,35 @@ export default function NowPlayingModal() {
   const [lyricsLoading, setLyricsLoading] = useState(false);
 
   const spinAnim = useRef(new Animated.Value(0)).current;
+  const modalTranslateY = useRef(new Animated.Value(0)).current;
   const lyricsScrollRef = useRef(null);
   const lineYMap = useRef({});
+
+  // Swipe Down to minimize PanResponder
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 5 && Math.abs(gestureState.dx) < 25,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          modalTranslateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 60 || gestureState.vy > 0.4) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+          setIsNowPlayingOpen(false);
+          modalTranslateY.setValue(0);
+        } else {
+          Animated.spring(modalTranslateY, {
+            toValue: 0,
+            bounciness: 4,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   // Fetch lyrics whenever song changes
   useEffect(() => {
@@ -115,7 +143,6 @@ export default function NowPlayingModal() {
   useEffect(() => {
     if (activeTab === 'lyrics' && lyricsScrollRef.current && activeLyricIndex >= 0) {
       const lineY = lineYMap.current[activeLyricIndex] ?? (activeLyricIndex * 48);
-      // Target offset centers the line in the view
       const targetY = Math.max(0, lineY - 130);
       lyricsScrollRef.current.scrollTo({
         y: targetY,
@@ -197,9 +224,14 @@ export default function NowPlayingModal() {
       onRequestClose={() => setIsNowPlayingOpen(false)}
     >
       <View style={[styles.backdrop, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 20) }]}>
-        <View style={styles.container}>
-          {/* Top Bar */}
-          <View style={styles.topBar}>
+        <Animated.View style={[styles.container, { transform: [{ translateY: modalTranslateY }] }]}>
+          {/* Top Drag Handle for intuitive swipe down */}
+          <View style={styles.dragArea} {...panResponder.panHandlers}>
+            <View style={styles.dragHandle} />
+          </View>
+
+          {/* Top Bar with both Chevron Click & Swipe down */}
+          <View style={styles.topBar} {...panResponder.panHandlers}>
             <TouchableOpacity
               onPress={() => setIsNowPlayingOpen(false)}
               style={styles.iconBtn}
@@ -425,7 +457,7 @@ export default function NowPlayingModal() {
               {repeatMode === 'one' && <Text style={[styles.repeatBadge, { color: accentColor }]}>1</Text>}
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -440,6 +472,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: 'space-between',
+  },
+  dragArea: {
+    width: '100%',
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: -8,
+  },
+  dragHandle: {
+    width: 44,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   topBar: {
     flexDirection: 'row',

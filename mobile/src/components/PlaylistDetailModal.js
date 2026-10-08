@@ -31,23 +31,27 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
     favorites,
     toggleFavorite,
     activeTheme,
+    currentUser,
   } = useAudio();
 
   const [isEditing, setIsEditing] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [descInput, setDescInput] = useState('');
+  const [coverInput, setCoverInput] = useState('');
 
   const accentColor = activeTheme?.color || THEME.accent;
+  const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email?.startsWith('admin'));
 
   useEffect(() => {
     if (playlist) {
       setNameInput(playlist.name || '');
       setDescInput(playlist.description || '');
+      setCoverInput(playlist.custom_cover || playlist.cover || '');
       setIsEditing(false);
     }
   }, [playlist?.id]);
 
-  // Resolve playlist songs unconditionally (Rules of Hooks: called before any early return)
+  // Resolve playlist songs unconditionally
   const playlistSongs = React.useMemo(() => {
     if (!playlist) return [];
     if (Array.isArray(playlist.songs) && playlist.songs.length > 0) {
@@ -63,7 +67,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
 
   if (!playlist) return null;
 
-  const coverUri = playlist.cover || playlist.custom_cover || DEFAULT_COVER;
+  const currentCover = coverInput || playlist.custom_cover || playlist.cover || DEFAULT_COVER;
 
   const handlePlayAll = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
@@ -76,15 +80,21 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
     await updatePlaylist(playlist.id, {
       name: nameInput.trim(),
       description: descInput.trim(),
+      custom_cover: coverInput.trim() || null,
     });
     setIsEditing(false);
   };
 
   const handleDeletePlaylist = () => {
+    if (!isAdmin) {
+      Alert.alert('Akses Ditolak', 'Hanya Administrator yang memiliki hak akses untuk menghapus playlist.');
+      return;
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
     Alert.alert(
       'Hapus Playlist',
-      `Apakah Anda yakin ingin menghapus playlist "${playlist.name}"?`,
+      `Apakah Anda yakin ingin menghapus playlist "${playlist.name}" secara permanen?`,
       [
         { text: 'Batal', style: 'cancel' },
         {
@@ -138,6 +148,24 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
           {/* Edit Form Mode */}
           {isEditing ? (
             <View style={styles.editSection}>
+              {/* Cover Preview & URL Input */}
+              <View style={styles.coverEditRow}>
+                <Image source={{ uri: currentCover }} style={styles.coverPreview} />
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Text style={styles.fieldLabel}>URL GAMBAR COVER</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={coverInput}
+                    onChangeText={setCoverInput}
+                    placeholder="https://... (link gambar)"
+                    placeholderTextColor={THEME.textMuted}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <Text style={styles.hintSub}>Mendukung link gambar JPG / PNG / WebP</Text>
+                </View>
+              </View>
+
               <View style={styles.fieldBox}>
                 <Text style={styles.fieldLabel}>NAMA PLAYLIST</Text>
                 <TextInput
@@ -181,23 +209,28 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity
-                style={styles.deleteBtn}
-                onPress={handleDeletePlaylist}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="trash-outline" size={16} color="#ef4444" />
-                <Text style={styles.deleteBtnText}>Hapus Playlist Ini</Text>
-              </TouchableOpacity>
+              {/* Delete button: ONLY visible to Admin */}
+              {isAdmin && (
+                <TouchableOpacity
+                  style={styles.deleteBtn}
+                  onPress={handleDeletePlaylist}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                  <Text style={styles.deleteBtnText}>Hapus Playlist Ini (Khusus Admin)</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             <>
               {/* Banner & Cover */}
               <View style={styles.bannerRow}>
-                <Image source={{ uri: coverUri }} style={styles.cover} />
+                <Image source={{ uri: currentCover }} style={styles.cover} />
                 <View style={styles.bannerInfo}>
                   <View style={styles.badge}>
-                    <Text style={styles.badgeText}>PLAYLIST</Text>
+                    <Text style={styles.badgeText}>
+                      {playlist.status === 'pending' ? 'PENDING APPROVAL' : 'PLAYLIST'}
+                    </Text>
                   </View>
                   <Text numberOfLines={2} style={styles.playlistName}>{playlist.name}</Text>
                   {playlist.description ? (
@@ -228,7 +261,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
           <View style={styles.tracklistContainer}>
             <View style={styles.tracklistHeader}>
               <Text style={styles.sectionLabel}>
-                {isEditing ? 'KELOLA LAGU (KETUK TONG SAMPAH UNTUK HAPUS)' : 'DAFTAR LAGU'}
+                {isEditing ? 'KELOLA LAGU (KETUK HAPUS UNTUK MENGELUARKAN LAGU)' : 'DAFTAR LAGU'}
               </Text>
             </View>
 
@@ -384,6 +417,21 @@ const styles = StyleSheet.create({
     borderColor: THEME.border,
     padding: 16,
     gap: 14,
+  },
+  coverEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  coverPreview: {
+    width: 64,
+    height: 64,
+    borderRadius: 10,
+    backgroundColor: THEME.elevated,
+  },
+  hintSub: {
+    fontSize: 10,
+    color: THEME.textMuted,
   },
   fieldBox: {
     gap: 6,
