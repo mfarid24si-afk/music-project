@@ -2,6 +2,9 @@
 /bootstrap/ssr
 /node_modules
 # public/build is intentionally tracked: the Alwaysdata host runs no Node.js,
+/mobile/node_modules
+/mobile/.expo
+/mobile/dist
 # so the built manifest and assets must be committed to be servable.
 /public/fonts-manifest.dev.json
 /public/hot
