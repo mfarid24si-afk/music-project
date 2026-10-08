@@ -443,19 +443,23 @@ export default function HomeScreen() {
         onClose={() => setIsLoginOpen(false)}
       />
 
-      {/* Playlist Detail Modal */}
-      <PlaylistDetailModal
-        visible={!!selectedPlaylist}
-        playlist={selectedPlaylist}
-        onClose={() => setSelectedPlaylist(null)}
-      />
+      {/* Playlist Detail Modal (Mounted only when a playlist is selected) */}
+      {selectedPlaylist ? (
+        <PlaylistDetailModal
+          visible={!!selectedPlaylist}
+          playlist={selectedPlaylist}
+          onClose={() => setSelectedPlaylist(null)}
+        />
+      ) : null}
 
-      {/* Add To Playlist Modal */}
-      <AddToPlaylistModal
-        visible={!!playlistModalSong}
-        song={playlistModalSong}
-        onClose={() => setPlaylistModalSong(null)}
-      />
+      {/* Add To Playlist Modal (Mounted only when a target song is selected) */}
+      {playlistModalSong ? (
+        <AddToPlaylistModal
+          visible={!!playlistModalSong}
+          song={playlistModalSong}
+          onClose={() => setPlaylistModalSong(null)}
+        />
+      ) : null}
 
       {/* In-App Update Modal (Android & iOS) */}
       <UpdateModal
