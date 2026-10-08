@@ -47,11 +47,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
     }
   }, [playlist?.id]);
 
-  if (!playlist) return null;
-
-  const coverUri = playlist.cover || playlist.custom_cover || DEFAULT_COVER;
-
-  // Resolve playlist songs from master songs list or nested song IDs
+  // Resolve playlist songs unconditionally (Rules of Hooks: called before any early return)
   const playlistSongs = React.useMemo(() => {
     if (!playlist) return [];
     if (Array.isArray(playlist.songs) && playlist.songs.length > 0) {
@@ -64,6 +60,10 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
     }
     return [];
   }, [playlist?.songs, songs]);
+
+  if (!playlist) return null;
+
+  const coverUri = playlist.cover || playlist.custom_cover || DEFAULT_COVER;
 
   const handlePlayAll = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
