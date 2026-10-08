@@ -52,6 +52,20 @@ export function extractYouTubeId(urlOrStr) {
     return match ? match[1] : null;
 }
 
+export function isDirectAudioSource(urlOrStr) {
+    if (!urlOrStr) return false;
+    const str = String(urlOrStr).trim();
+    if (str.startsWith('youtube:')) return false;
+    if (/youtu\.be|youtube\.com/i.test(str)) return false;
+    return (
+        str.startsWith('http://') ||
+        str.startsWith('https://') ||
+        str.startsWith('/') ||
+        str.startsWith('assets/') ||
+        str.startsWith('data:audio')
+    );
+}
+
 export function AudioProvider({ children }) {
     const audioRef = useRef(null);
     if (!audioRef.current && typeof Audio !== 'undefined') {
@@ -751,7 +765,10 @@ export function AudioProvider({ children }) {
         playStatRecordedRef.current = false;
         setCurrentSong(song);
 
-        const ytId = extractYouTubeId(song.youtubeUrl || song.rawSrc || song.src);
+        const directSrc = song.src || song.audio_file || '';
+        const ytId = isDirectAudioSource(directSrc)
+            ? null
+            : extractYouTubeId(song.youtubeUrl || song.rawSrc || song.src);
 
         if (ytId) {
             isYouTubeTrackRef.current = true;
@@ -786,7 +803,7 @@ export function AudioProvider({ children }) {
             audio.playsInline = true;
             audio.setAttribute('playsinline', 'true');
             audio.setAttribute('webkit-playsinline', 'true');
-            audio.src = song.src;
+            audio.src = directSrc;
             audio.load();
 
             const playPromise = audio.play();
