@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { createAudioPlayer, setAudioModeAsync, setIsAudioActiveAsync } from 'expo-audio';
 import {
   fetchSongsAPI,
   fetchPlaylistsAPI,
@@ -53,6 +53,7 @@ export function AudioProvider({ children }) {
         shouldPlayInBackground: true,
         interruptionMode: 'doNotMix',
       });
+      await setIsAudioActiveAsync(true);
     } catch (err) {
       console.warn('Audio mode config error:', err);
     }
@@ -140,14 +141,21 @@ export function AudioProvider({ children }) {
         }
       });
 
-      player.setActiveForLockScreen(true, {
-        title: song.title,
-        artist: song.artist,
-        albumTitle: song.album || 'Spotirid Archive',
-        artworkUrl: song.img || song.cover_image,
-      });
+      try {
+        const coverUrl = (song.img || song.cover_image);
+        player.setActiveForLockScreen(true, {
+          title: song.title,
+          artist: song.artist,
+          albumTitle: song.album || 'Spotirid Archive',
+          artworkUrl: coverUrl && coverUrl.startsWith('http') ? coverUrl : undefined,
+        });
+      } catch (err) {
+        console.debug('Lock screen setup error:', err);
+      }
 
       player.play();
+      await setIsAudioActiveAsync(true);
+
       playerRef.current = player;
       recordPlayStatAPI(song.id);
     } catch (error) {
@@ -173,6 +181,7 @@ export function AudioProvider({ children }) {
       } else {
         await ensureBackgroundAudioMode();
         playerRef.current.play();
+        await setIsAudioActiveAsync(true);
       }
     } catch (err) {
       console.warn('Toggle play error:', err);
