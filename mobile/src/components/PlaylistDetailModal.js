@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import SwipeModal from './SwipeModal';
 import SongItem from './SongItem';
+import MiniPlayer from './MiniPlayer';
 import { useAudio } from '../context/AudioContext';
 import { THEME } from '../config';
 
@@ -144,7 +145,13 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
           </TouchableOpacity>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: currentSong ? 130 : 40 },
+          ]}
+        >
           {/* Edit Form Mode */}
           {isEditing ? (
             <View style={styles.editSection}>
@@ -229,7 +236,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                 <View style={styles.bannerInfo}>
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>
-                      {playlist.status === 'pending' ? 'PENDING APPROVAL' : 'PLAYLIST'}
+                      {playlist.status === 'pending' ? 'MENUNGGU PERSETUJUAN' : 'PLAYLIST'}
                     </Text>
                   </View>
                   <Text numberOfLines={2} style={styles.playlistName}>{playlist.name}</Text>
@@ -302,6 +309,9 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
             )}
           </View>
         </ScrollView>
+
+        {/* Floating MiniPlayer inside PlaylistDetailModal so active playback is always visible */}
+        <MiniPlayer />
       </View>
     </SwipeModal>
   );
@@ -311,6 +321,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
+    position: 'relative',
   },
   topBar: {
     flexDirection: 'row',
@@ -337,7 +348,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 16,
-    paddingBottom: 40,
     gap: 20,
   },
   bannerRow: {

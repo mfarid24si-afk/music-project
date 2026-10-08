@@ -161,12 +161,12 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Tab: TRACKS (Home Screen) */}
+      {/* Tab: TRACKS (Beranda Lagu) */}
       {activeNavTab === 'tracks' && (
         <View style={styles.tabScreen}>
           <Header trackCount={safeSongs.length} />
 
-          {/* Compact Filter Chips Row */}
+          {/* Filter Chips Row */}
           <FilterChips
             activeFilter={activeFilter}
             onSelectFilter={handleFilterSelect}
@@ -175,7 +175,7 @@ export default function HomeScreen() {
           {loading && safeSongs.length === 0 ? (
             <View style={styles.centerBox}>
               <ActivityIndicator size="large" color={accentColor} />
-              <Text style={styles.loadingText}>Menghubungkan ke Spotirid Server...</Text>
+              <Text style={styles.loadingText}>Menghubungkan ke Server Spotirid...</Text>
             </View>
           ) : (
             <ScrollView
@@ -198,9 +198,9 @@ export default function HomeScreen() {
               {/* Section Header with View Toggle (Grid / List) */}
               <View style={styles.sectionHeader}>
                 <View style={styles.sectionTitleRow}>
-                  <Text style={styles.sectionTitle}>Essential Tracks</Text>
+                  <Text style={styles.sectionTitle}>Lagu Pilihan</Text>
                   <View style={styles.countBadge}>
-                    <Text style={styles.countText}>{filteredSongs.length} TRACKS</Text>
+                    <Text style={styles.countText}>{filteredSongs.length} LAGU</Text>
                   </View>
                 </View>
 
@@ -291,12 +291,12 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Tab: SEARCH SCREEN */}
+      {/* Tab: PENCARIAN (Search Screen) */}
       {activeNavTab === 'search' && (
         <View style={styles.tabScreen}>
           <View style={styles.tabScreenHeader}>
-            <Text style={styles.tabScreenTitle}>Search</Text>
-            <Text style={styles.tabScreenSub}>Cari lagu, artis, album, atau genre</Text>
+            <Text style={styles.tabScreenTitle}>Pencarian</Text>
+            <Text style={styles.tabScreenSub}>Cari judul lagu, artis, atau album...</Text>
           </View>
 
           <SearchBar
@@ -335,19 +335,19 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Tab: PLAYLISTS SCREEN */}
+      {/* Tab: PLAYLIST (Playlists Screen) */}
       {activeNavTab === 'playlists' && (
         <View style={styles.tabScreen}>
           <View style={styles.playlistHeaderRow}>
             <View>
-              <Text style={styles.tabScreenTitle}>Playlists</Text>
-              <Text style={styles.tabScreenSub}>Koleksi playlist komunitas & kustom</Text>
+              <Text style={styles.tabScreenTitle}>Koleksi Playlist</Text>
+              <Text style={styles.tabScreenSub}>Daftar playlist yang siap didengarkan</Text>
             </View>
 
             <TouchableOpacity
               style={[styles.createPlBtn, { backgroundColor: accentColor }]}
               onPress={() =>
-                setPlaylistModalSong({ id: 0, title: 'New Playlist', artist: 'Custom' })
+                setPlaylistModalSong({ id: 0, title: 'Playlist Baru', artist: 'Kustom' })
               }
               activeOpacity={0.8}
             >
@@ -393,12 +393,12 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Tab: SETTINGS SCREEN */}
+      {/* Tab: PENGATURAN (Settings Screen) */}
       {activeNavTab === 'settings' && (
         <View style={styles.tabScreen}>
           <View style={styles.tabScreenHeader}>
-            <Text style={styles.tabScreenTitle}>Settings</Text>
-            <Text style={styles.tabScreenSub}>Pengaturan profil, tema, dan sistem</Text>
+            <Text style={styles.tabScreenTitle}>Pengaturan</Text>
+            <Text style={styles.tabScreenSub}>Pengaturan profil, tema warna, dan sistem</Text>
           </View>
 
           <ScrollView
@@ -566,7 +566,7 @@ export default function HomeScreen() {
                 activeNavTab === 'tracks' && [styles.navBarLabelActive, { color: accentColor }],
               ]}
             >
-              Tracks
+              Lagu
             </Text>
           </TouchableOpacity>
 
@@ -588,7 +588,7 @@ export default function HomeScreen() {
                 activeNavTab === 'search' && [styles.navBarLabelActive, { color: accentColor }],
               ]}
             >
-              Search
+              Pencarian
             </Text>
           </TouchableOpacity>
 
@@ -610,7 +610,7 @@ export default function HomeScreen() {
                 activeNavTab === 'playlists' && [styles.navBarLabelActive, { color: accentColor }],
               ]}
             >
-              Playlists
+              Playlist
             </Text>
           </TouchableOpacity>
 
@@ -632,7 +632,7 @@ export default function HomeScreen() {
                 activeNavTab === 'settings' && [styles.navBarLabelActive, { color: accentColor }],
               ]}
             >
-              Settings
+              Pengaturan
             </Text>
           </TouchableOpacity>
         </BlurView>
@@ -811,7 +811,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
-    marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 12,

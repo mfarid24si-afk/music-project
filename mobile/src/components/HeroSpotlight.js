@@ -70,9 +70,9 @@ export default function HeroSpotlight() {
       <View style={styles.topBadgeRow}>
         <View style={[styles.hiresPill, { borderColor: accentColor + '66' }]}>
           <View style={[styles.pulseDot, { backgroundColor: accentColor }]} />
-          <Text style={[styles.hiresText, { color: accentColor }]}>HIGH RESOLUTION MASTER • 24-BIT</Text>
+          <Text style={[styles.hiresText, { color: accentColor }]}>MASTER HI-RES • 24-BIT</Text>
         </View>
-        <Text style={styles.editorialLabel}>EDITORIAL SELECTION</Text>
+        <Text style={styles.editorialLabel}>PILIHAN REDAKSI</Text>
       </View>
 
       {/* Center Showcase: Vinyl peeking anchored behind Album Sleeve */}
@@ -103,7 +103,7 @@ export default function HeroSpotlight() {
             <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
             <View style={styles.coverOverlayBadge}>
               <Text style={[styles.coverBadgeText, { color: accentColor }]}>
-                {isCurrentlyPlayingThis ? 'NOW PLAYING' : 'EDITORIAL PICK'}
+                {isCurrentlyPlayingThis ? 'SEDANG DIPUTAR' : 'LAGU UNGGULAN'}
               </Text>
             </View>
           </View>
