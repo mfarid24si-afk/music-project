@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useAudio } from '../context/AudioContext';
 import { THEME, space, shape, font, ripple } from '../config';
 
 const CHIPS = [
@@ -14,6 +15,9 @@ const CHIPS = [
 ];
 
 export default function FilterChips({ activeFilter, onSelectFilter }) {
+    const { activeTheme } = useAudio();
+    const accentColor = activeTheme?.color || THEME.accent;
+
     return (
         <ScrollView
             horizontal
@@ -27,7 +31,16 @@ export default function FilterChips({ activeFilter, onSelectFilter }) {
                     <TouchableOpacity
                         key={chip.id}
                         onPress={() => onSelectFilter(chip.id)}
-                        style={[styles.chip, isActive && styles.chipActive]}
+                        style={[
+                            styles.chip,
+                            isActive && [
+                                styles.chipActive,
+                                {
+                                    backgroundColor: accentColor,
+                                    borderColor: accentColor,
+                                },
+                            ],
+                        ]}
                         android_ripple={ripple.bounded()}
                         activeOpacity={0.7}
                     >

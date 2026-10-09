@@ -129,8 +129,13 @@ export default function AddToPlaylistModal({ visible, song, onClose }) {
                                         key={String(pl.id)}
                                         style={[
                                             styles.playlistRow,
-                                            isInPlaylist &&
+                                            isInPlaylist && [
                                                 styles.playlistRowActive,
+                                                {
+                                                    borderColor:
+                                                        accentColor + '40',
+                                                },
+                                            ],
                                         ]}
                                         onPress={() => handleToggleSong(pl.id)}
                                         activeOpacity={0.7}

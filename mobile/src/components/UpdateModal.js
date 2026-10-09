@@ -1,10 +1,14 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useAudio } from '../context/AudioContext';
 import { THEME, space, shape, font, elevation, ripple } from '../config';
 import { openUpdateLink } from '../services/versionChecker';
 
 export default function UpdateModal({ visible, updateInfo, onClose }) {
+    const { activeTheme } = useAudio();
+    const accentColor = activeTheme?.color || THEME.accent;
+
     if (!visible || !updateInfo) return null;
 
     return (
@@ -17,12 +21,20 @@ export default function UpdateModal({ visible, updateInfo, onClose }) {
             <View style={styles.overlay}>
                 <View style={styles.dialog}>
                     {/* Badge Icon */}
-                    <View style={styles.iconCircle}>
+                    <View
+                        style={[
+                            styles.iconCircle,
+                            {
+                                backgroundColor: accentColor,
+                                shadowColor: accentColor,
+                            },
+                        ]}
+                    >
                         <Ionicons name="sparkles" size={26} color="#000" />
                     </View>
 
                     <Text style={styles.title}>Pembaruan Tersedia 🚀</Text>
-                    <Text style={styles.versionTag}>
+                    <Text style={[styles.versionTag, { color: accentColor }]}>
                         Versi Baru: v{updateInfo.latestVersion}
                     </Text>
 
@@ -34,7 +46,13 @@ export default function UpdateModal({ visible, updateInfo, onClose }) {
                     {/* Action Buttons */}
                     <View style={styles.buttonGroup}>
                         <TouchableOpacity
-                            style={styles.primaryBtn}
+                            style={[
+                                styles.primaryBtn,
+                                {
+                                    backgroundColor: accentColor,
+                                    shadowColor: accentColor,
+                                },
+                            ]}
                             onPress={() =>
                                 openUpdateLink(updateInfo.downloadUrl)
                             }

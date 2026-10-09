@@ -22,6 +22,7 @@ import {
     logoutAPI,
 } from '../services/api';
 import { THEMES } from '../config';
+import { recordLocalPlay } from '../services/localStats';
 
 const AudioContext = createContext(null);
 
@@ -35,7 +36,7 @@ export function AudioProvider({ children }) {
     const [duration, setDuration] = useState(0); // in seconds
     const [isBuffering, setIsBuffering] = useState(false);
     const [favorites, setFavorites] = useState([]);
-    const [repeatMode, setRepeatMode] = useState('off'); // 'off', 'all', 'one'
+    const [repeatMode, setRepeatMode] = useState('all'); // 'off', 'all', 'one'
     const [isShuffle, setIsShuffle] = useState(false);
     const [activeQueue, setActiveQueue] = useState([]);
 
@@ -61,7 +62,7 @@ export function AudioProvider({ children }) {
     const activeQueueRef = useRef([]);
     const songsRef = useRef([]);
     const isShuffleRef = useRef(false);
-    const repeatModeRef = useRef('off');
+    const repeatModeRef = useRef('all');
 
     // Configure background playback for iOS & Android
     const ensureBackgroundAudioMode = async () => {
@@ -126,8 +127,15 @@ export function AudioProvider({ children }) {
         };
     }, []);
 
-    const playSong = async (song) => {
+    const playSong = async (song, queue = null) => {
         if (!song) return;
+
+        // Scope next/prev to the provided queue (e.g. a playlist) so playback
+        // never leaks into the global library. Fall back to the whole library.
+        const nextQueue =
+            Array.isArray(queue) && queue.length > 0 ? queue : songsRef.current;
+        activeQueueRef.current = nextQueue;
+        setActiveQueue(nextQueue);
 
         try {
             // Re-assert background audio mode before every playback
@@ -197,6 +205,7 @@ export function AudioProvider({ children }) {
 
             playerRef.current = player;
             void recordPlayStatAPI(song.id);
+            void recordLocalPlay(song);
         } catch (error) {
             console.warn('Gagal memutar lagu:', error);
             setIsBuffering(false);
@@ -207,9 +216,9 @@ export function AudioProvider({ children }) {
     const togglePlay = async () => {
         if (!playerRef.current) {
             if (currentSong) {
-                void playSong(currentSong);
+                void playSong(currentSong, activeQueueRef.current);
             } else if (songs.length > 0) {
-                void playSong(songs[0]);
+                void playSong(songs[0], songsRef.current);
             }
             return;
         }
@@ -268,7 +277,7 @@ export function AudioProvider({ children }) {
             if (remaining.length > 0) {
                 const randomSong =
                     remaining[Math.floor(Math.random() * remaining.length)];
-                void playSong(randomSong);
+                void playSong(randomSong, list);
                 return;
             }
         }
@@ -277,11 +286,11 @@ export function AudioProvider({ children }) {
             (s) => String(s.id) === String(current.id),
         );
         if (currentIndex >= 0 && currentIndex < list.length - 1) {
-            void playSong(list[currentIndex + 1]);
+            void playSong(list[currentIndex + 1], list);
         } else if (currentIndex === -1) {
-            void playSong(list[0]);
+            void playSong(list[0], list);
         } else if (repeatModeRef.current === 'all') {
-            void playSong(list[0]);
+            void playSong(list[0], list);
         } else {
             setIsPlaying(false);
         }
@@ -304,9 +313,9 @@ export function AudioProvider({ children }) {
             (s) => String(s.id) === String(current.id),
         );
         if (currentIndex > 0) {
-            void playSong(list[currentIndex - 1]);
+            void playSong(list[currentIndex - 1], list);
         } else {
-            void playSong(list[list.length - 1]);
+            void playSong(list[list.length - 1], list);
         }
     };
 
@@ -364,8 +373,7 @@ export function AudioProvider({ children }) {
             }
         }
         if (trackList.length > 0) {
-            setActiveQueue(trackList);
-            void playSong(trackList[0]);
+            void playSong(trackList[0], trackList);
         }
     };
 
@@ -395,12 +403,19 @@ export function AudioProvider({ children }) {
             });
             if (res && res.success && res.data) {
                 const realId = String(res.data.id);
+                const serverFields = {
+                    id: realId,
+                    status: res.data.status || 'pending',
+                    isLocked: res.data.isLocked ?? true,
+                };
                 setPlaylists((prev) =>
                     prev.map((p) =>
-                        p.id === tempId ? { ...p, id: realId } : p,
+                        p.id === tempId ? { ...p, ...serverFields } : p,
                     ),
                 );
                 newPl.id = realId;
+                newPl.status = serverFields.status;
+                newPl.isLocked = serverFields.isLocked;
             }
         } catch (e) {
             console.warn('Sync playlist to MySQL failed:', e);

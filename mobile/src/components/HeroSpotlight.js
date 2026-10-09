@@ -77,7 +77,7 @@ export default function HeroSpotlight() {
         if (currentSong && currentSong.id === displaySong.id) {
             togglePlay();
         } else {
-            playSong(displaySong);
+            playSong(displaySong, songs);
         }
     };
 
@@ -111,7 +111,7 @@ export default function HeroSpotlight() {
                 android_ripple={ripple.bounded()}
                 onPress={() => {
                     if (!currentSong) {
-                        playSong(displaySong);
+                        playSong(displaySong, songs);
                     }
                     setIsNowPlayingOpen(true);
                 }}

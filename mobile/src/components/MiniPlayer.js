@@ -10,7 +10,7 @@ import { THEME, space, shape, font, elevation, ripple } from '../config';
 const DEFAULT_COVER =
     'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
 
-export default function MiniPlayer() {
+export default function MiniPlayer({ embedded = false }) {
     const insets = useSafeAreaInsets();
     const {
         currentSong,
@@ -67,7 +67,9 @@ export default function MiniPlayer() {
         <View
             style={[
                 styles.wrapper,
-                { bottom: Math.max(insets.bottom, 10) + 64 },
+                embedded
+                    ? styles.wrapperEmbedded
+                    : { bottom: Math.max(insets.bottom, 10) + 64 },
             ]}
         >
             <BlurView intensity={80} tint="dark" style={styles.blurBackground}>
@@ -193,6 +195,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.16)',
         ...elevation[5],
+    },
+    wrapperEmbedded: {
+        position: 'relative',
+        left: 0,
+        right: 0,
     },
     blurBackground: {
         width: '100%',

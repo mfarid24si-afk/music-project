@@ -9,6 +9,7 @@ import {
     TouchableOpacity,
     TextInput,
     Linking,
+    Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -29,6 +30,7 @@ import LoginModal from '../components/LoginModal';
 import PlaylistDetailModal from '../components/PlaylistDetailModal';
 import AddToPlaylistModal from '../components/AddToPlaylistModal';
 import UpdateModal from '../components/UpdateModal';
+import NavDrawer from '../components/NavDrawer';
 import { checkAppUpdateAPI } from '../services/versionChecker';
 import {
     THEMES,
@@ -83,6 +85,7 @@ export default function HomeScreen() {
 
     const [updateInfo, setUpdateInfo] = useState(null);
     const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     // Check for app updates on mount
     useEffect(() => {
@@ -193,7 +196,10 @@ export default function HomeScreen() {
             {/* Tab: TRACKS (Beranda Lagu) */}
             {activeNavTab === 'tracks' && (
                 <View style={styles.tabScreen}>
-                    <Header trackCount={safeSongs.length} />
+                    <Header
+                        trackCount={safeSongs.length}
+                        onLogoPress={() => setIsDrawerOpen(true)}
+                    />
 
                     {/* Filter Chips Row */}
                     <FilterChips
@@ -349,7 +355,12 @@ export default function HomeScreen() {
                                                 isCurrent={isCurrent}
                                                 isPlaying={isPlaying}
                                                 isLiked={isLiked}
-                                                onPlay={() => playSong(item)}
+                                                onPlay={() =>
+                                                    playSong(
+                                                        item,
+                                                        filteredSongs,
+                                                    )
+                                                }
                                                 onToggleLike={() =>
                                                     toggleFavorite(item.id)
                                                 }
@@ -377,7 +388,12 @@ export default function HomeScreen() {
                                                 isCurrent={isCurrent}
                                                 isPlaying={isPlaying}
                                                 isLiked={isLiked}
-                                                onPlay={() => playSong(item)}
+                                                onPlay={() =>
+                                                    playSong(
+                                                        item,
+                                                        filteredSongs,
+                                                    )
+                                                }
                                                 onToggleLike={() =>
                                                     toggleFavorite(item.id)
                                                 }
@@ -434,7 +450,9 @@ export default function HomeScreen() {
                                         isCurrent={isCurrent}
                                         isPlaying={isPlaying}
                                         isLiked={isLiked}
-                                        onPlay={() => playSong(item)}
+                                        onPlay={() =>
+                                            playSong(item, filteredSongs)
+                                        }
                                         onToggleLike={() =>
                                             toggleFavorite(item.id)
                                         }
@@ -524,7 +542,23 @@ export default function HomeScreen() {
                                         key={String(pl.id)}
                                         playlist={pl}
                                         onOpen={() => setSelectedPlaylist(pl)}
-                                        onPlayAll={() => playPlaylist(pl)}
+                                        onPlayAll={() => {
+                                            const locked =
+                                                pl.isLocked ??
+                                                (pl.status &&
+                                                    pl.status !== 'approved');
+                                            if (
+                                                locked &&
+                                                currentUser?.role !== 'admin'
+                                            ) {
+                                                Alert.alert(
+                                                    'Belum Disetujui',
+                                                    'Playlist ini masih menunggu persetujuan admin.',
+                                                );
+                                                return;
+                                            }
+                                            playPlaylist(pl);
+                                        }}
                                         activeTheme={activeTheme}
                                     />
                                 ))}
@@ -780,7 +814,14 @@ export default function HomeScreen() {
                     { height: 56 + Math.max(insets.bottom, 10) },
                 ]}
             >
-                <BlurView intensity={90} tint="dark" style={styles.glassNavBar}>
+                <BlurView
+                    intensity={90}
+                    tint="dark"
+                    style={[
+                        styles.glassNavBar,
+                        { paddingBottom: Math.max(insets.bottom, 10) },
+                    ]}
+                >
                     <TouchableOpacity
                         style={styles.navBarItem}
                         onPress={() => handleNavTabPress('tracks')}
@@ -985,6 +1026,13 @@ export default function HomeScreen() {
                 visible={showUpdateModal}
                 updateInfo={updateInfo}
                 onClose={() => setShowUpdateModal(false)}
+            />
+
+            {/* Logo-triggered Navigation Drawer */}
+            <NavDrawer
+                visible={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                onNavigate={handleNavTabPress}
             />
         </View>
     );

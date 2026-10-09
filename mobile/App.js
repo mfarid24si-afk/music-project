@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AudioProvider } from './src/context/AudioContext';
 import HomeScreen from './src/screens/HomeScreen';
+
+SplashScreen.setOptions({ duration: 400, fade: true });
 
 class ErrorBoundary extends Component {
     constructor(props) {

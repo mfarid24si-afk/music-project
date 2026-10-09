@@ -1,27 +1,26 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import BrandMark from './BrandMark';
 import { useAudio } from '../context/AudioContext';
-import { THEME, space, shape, font } from '../config';
+import { THEME, space, shape, font, ripple } from '../config';
 
-export default function Header({ trackCount }) {
+export default function Header({ trackCount, onLogoPress }) {
     const { activeTheme } = useAudio();
     const accentColor = activeTheme?.color || THEME.accent;
 
     return (
         <View style={styles.header}>
-            {/* Brand Logo & Name */}
-            <View style={styles.leftRow}>
-                <View
-                    style={[
-                        styles.iconCircle,
-                        { backgroundColor: accentColor },
-                    ]}
-                >
-                    <Ionicons name="musical-notes" size={16} color="#000" />
-                </View>
+            {/* Brand Logo & Name (tap to open navigation drawer) */}
+            <TouchableOpacity
+                style={styles.leftRow}
+                onPress={onLogoPress}
+                activeOpacity={0.7}
+                android_ripple={ripple.borderless('rgba(255,255,255,0.16)', 24)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+                <BrandMark size={26} color={accentColor} />
                 <Text style={styles.title}>Spotirid</Text>
-            </View>
+            </TouchableOpacity>
 
             {/* Right Action: Clean Track Counter Badge (No Redundant Gear Button) */}
             <View style={styles.rightRow}>
@@ -56,13 +55,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: space.sm,
-    },
-    iconCircle: {
-        width: 28,
-        height: 28,
+        paddingVertical: space.xs,
+        paddingRight: space.sm,
         borderRadius: shape.full,
-        alignItems: 'center',
-        justifyContent: 'center',
     },
     title: {
         ...font.titleLarge,

@@ -48,8 +48,14 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
     const [nameInput, setNameInput] = useState('');
     const [descInput, setDescInput] = useState('');
     const [coverInput, setCoverInput] = useState('');
+    const [showPlayer, setShowPlayer] = useState(true);
 
     const accentColor = activeTheme?.color || THEME.accent;
+    const isLocked = !!(
+        playlist &&
+        (playlist.isLocked ??
+            (playlist.status && playlist.status !== 'approved'))
+    );
     const isAdmin =
         currentUser &&
         (currentUser.role === 'admin' ||
@@ -84,8 +90,32 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
         coverInput || playlist.custom_cover || playlist.cover || DEFAULT_COVER;
 
     const handlePlayAll = () => {
+        if (isLocked) {
+            Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Warning,
+            ).catch(() => {});
+            Alert.alert(
+                'Belum Disetujui',
+                'Playlist ini masih menunggu persetujuan Administrator dan belum bisa diputar.',
+            );
+            return;
+        }
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
         playPlaylist(playlist);
+    };
+
+    const handlePlaySong = (song) => {
+        if (isLocked) {
+            Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Warning,
+            ).catch(() => {});
+            Alert.alert(
+                'Belum Disetujui',
+                'Playlist ini masih menunggu persetujuan Administrator dan belum bisa diputar.',
+            );
+            return;
+        }
+        playSong(song, playlistSongs);
     };
 
     const handleSaveEdit = async () => {
@@ -187,10 +217,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
 
                 <ScrollView
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={[
-                        styles.scrollContent,
-                        { paddingBottom: currentSong ? 130 : 40 },
-                    ]}
+                    contentContainerStyle={styles.scrollContent}
                 >
                     {/* Edit Form Mode */}
                     {isEditing ? (
@@ -352,18 +379,21 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                                     style={[
                                         styles.playAllBtn,
                                         { backgroundColor: accentColor },
+                                        isLocked && styles.playAllBtnLocked,
                                     ]}
                                     onPress={handlePlayAll}
                                     android_ripple={ripple.bounded()}
                                     activeOpacity={0.8}
                                 >
                                     <Ionicons
-                                        name="play"
+                                        name={isLocked ? 'lock-closed' : 'play'}
                                         size={20}
                                         color="#000"
                                     />
                                     <Text style={styles.playAllText}>
-                                        Putar Semua
+                                        {isLocked
+                                            ? 'Menunggu Persetujuan'
+                                            : 'Putar Semua'}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -409,7 +439,9 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                                                 isCurrent={isCurrent}
                                                 isPlaying={isPlaying}
                                                 isLiked={isLiked}
-                                                onPlay={() => playSong(song)}
+                                                onPlay={() =>
+                                                    handlePlaySong(song)
+                                                }
                                                 onToggleLike={() =>
                                                     toggleFavorite(song.id)
                                                 }
@@ -447,8 +479,71 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                     </View>
                 </ScrollView>
 
-                {/* Floating MiniPlayer inside PlaylistDetailModal so active playback is always visible */}
-                <MiniPlayer />
+                {/* Docked now-playing footer (does not overlap the tracklist) */}
+                {currentSong ? (
+                    showPlayer ? (
+                        <View style={styles.playerDock}>
+                            <MiniPlayer embedded />
+                            <TouchableOpacity
+                                style={styles.hidePlayerBtn}
+                                onPress={() => {
+                                    Haptics.impactAsync(
+                                        Haptics.ImpactFeedbackStyle.Light,
+                                    ).catch(() => {});
+                                    setShowPlayer(false);
+                                }}
+                                android_ripple={ripple.borderless(
+                                    'rgba(255,255,255,0.16)',
+                                    24,
+                                )}
+                                hitSlop={{
+                                    top: 8,
+                                    bottom: 8,
+                                    left: 8,
+                                    right: 8,
+                                }}
+                            >
+                                <Ionicons
+                                    name="chevron-down"
+                                    size={14}
+                                    color={THEME.textMuted}
+                                />
+                                <Text style={styles.hidePlayerText}>
+                                    Sembunyikan
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <TouchableOpacity
+                            style={styles.showPlayerBtn}
+                            onPress={() => {
+                                Haptics.impactAsync(
+                                    Haptics.ImpactFeedbackStyle.Light,
+                                ).catch(() => {});
+                                setShowPlayer(true);
+                            }}
+                            android_ripple={ripple.bounded()}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons
+                                name="musical-notes"
+                                size={16}
+                                color={accentColor}
+                            />
+                            <Text
+                                numberOfLines={1}
+                                style={styles.showPlayerText}
+                            >
+                                {currentSong.title}
+                            </Text>
+                            <Ionicons
+                                name="chevron-up"
+                                size={14}
+                                color={THEME.textMuted}
+                            />
+                        </TouchableOpacity>
+                    )
+                ) : null}
             </View>
         </SwipeModal>
     );
@@ -486,6 +581,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingTop: space.lg,
+        paddingBottom: space.lg,
         gap: space.xl,
     },
     bannerRow: {
@@ -554,6 +650,46 @@ const styles = StyleSheet.create({
         ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
+    },
+    playAllBtnLocked: {
+        opacity: 0.55,
+    },
+    playerDock: {
+        paddingTop: space.sm,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    },
+    hidePlayerBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: space.xs,
+        paddingVertical: space.sm,
+    },
+    hidePlayerText: {
+        ...font.labelSmall,
+        fontWeight: '700',
+        color: THEME.textMuted,
+        letterSpacing: 0.4,
+    },
+    showPlayerBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: space.sm,
+        paddingVertical: space.md,
+        paddingHorizontal: space.md,
+        marginTop: space.sm,
+        borderRadius: shape.md,
+        backgroundColor: THEME.surface,
+        borderWidth: 1,
+        borderColor: THEME.border,
+        overflow: 'hidden',
+    },
+    showPlayerText: {
+        ...font.bodySmall,
+        fontWeight: '600',
+        color: '#fff',
+        flex: 1,
     },
     editSection: {
         backgroundColor: THEME.surface,
