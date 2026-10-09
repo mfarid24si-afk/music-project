@@ -1,5 +1,10 @@
 import { API_BASE_URL } from '../config';
 
+const LYRICS_HEADERS = {
+    'User-Agent': 'Spotirid/1.0.0 (https://farid-peminjaman.alwaysdata.net)',
+    Accept: 'application/json',
+};
+
 export async function fetchSongsAPI() {
     try {
         const res = await fetch(`${API_BASE_URL}/music`, {
@@ -192,7 +197,7 @@ export async function fetchLyricsFromAPI(artist, title) {
 
         // 1. Try exact match with cleaned title & artist
         const exactUrl = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(cleanArtist)}&track_name=${encodeURIComponent(cleanTitle)}`;
-        const res = await fetch(exactUrl);
+        const res = await fetch(exactUrl, { headers: LYRICS_HEADERS });
         if (res.ok) {
             const data = await res.json();
             if (data && (data.syncedLyrics || data.plainLyrics)) {
@@ -203,7 +208,7 @@ export async function fetchLyricsFromAPI(artist, title) {
         // 2. Try raw title & artist if cleaned was different
         if (cleanArtist !== rawArtist || cleanTitle !== rawTitle) {
             const rawUrl = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(rawArtist)}&track_name=${encodeURIComponent(rawTitle)}`;
-            const rawRes = await fetch(rawUrl);
+            const rawRes = await fetch(rawUrl, { headers: LYRICS_HEADERS });
             if (rawRes.ok) {
                 const rawData = await rawRes.json();
                 if (rawData && (rawData.syncedLyrics || rawData.plainLyrics)) {
@@ -214,7 +219,7 @@ export async function fetchLyricsFromAPI(artist, title) {
 
         // 3. Fallback: Search endpoint (returns array of matching tracks)
         const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(cleanArtist + ' ' + cleanTitle)}`;
-        const searchRes = await fetch(searchUrl);
+        const searchRes = await fetch(searchUrl, { headers: LYRICS_HEADERS });
         if (searchRes.ok) {
             const searchData = await searchRes.json();
             if (Array.isArray(searchData) && searchData.length > 0) {
