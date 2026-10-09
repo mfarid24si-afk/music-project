@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../config';
+import { THEME, space, shape, font, elevation, ripple } from '../config';
 
 const DEFAULT_COVER =
     'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
@@ -38,6 +38,7 @@ export default function SongCard({
                 },
             ]}
             onPress={onPlay}
+            android_ripple={ripple.bounded()}
             activeOpacity={0.8}
         >
             {/* Cover Image Container */}
@@ -91,6 +92,10 @@ export default function SongCard({
                 <TouchableOpacity
                     onPress={onAddToPlaylist}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    android_ripple={ripple.borderless(
+                        'rgba(255,255,255,0.16)',
+                        20,
+                    )}
                     style={styles.actionBtn}
                 >
                     <Ionicons
@@ -103,6 +108,10 @@ export default function SongCard({
                 <TouchableOpacity
                     onPress={onToggleLike}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    android_ripple={ripple.borderless(
+                        'rgba(255,255,255,0.16)',
+                        20,
+                    )}
                     style={styles.actionBtn}
                 >
                     <Ionicons
@@ -120,16 +129,17 @@ const styles = StyleSheet.create({
     card: {
         width: '48.5%',
         backgroundColor: THEME.surface,
-        borderRadius: 16,
+        borderRadius: shape.lg,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        padding: 10,
-        marginBottom: 12,
+        borderColor: THEME.border,
+        padding: space.md,
+        marginBottom: space.md,
+        overflow: 'hidden',
     },
     imageBox: {
         width: '100%',
         aspectRatio: 1,
-        borderRadius: 12,
+        borderRadius: shape.md,
         overflow: 'hidden',
         backgroundColor: THEME.elevated,
         position: 'relative',
@@ -140,58 +150,59 @@ const styles = StyleSheet.create({
     },
     genrePill: {
         position: 'absolute',
-        top: 6,
-        left: 6,
+        top: space.xs,
+        left: space.xs,
         backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        paddingHorizontal: 6,
+        paddingHorizontal: space.sm,
         paddingVertical: 2,
-        borderRadius: 4,
+        borderRadius: shape.xs,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     genreText: {
-        fontSize: 8,
+        ...font.labelSmall,
         fontWeight: '800',
         letterSpacing: 0.5,
     },
     playingBadge: {
         position: 'absolute',
-        bottom: 6,
-        right: 6,
+        bottom: space.xs,
+        right: space.xs,
         width: 26,
         height: 26,
-        borderRadius: 13,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.6,
-        shadowRadius: 6,
-        elevation: 4,
+        ...elevation[3],
     },
     info: {
-        marginTop: 8,
-        marginBottom: 6,
+        marginTop: space.sm,
+        marginBottom: space.xs,
     },
     title: {
-        fontSize: 13,
+        ...font.titleSmall,
         fontWeight: '700',
         color: '#fff',
         marginBottom: 2,
     },
     artist: {
-        fontSize: 11,
+        ...font.bodySmall,
         color: THEME.textMuted,
     },
     bottomBar: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingTop: 6,
+        paddingTop: space.sm,
         borderTopWidth: 1,
         borderTopColor: 'rgba(255, 255, 255, 0.05)',
     },
     actionBtn: {
-        padding: 2,
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: shape.full,
+        overflow: 'hidden',
     },
 });

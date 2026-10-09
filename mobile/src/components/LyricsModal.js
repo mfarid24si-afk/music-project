@@ -12,7 +12,7 @@ import * as Haptics from 'expo-haptics';
 import SwipeModal from './SwipeModal';
 import { useAudio } from '../context/AudioContext';
 import { fetchLyricsFromAPI } from '../services/api';
-import { THEME } from '../config';
+import { THEME, space, shape, font, touchTarget, ripple } from '../config';
 
 export default function LyricsModal({ visible, onClose }) {
     const { currentSong, currentTime, seekTo, activeTheme } = useAudio();
@@ -120,6 +120,10 @@ export default function LyricsModal({ visible, onClose }) {
                         onPress={onClose}
                         style={styles.closeBtn}
                         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        android_ripple={ripple.borderless(
+                            'rgba(255,255,255,0.16)',
+                            24,
+                        )}
                     >
                         <Ionicons
                             name="close"
@@ -159,6 +163,7 @@ export default function LyricsModal({ visible, onClose }) {
                                         ).catch(() => {});
                                     }}
                                     activeOpacity={0.7}
+                                    android_ripple={ripple.bounded()}
                                     style={styles.lineBox}
                                 >
                                     <Text
@@ -201,89 +206,88 @@ export default function LyricsModal({ visible, onClose }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingHorizontal: 20,
+        paddingHorizontal: space.xl,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 12,
+        paddingVertical: space.md,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     },
     titleBox: {
         flex: 1,
-        marginRight: 12,
+        marginRight: space.md,
     },
     liveBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        marginBottom: 4,
+        gap: space.sm,
+        marginBottom: space.xs,
     },
     liveDot: {
         width: 6,
         height: 6,
-        borderRadius: 3,
+        borderRadius: shape.full,
     },
     liveText: {
-        fontSize: 9,
+        ...font.labelSmall,
         fontWeight: '800',
         letterSpacing: 0.8,
     },
     songTitle: {
-        fontSize: 16,
+        ...font.titleMedium,
         fontWeight: '800',
         color: '#fff',
     },
     songArtist: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
     },
     closeBtn: {
-        padding: 6,
+        ...touchTarget,
+        borderRadius: shape.full,
+        overflow: 'hidden',
     },
     lyricsList: {
         paddingVertical: 140, // Generous padding for clean center positioning!
-        gap: 18,
+        gap: space.lg,
     },
     lineBox: {
-        paddingVertical: 4,
+        paddingVertical: space.xs,
         alignItems: 'center',
     },
     lineText: {
-        fontSize: 17,
+        ...font.bodyLarge,
         fontWeight: '600',
         color: 'rgba(255, 255, 255, 0.3)',
         textAlign: 'center',
-        lineHeight: 26,
     },
     lineTextActive: {
-        fontSize: 22,
+        ...font.titleLarge,
         fontWeight: '800',
-        lineHeight: 32,
         transform: [{ scale: 1.05 }],
     },
     centerBox: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 24,
-        gap: 12,
+        paddingHorizontal: space.xl,
+        gap: space.md,
     },
     loadingText: {
-        fontSize: 13,
+        ...font.bodyMedium,
         color: THEME.textMuted,
     },
     emptyTitle: {
-        fontSize: 16,
+        ...font.titleMedium,
         fontWeight: '700',
         color: '#fff',
     },
     emptySubtitle: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
         textAlign: 'center',
-        lineHeight: 18,
     },
 });

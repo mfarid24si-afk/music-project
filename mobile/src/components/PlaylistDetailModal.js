@@ -15,7 +15,15 @@ import SwipeModal from './SwipeModal';
 import SongItem from './SongItem';
 import MiniPlayer from './MiniPlayer';
 import { useAudio } from '../context/AudioContext';
-import { THEME } from '../config';
+import {
+    THEME,
+    space,
+    shape,
+    font,
+    elevation,
+    ripple,
+    touchTarget,
+} from '../config';
 
 const DEFAULT_COVER =
     'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
@@ -135,6 +143,10 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                     <TouchableOpacity
                         onPress={onClose}
                         style={styles.iconBtn}
+                        android_ripple={ripple.borderless(
+                            'rgba(255,255,255,0.16)',
+                            22,
+                        )}
                         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                     >
                         <Ionicons name="chevron-down" size={26} color="#fff" />
@@ -156,9 +168,13 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                             styles.iconBtn,
                             isEditing && {
                                 backgroundColor: accentColor + '22',
-                                borderRadius: 18,
+                                borderRadius: shape.full,
                             },
                         ]}
+                        android_ripple={ripple.borderless(
+                            'rgba(255,255,255,0.16)',
+                            22,
+                        )}
                         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                     >
                         <Ionicons
@@ -185,7 +201,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                                     source={{ uri: currentCover }}
                                     style={styles.coverPreview}
                                 />
-                                <View style={{ flex: 1, gap: 6 }}>
+                                <View style={{ flex: 1, gap: space.sm }}>
                                     <Text style={styles.fieldLabel}>
                                         URL GAMBAR COVER
                                     </Text>
@@ -228,7 +244,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                                         {
                                             height: 70,
                                             textAlignVertical: 'top',
-                                            paddingTop: 8,
+                                            paddingTop: space.sm,
                                         },
                                     ]}
                                     value={descInput}
@@ -247,6 +263,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                                         { backgroundColor: accentColor },
                                     ]}
                                     onPress={handleSaveEdit}
+                                    android_ripple={ripple.bounded()}
                                     activeOpacity={0.8}
                                 >
                                     <Text style={styles.saveBtnText}>
@@ -257,6 +274,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                                 <TouchableOpacity
                                     style={styles.cancelBtn}
                                     onPress={() => setIsEditing(false)}
+                                    android_ripple={ripple.bounded()}
                                     activeOpacity={0.7}
                                 >
                                     <Text style={styles.cancelBtnText}>
@@ -270,6 +288,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                                 <TouchableOpacity
                                     style={styles.deleteBtn}
                                     onPress={handleDeletePlaylist}
+                                    android_ripple={ripple.bounded()}
                                     activeOpacity={0.7}
                                 >
                                     <Ionicons
@@ -335,6 +354,7 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                                         { backgroundColor: accentColor },
                                     ]}
                                     onPress={handlePlayAll}
+                                    android_ripple={ripple.bounded()}
                                     activeOpacity={0.8}
                                 >
                                     <Ionicons
@@ -403,6 +423,10 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
                                             onPress={() =>
                                                 handleRemoveSong(song.id)
                                             }
+                                            android_ripple={ripple.borderless(
+                                                'rgba(255,255,255,0.16)',
+                                                24,
+                                            )}
                                             hitSlop={{
                                                 top: 10,
                                                 bottom: 10,
@@ -433,81 +457,82 @@ export default function PlaylistDetailModal({ visible, playlist, onClose }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingHorizontal: 16,
+        paddingHorizontal: space.lg,
         position: 'relative',
     },
     topBar: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 10,
+        paddingVertical: space.md,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     },
     headerTitle: {
-        fontSize: 16,
+        ...font.titleMedium,
         fontWeight: '700',
         color: '#fff',
         flex: 1,
         textAlign: 'center',
-        marginHorizontal: 12,
+        marginHorizontal: space.md,
     },
     iconBtn: {
-        padding: 6,
-        width: 36,
-        height: 36,
+        padding: space.sm,
+        width: 44,
+        height: 44,
         alignItems: 'center',
         justifyContent: 'center',
+        borderRadius: shape.full,
     },
     scrollContent: {
-        paddingTop: 16,
-        gap: 20,
+        paddingTop: space.lg,
+        gap: space.xl,
     },
     bannerRow: {
         flexDirection: 'row',
-        gap: 16,
+        gap: space.lg,
         alignItems: 'center',
     },
     cover: {
         width: 110,
         height: 110,
-        borderRadius: 12,
+        borderRadius: shape.md,
         backgroundColor: THEME.elevated,
+        ...elevation[2],
     },
     bannerInfo: {
         flex: 1,
-        gap: 4,
+        gap: space.xs,
     },
     badge: {
         alignSelf: 'flex-start',
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
+        paddingHorizontal: space.sm,
+        paddingVertical: space.xs,
+        borderRadius: shape.xs,
     },
     badgeText: {
-        fontSize: 8,
+        ...font.labelSmall,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: 0.6,
     },
     playlistName: {
-        fontSize: 20,
+        ...font.titleLarge,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: -0.3,
     },
     playlistDesc: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
-        lineHeight: 16,
     },
     playlistCreator: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
     },
     playlistCount: {
-        fontSize: 11,
+        ...font.labelSmall,
         color: THEME.textMuted,
         fontWeight: '600',
     },
@@ -518,91 +543,92 @@ const styles = StyleSheet.create({
     playAllBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        paddingHorizontal: 22,
-        paddingVertical: 12,
-        borderRadius: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
+        gap: space.sm,
+        paddingHorizontal: space.xl,
+        paddingVertical: space.md,
+        borderRadius: shape.full,
+        overflow: 'hidden',
+        ...elevation[3],
     },
     playAllText: {
-        fontSize: 14,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },
     editSection: {
         backgroundColor: THEME.surface,
-        borderRadius: 16,
+        borderRadius: shape.lg,
         borderWidth: 1,
         borderColor: THEME.border,
-        padding: 16,
-        gap: 14,
+        padding: space.lg,
+        gap: space.lg,
+        ...elevation[1],
     },
     coverEditRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: space.md,
     },
     coverPreview: {
         width: 64,
         height: 64,
-        borderRadius: 10,
+        borderRadius: shape.md,
         backgroundColor: THEME.elevated,
+        ...elevation[1],
     },
     hintSub: {
-        fontSize: 10,
+        ...font.labelSmall,
         color: THEME.textMuted,
     },
     fieldBox: {
-        gap: 6,
+        gap: space.sm,
     },
     fieldLabel: {
-        fontSize: 10,
+        ...font.labelSmall,
         fontWeight: '800',
         color: THEME.textMuted,
         letterSpacing: 0.6,
     },
     textInput: {
         backgroundColor: THEME.elevated,
-        borderRadius: 10,
+        borderRadius: shape.md,
         borderWidth: 1,
         borderColor: THEME.border,
-        paddingHorizontal: 12,
+        paddingHorizontal: space.md,
         color: '#fff',
-        fontSize: 14,
+        ...font.bodyMedium,
         height: 44,
     },
     editBtnRow: {
         flexDirection: 'row',
-        gap: 10,
-        marginTop: 4,
+        gap: space.md,
+        marginTop: space.xs,
     },
     saveBtn: {
         flex: 1,
         height: 42,
-        borderRadius: 21,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     saveBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },
     cancelBtn: {
         height: 42,
-        paddingHorizontal: 18,
-        borderRadius: 21,
+        paddingHorizontal: space.lg,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
         borderColor: THEME.border,
+        overflow: 'hidden',
     },
     cancelBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '600',
         color: THEME.textMuted,
     },
@@ -610,30 +636,31 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 6,
-        paddingVertical: 10,
-        borderRadius: 10,
+        gap: space.sm,
+        paddingVertical: space.md,
+        borderRadius: shape.md,
         backgroundColor: 'rgba(239, 68, 68, 0.08)',
         borderWidth: 1,
         borderColor: 'rgba(239, 68, 68, 0.2)',
-        marginTop: 4,
+        marginTop: space.xs,
+        overflow: 'hidden',
     },
     deleteBtnText: {
-        fontSize: 12,
+        ...font.labelMedium,
         fontWeight: '700',
         color: '#fca5a5',
     },
     tracklistContainer: {
-        gap: 8,
+        gap: space.sm,
     },
     tracklistHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 4,
+        marginBottom: space.xs,
     },
     sectionLabel: {
-        fontSize: 10,
+        ...font.labelSmall,
         fontWeight: '800',
         color: THEME.textMuted,
         letterSpacing: 0.8,
@@ -642,22 +669,23 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: THEME.surface,
-        borderRadius: 12,
-        marginBottom: 6,
-        paddingRight: 10,
+        borderRadius: shape.md,
+        marginBottom: space.sm,
+        paddingRight: space.md,
     },
     removeSongBtn: {
-        padding: 6,
-        marginLeft: 4,
+        ...touchTarget,
+        marginLeft: space.xs,
+        borderRadius: shape.full,
     },
     emptyBox: {
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 32,
-        gap: 8,
+        paddingVertical: space.xxl,
+        gap: space.sm,
     },
     emptyText: {
-        fontSize: 13,
+        ...font.bodyMedium,
         color: THEME.textMuted,
     },
 });

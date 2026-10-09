@@ -11,7 +11,15 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import SwipeModal from './SwipeModal';
 import { useAudio } from '../context/AudioContext';
-import { THEME } from '../config';
+import {
+    THEME,
+    space,
+    shape,
+    font,
+    elevation,
+    touchTarget,
+    ripple,
+} from '../config';
 
 export default function AddToPlaylistModal({ visible, song, onClose }) {
     const { playlists, createPlaylist, togglePlaylistSong, activeTheme } =
@@ -57,6 +65,10 @@ export default function AddToPlaylistModal({ visible, song, onClose }) {
                         onPress={onClose}
                         style={styles.closeBtn}
                         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        android_ripple={ripple.borderless(
+                            'rgba(255, 255, 255, 0.16)',
+                            24,
+                        )}
                     >
                         <Ionicons
                             name="close"
@@ -86,6 +98,7 @@ export default function AddToPlaylistModal({ visible, song, onClose }) {
                                 { backgroundColor: accentColor },
                             ]}
                             onPress={handleCreate}
+                            android_ripple={ripple.bounded()}
                         >
                             <Ionicons name="add" size={20} color="#000" />
                             <Text style={styles.createBtnText}>Buat</Text>
@@ -121,6 +134,7 @@ export default function AddToPlaylistModal({ visible, song, onClose }) {
                                         ]}
                                         onPress={() => handleToggleSong(pl.id)}
                                         activeOpacity={0.7}
+                                        android_ripple={ripple.bounded()}
                                     >
                                         <View style={styles.rowLeft}>
                                             <View style={styles.iconBox}>
@@ -184,86 +198,91 @@ export default function AddToPlaylistModal({ visible, song, onClose }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingHorizontal: 20,
+        paddingHorizontal: space.lg,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 12,
+        paddingVertical: space.md,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     },
     headerInfo: {
         flex: 1,
-        marginRight: 12,
+        marginRight: space.md,
     },
     headerTitle: {
-        fontSize: 18,
+        ...font.titleMedium,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: -0.3,
     },
     songSub: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
-        marginTop: 2,
+        marginTop: space.xs,
     },
     closeBtn: {
-        padding: 6,
+        ...touchTarget,
+        borderRadius: shape.full,
+        overflow: 'hidden',
     },
     scrollContent: {
-        paddingTop: 16,
-        paddingBottom: 32,
-        gap: 20,
+        paddingTop: space.lg,
+        paddingBottom: space.xxl,
+        gap: space.lg,
     },
     createBox: {
         flexDirection: 'row',
-        gap: 8,
+        gap: space.sm,
     },
     input: {
         flex: 1,
         height: 42,
         backgroundColor: THEME.surface,
-        borderRadius: 12,
+        borderRadius: shape.md,
         borderWidth: 1,
         borderColor: THEME.border,
-        paddingHorizontal: 14,
+        paddingHorizontal: space.md,
         color: '#fff',
-        fontSize: 14,
+        ...font.bodyMedium,
     },
     createBtn: {
         height: 42,
-        paddingHorizontal: 16,
-        borderRadius: 12,
+        paddingHorizontal: space.lg,
+        borderRadius: shape.md,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: space.xs,
+        overflow: 'hidden',
+        ...elevation[1],
     },
     createBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },
     list: {
-        gap: 8,
+        gap: space.sm,
     },
     sectionLabel: {
-        fontSize: 10,
+        ...font.labelSmall,
         fontWeight: '800',
         color: THEME.textMuted,
         letterSpacing: 0.8,
-        marginBottom: 4,
+        marginBottom: space.xs,
     },
     playlistRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: THEME.surface,
-        padding: 12,
-        borderRadius: 14,
+        padding: space.md,
+        borderRadius: shape.md,
         borderWidth: 1,
         borderColor: 'transparent',
+        overflow: 'hidden',
     },
     playlistRowActive: {
         borderColor: 'rgba(204, 242, 40, 0.25)',
@@ -272,13 +291,13 @@ const styles = StyleSheet.create({
     rowLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: space.md,
         flex: 1,
     },
     iconBox: {
         width: 36,
         height: 36,
-        borderRadius: 8,
+        borderRadius: shape.sm,
         backgroundColor: THEME.elevated,
         alignItems: 'center',
         justifyContent: 'center',
@@ -287,30 +306,30 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     rowTitle: {
-        fontSize: 14,
+        ...font.titleSmall,
         fontWeight: '700',
         color: '#fff',
     },
     rowCount: {
-        fontSize: 11,
+        ...font.labelSmall,
         color: THEME.textMuted,
-        marginTop: 2,
+        marginTop: space.xs,
     },
     checkCircle: {
         width: 24,
         height: 24,
-        borderRadius: 12,
+        borderRadius: shape.full,
         borderWidth: 1.5,
         borderColor: THEME.border,
         alignItems: 'center',
         justifyContent: 'center',
     },
     emptyBox: {
-        paddingVertical: 24,
+        paddingVertical: space.xl,
         alignItems: 'center',
     },
     emptyText: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
         textAlign: 'center',
     },

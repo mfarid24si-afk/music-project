@@ -12,7 +12,16 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import SwipeModal from './SwipeModal';
 import { useAudio } from '../context/AudioContext';
-import { THEMES, THEME, APP_BASE_URL } from '../config';
+import {
+    THEMES,
+    THEME,
+    APP_BASE_URL,
+    space,
+    shape,
+    font,
+    touchTarget,
+    ripple,
+} from '../config';
 
 export default function SettingsModal({ visible, onClose }) {
     const {
@@ -70,6 +79,10 @@ export default function SettingsModal({ visible, onClose }) {
                         onPress={onClose}
                         style={styles.closeBtn}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        android_ripple={ripple.borderless(
+                            'rgba(255,255,255,0.16)',
+                            24,
+                        )}
                     >
                         <Ionicons
                             name="close"
@@ -121,6 +134,7 @@ export default function SettingsModal({ visible, onClose }) {
                                 <TouchableOpacity
                                     style={styles.logoutBtn}
                                     onPress={handleLogoutPress}
+                                    android_ripple={ripple.bounded()}
                                     activeOpacity={0.7}
                                 >
                                     <Ionicons
@@ -151,6 +165,7 @@ export default function SettingsModal({ visible, onClose }) {
                                         onClose();
                                         setIsLoginOpen(true);
                                     }}
+                                    android_ripple={ripple.bounded()}
                                     activeOpacity={0.8}
                                 >
                                     <Ionicons
@@ -185,6 +200,7 @@ export default function SettingsModal({ visible, onClose }) {
                                         { backgroundColor: accentColor },
                                     ]}
                                     onPress={handleSaveName}
+                                    android_ripple={ripple.bounded()}
                                 >
                                     <Text style={styles.saveBtnText}>
                                         Simpan
@@ -215,6 +231,7 @@ export default function SettingsModal({ visible, onClose }) {
                                                 },
                                             ]}
                                             onPress={() => handleSelectTheme(t)}
+                                            android_ripple={ripple.bounded()}
                                             activeOpacity={0.7}
                                         >
                                             <View
@@ -310,6 +327,7 @@ export default function SettingsModal({ visible, onClose }) {
                                     `${APP_BASE_URL}/admin/login`,
                                 ).catch(() => {});
                             }}
+                            android_ripple={ripple.bounded()}
                             activeOpacity={0.8}
                         >
                             <Ionicons
@@ -337,66 +355,68 @@ export default function SettingsModal({ visible, onClose }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingHorizontal: 20,
+        paddingHorizontal: space.xl,
     },
     headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 12,
+        paddingVertical: space.md,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     },
     headerTitleBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: space.sm,
     },
     headerTitle: {
-        fontSize: 18,
+        ...font.titleLarge,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: -0.3,
     },
     closeBtn: {
-        padding: 6,
+        ...touchTarget,
+        borderRadius: shape.full,
+        overflow: 'hidden',
     },
     scrollContent: {
-        paddingTop: 16,
+        paddingTop: space.lg,
         paddingBottom: 40,
-        gap: 20,
+        gap: space.xl,
     },
     section: {
-        gap: 8,
+        gap: space.sm,
     },
     sectionLabel: {
-        fontSize: 10,
+        ...font.labelSmall,
         fontWeight: '800',
         color: THEME.textMuted,
         letterSpacing: 0.8,
     },
     card: {
         backgroundColor: THEME.surface,
-        borderRadius: 16,
+        borderRadius: shape.lg,
         borderWidth: 1,
         borderColor: THEME.border,
-        padding: 16,
+        padding: space.lg,
     },
     userRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-        marginBottom: 12,
+        gap: space.md,
+        marginBottom: space.md,
     },
     avatar: {
         width: 44,
         height: 44,
-        borderRadius: 22,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
     },
     avatarText: {
-        fontSize: 18,
+        ...font.titleMedium,
         fontWeight: '800',
         color: '#000',
     },
@@ -404,25 +424,25 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     userName: {
-        fontSize: 16,
+        ...font.titleMedium,
         fontWeight: '800',
         color: '#fff',
     },
     userEmail: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
         marginTop: 2,
     },
     roleBadge: {
         alignSelf: 'flex-start',
         backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        paddingHorizontal: 6,
+        paddingHorizontal: space.sm,
         paddingVertical: 2,
-        borderRadius: 4,
-        marginTop: 4,
+        borderRadius: shape.xs,
+        marginTop: space.xs,
     },
     roleText: {
-        fontSize: 9,
+        ...font.labelSmall,
         fontWeight: '800',
         color: '#fff',
     },
@@ -430,124 +450,128 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 6,
-        paddingVertical: 10,
-        borderRadius: 10,
+        gap: space.sm,
+        paddingVertical: space.md,
+        borderRadius: shape.md,
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         borderWidth: 1,
         borderColor: 'rgba(239, 68, 68, 0.25)',
+        overflow: 'hidden',
     },
     logoutBtnText: {
-        fontSize: 12,
+        ...font.bodySmall,
         fontWeight: '700',
         color: '#fca5a5',
     },
     guestTitle: {
-        fontSize: 14,
+        ...font.titleSmall,
         fontWeight: '700',
         color: '#fff',
-        marginBottom: 4,
+        marginBottom: space.xs,
     },
     guestSubtitle: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
-        lineHeight: 18,
-        marginBottom: 14,
+        marginBottom: space.lg,
     },
     loginBtn: {
         height: 42,
-        borderRadius: 21,
+        borderRadius: shape.full,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        gap: space.sm,
+        overflow: 'hidden',
     },
     loginBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },
     inputRow: {
         flexDirection: 'row',
-        gap: 8,
+        gap: space.sm,
     },
     textInput: {
         flex: 1,
         height: 42,
         backgroundColor: THEME.elevated,
-        borderRadius: 10,
+        borderRadius: shape.md,
         borderWidth: 1,
         borderColor: THEME.border,
-        paddingHorizontal: 12,
+        paddingHorizontal: space.md,
         color: '#fff',
-        fontSize: 14,
+        ...font.bodyMedium,
     },
     saveBtn: {
         height: 42,
-        paddingHorizontal: 16,
-        borderRadius: 10,
+        paddingHorizontal: space.lg,
+        borderRadius: shape.md,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     saveBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },
     themesGrid: {
-        gap: 8,
+        gap: space.sm,
     },
     themeItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
-        borderRadius: 12,
+        padding: space.md,
+        borderRadius: shape.md,
         borderWidth: 1,
         borderColor: 'transparent',
         backgroundColor: THEME.elevated,
+        overflow: 'hidden',
     },
     colorDot: {
         width: 18,
         height: 18,
-        borderRadius: 9,
-        marginRight: 12,
+        borderRadius: shape.full,
+        marginRight: space.md,
     },
     themeName: {
-        fontSize: 13,
+        ...font.bodyMedium,
         fontWeight: '600',
         color: THEME.textMuted,
         flex: 1,
     },
     checkIcon: {
-        marginLeft: 8,
+        marginLeft: space.sm,
     },
     specRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: 10,
+        paddingVertical: space.md,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255, 255, 255, 0.05)',
     },
     specKey: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
     },
     specValue: {
-        fontSize: 12,
+        ...font.bodySmall,
         fontWeight: '700',
         color: '#fff',
     },
     adminBtn: {
         height: 46,
-        borderRadius: 23,
+        borderRadius: shape.full,
         backgroundColor: '#fff',
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        gap: 8,
+        paddingHorizontal: space.lg,
+        gap: space.sm,
+        overflow: 'hidden',
     },
     adminBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },

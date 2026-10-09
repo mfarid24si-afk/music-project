@@ -18,7 +18,7 @@ import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
 import { fetchLyricsFromAPI } from '../services/api';
-import { THEME } from '../config';
+import { THEME, space, shape, font, elevation, ripple } from '../config';
 
 const { width, height } = Dimensions.get('window');
 const TURNTABLE_SIZE = Math.min(width - 64, height * 0.35, 300);
@@ -262,6 +262,10 @@ export default function NowPlayingModal() {
                         <TouchableOpacity
                             onPress={() => setIsNowPlayingOpen(false)}
                             style={styles.iconBtn}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                22,
+                            )}
                             hitSlop={{
                                 top: 12,
                                 bottom: 12,
@@ -304,6 +308,10 @@ export default function NowPlayingModal() {
                                     { borderColor: accentColor + '66' },
                                 ],
                             ]}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                22,
+                            )}
                         >
                             <Ionicons
                                 name={
@@ -450,6 +458,7 @@ export default function NowPlayingModal() {
                                                 }}
                                                 activeOpacity={0.7}
                                                 style={styles.lyricLineBox}
+                                                android_ripple={ripple.bounded()}
                                             >
                                                 <Text
                                                     style={[
@@ -508,6 +517,10 @@ export default function NowPlayingModal() {
                                 right: 14,
                             }}
                             style={styles.likeBtn}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                22,
+                            )}
                         >
                             <Ionicons
                                 name={isLiked ? 'heart' : 'heart-outline'}
@@ -549,6 +562,10 @@ export default function NowPlayingModal() {
                         <TouchableOpacity
                             onPress={handleShuffle}
                             style={styles.secondaryBtn}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                22,
+                            )}
                             hitSlop={{
                                 top: 12,
                                 bottom: 12,
@@ -569,6 +586,10 @@ export default function NowPlayingModal() {
                         <TouchableOpacity
                             onPress={handlePrev}
                             style={styles.mainNavBtn}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                24,
+                            )}
                             hitSlop={{
                                 top: 12,
                                 bottom: 12,
@@ -591,6 +612,10 @@ export default function NowPlayingModal() {
                                 { backgroundColor: accentColor },
                             ]}
                             activeOpacity={0.8}
+                            android_ripple={ripple.borderless(
+                                'rgba(0,0,0,0.12)',
+                                33,
+                            )}
                         >
                             <Ionicons
                                 name={isPlaying ? 'pause' : 'play'}
@@ -604,6 +629,10 @@ export default function NowPlayingModal() {
                         <TouchableOpacity
                             onPress={handleNext}
                             style={styles.mainNavBtn}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                24,
+                            )}
                             hitSlop={{
                                 top: 12,
                                 bottom: 12,
@@ -622,6 +651,10 @@ export default function NowPlayingModal() {
                         <TouchableOpacity
                             onPress={handleRepeat}
                             style={styles.secondaryBtn}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                22,
+                            )}
                             hitSlop={{
                                 top: 12,
                                 bottom: 12,
@@ -663,82 +696,84 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        paddingHorizontal: 24,
+        paddingHorizontal: space.xl,
         justifyContent: 'space-between',
     },
     dragArea: {
         width: '100%',
-        height: 24,
+        height: space.xl,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: -8,
+        marginBottom: -space.sm,
     },
     dragHandle: {
         width: 44,
         height: 4,
-        borderRadius: 2,
+        borderRadius: shape.full,
         backgroundColor: 'rgba(255, 255, 255, 0.3)',
     },
     topBar: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingTop: 4,
+        paddingTop: space.xs,
     },
     topTitleBox: {
         alignItems: 'center',
         flex: 1,
-        marginHorizontal: 12,
+        marginHorizontal: space.md,
     },
     topSubtitle: {
-        fontSize: 9,
+        ...font.labelSmall,
         fontWeight: '800',
         color: THEME.textMuted,
         letterSpacing: 1,
     },
     topTitle: {
-        fontSize: 13,
+        ...font.titleSmall,
         fontWeight: '700',
         color: '#fff',
-        marginTop: 2,
+        marginTop: space.xs,
     },
     iconBtn: {
-        padding: 6,
+        padding: space.xs,
         width: 44,
         height: 44,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     iconBtnActive: {
         backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        borderRadius: 22,
+        borderRadius: shape.full,
         borderWidth: 1,
     },
     telemetryRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
-        marginTop: 4,
+        gap: space.sm,
+        marginTop: space.xs,
     },
     telemetryPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        gap: space.sm,
+        paddingHorizontal: space.md,
+        paddingVertical: space.xs,
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 20,
+        borderRadius: shape.full,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     pulseDot: {
         width: 6,
         height: 6,
-        borderRadius: 3,
+        borderRadius: shape.full,
     },
     telemetryText: {
-        fontSize: 9,
+        ...font.labelSmall,
         fontWeight: '700',
         color: '#fff',
         letterSpacing: 0.6,
@@ -746,20 +781,20 @@ const styles = StyleSheet.create({
     hiresBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        gap: space.xs,
+        paddingHorizontal: space.sm,
+        paddingVertical: space.xs,
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 20,
+        borderRadius: shape.full,
         borderWidth: 1,
     },
     hiresText: {
-        fontSize: 9,
+        ...font.labelSmall,
         fontWeight: '800',
         letterSpacing: 0.5,
     },
     mainCenterBox: {
-        marginVertical: 8,
+        marginVertical: space.sm,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -771,10 +806,10 @@ const styles = StyleSheet.create({
         width: '100%',
         height: TURNTABLE_SIZE + 40,
         backgroundColor: THEME.surface,
-        borderRadius: 20,
+        borderRadius: shape.lg,
         borderWidth: 1,
         borderColor: THEME.border,
-        paddingHorizontal: 16,
+        paddingHorizontal: space.lg,
         overflow: 'hidden',
     },
     lyricsScroll: {
@@ -782,40 +817,37 @@ const styles = StyleSheet.create({
     },
     lyricsContent: {
         paddingVertical: 140, // Generous padding so any line can be centered!
-        gap: 18,
+        gap: space.lg,
     },
     lyricsCenter: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 20,
-        gap: 8,
+        padding: space.xl,
+        gap: space.sm,
     },
     lyricsEmptyTitle: {
-        fontSize: 15,
+        ...font.titleMedium,
         fontWeight: '700',
         color: '#fff',
     },
     lyricsMuted: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
         textAlign: 'center',
     },
     lyricLineBox: {
-        paddingVertical: 4,
+        paddingVertical: space.xs,
         alignItems: 'center',
     },
     lyricText: {
-        fontSize: 17,
-        fontWeight: '600',
+        ...font.titleMedium,
         color: 'rgba(255, 255, 255, 0.3)',
         textAlign: 'center',
-        lineHeight: 26,
     },
     lyricTextActive: {
-        fontSize: 22,
+        ...font.titleLarge,
         fontWeight: '800',
-        lineHeight: 32,
         transform: [{ scale: 1.05 }],
     },
     vinylPlatter: {
@@ -827,11 +859,7 @@ const styles = StyleSheet.create({
         borderColor: '#1e2025',
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 16 },
-        shadowOpacity: 0.8,
-        shadowRadius: 24,
-        elevation: 16,
+        ...elevation[5],
     },
     strobeRing: {
         width: TURNTABLE_SIZE - 16,
@@ -877,7 +905,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         width: 14,
         height: 14,
-        borderRadius: 7,
+        borderRadius: shape.full,
         backgroundColor: '#000',
         borderWidth: 2,
         borderColor: 'rgba(255, 255, 255, 0.6)',
@@ -886,32 +914,34 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 6,
+        marginBottom: space.sm,
     },
     titleBox: {
         flex: 1,
-        marginRight: 16,
+        marginRight: space.lg,
     },
     songTitle: {
-        fontSize: 22,
+        ...font.titleLarge,
         fontWeight: '800',
         color: '#fff',
-        marginBottom: 4,
+        marginBottom: space.xs,
         letterSpacing: -0.3,
     },
     songArtist: {
-        fontSize: 14,
+        ...font.bodyMedium,
         fontWeight: '500',
         color: THEME.textMuted,
     },
     likeBtn: {
         width: 44,
         height: 44,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     sliderContainer: {
-        marginVertical: 6,
+        marginVertical: space.sm,
     },
     slider: {
         width: '100%',
@@ -920,11 +950,11 @@ const styles = StyleSheet.create({
     timeRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 4,
-        marginTop: -4,
+        paddingHorizontal: space.xs,
+        marginTop: -space.xs,
     },
     timeText: {
-        fontSize: 11,
+        ...font.labelSmall,
         color: THEME.textMuted,
         fontFamily: 'monospace',
     },
@@ -932,39 +962,40 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: 2,
-        marginBottom: 10,
+        marginTop: space.xs,
+        marginBottom: space.md,
     },
     secondaryBtn: {
         width: 44,
         height: 44,
         position: 'relative',
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     repeatBadge: {
         position: 'absolute',
-        top: 6,
-        right: 6,
-        fontSize: 9,
+        top: space.sm,
+        right: space.sm,
+        ...font.labelSmall,
         fontWeight: '800',
     },
     mainNavBtn: {
         width: 48,
         height: 48,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     bigPlayBtn: {
         width: 66,
         height: 66,
-        borderRadius: 33,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 12,
-        elevation: 8,
+        overflow: 'hidden',
+        ...elevation[4],
     },
 });

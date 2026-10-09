@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { THEME } from '../config';
+import { THEME, space, shape, font, ripple } from '../config';
 
 const CHIPS = [
     { id: 'all', label: 'All Sessions' },
@@ -28,6 +28,7 @@ export default function FilterChips({ activeFilter, onSelectFilter }) {
                         key={chip.id}
                         onPress={() => onSelectFilter(chip.id)}
                         style={[styles.chip, isActive && styles.chipActive]}
+                        android_ripple={ripple.bounded()}
                         activeOpacity={0.7}
                     >
                         <Text
@@ -47,33 +48,34 @@ export default function FilterChips({ activeFilter, onSelectFilter }) {
 
 const styles = StyleSheet.create({
     container: {
-        height: 44,
-        maxHeight: 44,
+        height: 48,
+        maxHeight: 48,
         flexGrow: 0,
-        marginBottom: 12,
+        marginBottom: space.md,
     },
     scrollContent: {
-        paddingHorizontal: 16,
-        gap: 8,
+        paddingHorizontal: space.lg,
+        gap: space.sm,
         alignItems: 'center',
-        height: 44,
+        height: 48,
     },
     chip: {
-        height: 34,
-        paddingHorizontal: 14,
-        borderRadius: 17,
+        height: 36,
+        paddingHorizontal: space.lg,
+        borderRadius: shape.full,
         backgroundColor: THEME.surface,
         borderWidth: 1,
         borderColor: THEME.border,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     chipActive: {
         backgroundColor: THEME.accent,
         borderColor: THEME.accent,
     },
     chipText: {
-        fontSize: 12,
+        ...font.labelMedium,
         fontWeight: '600',
         color: THEME.textMuted,
     },

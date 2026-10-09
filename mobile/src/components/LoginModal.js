@@ -16,7 +16,15 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import SwipeModal from './SwipeModal';
 import { useAudio } from '../context/AudioContext';
-import { THEME } from '../config';
+import {
+    THEME,
+    space,
+    shape,
+    font,
+    touchTarget,
+    elevation,
+    ripple,
+} from '../config';
 
 export default function LoginModal({ visible, onClose }) {
     const { login, activeTheme } = useAudio();
@@ -168,6 +176,10 @@ export default function LoginModal({ visible, onClose }) {
                                             left: 12,
                                             right: 12,
                                         }}
+                                        android_ripple={ripple.borderless(
+                                            'rgba(255,255,255,0.16)',
+                                            24,
+                                        )}
                                     >
                                         <Ionicons
                                             name={
@@ -194,6 +206,7 @@ export default function LoginModal({ visible, onClose }) {
                                 ]}
                                 onPress={handleSubmit}
                                 disabled={loading}
+                                android_ripple={ripple.bounded()}
                                 activeOpacity={0.8}
                             >
                                 {loading ? (
@@ -227,66 +240,65 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContainer: {
-        paddingHorizontal: 24,
-        paddingTop: 8,
+        paddingHorizontal: space.xl,
+        paddingTop: space.sm,
         paddingBottom: 40,
     },
     header: {
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: space.xl,
     },
     badge: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        gap: space.sm,
+        paddingHorizontal: space.md,
+        paddingVertical: space.xs,
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 16,
-        marginBottom: 10,
+        borderRadius: shape.full,
+        marginBottom: space.sm,
     },
     badgeText: {
-        fontSize: 10,
+        ...font.labelSmall,
         fontWeight: '800',
         letterSpacing: 0.8,
     },
     title: {
-        fontSize: 22,
+        ...font.titleLarge,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: -0.4,
-        marginBottom: 4,
+        marginBottom: space.xs,
     },
     subtitle: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
         textAlign: 'center',
-        lineHeight: 18,
     },
     errorBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: space.sm,
         backgroundColor: 'rgba(239, 68, 68, 0.12)',
         borderWidth: 1,
         borderColor: 'rgba(239, 68, 68, 0.3)',
-        borderRadius: 10,
-        padding: 10,
-        marginBottom: 14,
+        borderRadius: shape.md,
+        padding: space.md,
+        marginBottom: space.lg,
     },
     errorText: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: '#fca5a5',
         flex: 1,
     },
     form: {
-        gap: 16,
+        gap: space.lg,
     },
     field: {
-        gap: 6,
+        gap: space.sm,
     },
     label: {
-        fontSize: 10,
+        ...font.labelSmall,
         fontWeight: '800',
         color: THEME.textMuted,
         letterSpacing: 0.6,
@@ -295,45 +307,44 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: THEME.surface,
-        borderRadius: 14,
+        borderRadius: shape.lg,
         borderWidth: 1,
         borderColor: THEME.border,
         height: 52,
-        paddingHorizontal: 12,
+        paddingHorizontal: space.md,
     },
     fieldIcon: {
-        marginRight: 8,
+        marginRight: space.sm,
     },
     textInput: {
         flex: 1,
         height: '100%',
         color: '#fff',
-        fontSize: 14,
+        ...font.bodyMedium,
         paddingVertical: 0,
     },
     eyeBtn: {
-        padding: 8,
-        marginLeft: 4,
+        ...touchTarget,
+        borderRadius: shape.full,
+        marginLeft: space.xs,
+        overflow: 'hidden',
     },
     submitBtn: {
         height: 50,
-        borderRadius: 25,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
+        marginTop: space.sm,
+        overflow: 'hidden',
+        ...elevation[3],
     },
     btnRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        gap: space.sm,
     },
     submitBtnText: {
-        fontSize: 14,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },

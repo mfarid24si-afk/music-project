@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../config';
+import { THEME, space, shape, font, elevation, ripple } from '../config';
 import { openUpdateLink } from '../services/versionChecker';
 
 export default function UpdateModal({ visible, updateInfo, onClose }) {
@@ -38,6 +38,7 @@ export default function UpdateModal({ visible, updateInfo, onClose }) {
                             onPress={() =>
                                 openUpdateLink(updateInfo.downloadUrl)
                             }
+                            android_ripple={ripple.bounded()}
                             activeOpacity={0.8}
                         >
                             <Ionicons
@@ -54,6 +55,7 @@ export default function UpdateModal({ visible, updateInfo, onClose }) {
                             <TouchableOpacity
                                 style={styles.secondaryBtn}
                                 onPress={onClose}
+                                android_ripple={ripple.bounded()}
                                 activeOpacity={0.7}
                             >
                                 <Text style={styles.secondaryBtnText}>
@@ -74,31 +76,27 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.75)',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 24,
+        paddingHorizontal: space.xl,
     },
     dialog: {
         width: '100%',
         maxWidth: 360,
         backgroundColor: THEME.surface,
-        borderRadius: 24,
+        borderRadius: shape.xl,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.12)',
-        padding: 24,
+        padding: space.xl,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.6,
-        shadowRadius: 20,
-        elevation: 16,
+        ...elevation[5],
     },
     iconCircle: {
         width: 56,
         height: 56,
-        borderRadius: 28,
+        borderRadius: shape.full,
         backgroundColor: THEME.accent,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 16,
+        marginBottom: space.lg,
         shadowColor: THEME.accent,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
@@ -106,39 +104,39 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     title: {
-        fontSize: 20,
+        ...font.titleLarge,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: -0.4,
-        marginBottom: 6,
+        marginBottom: space.sm,
         textAlign: 'center',
     },
     versionTag: {
-        fontSize: 12,
+        ...font.bodySmall,
         fontWeight: '700',
         color: THEME.accent,
         letterSpacing: 0.5,
-        marginBottom: 12,
+        marginBottom: space.md,
     },
     notesText: {
-        fontSize: 13,
+        ...font.bodyMedium,
         color: THEME.textMuted,
-        lineHeight: 20,
         textAlign: 'center',
-        marginBottom: 22,
+        marginBottom: space.xl,
     },
     buttonGroup: {
         width: '100%',
-        gap: 10,
+        gap: space.md,
     },
     primaryBtn: {
         height: 48,
-        borderRadius: 24,
+        borderRadius: shape.full,
         backgroundColor: THEME.accent,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        gap: space.sm,
+        overflow: 'hidden',
         shadowColor: THEME.accent,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.35,
@@ -146,18 +144,19 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     primaryBtnText: {
-        fontSize: 14,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },
     secondaryBtn: {
         height: 44,
-        borderRadius: 22,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     secondaryBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '600',
         color: THEME.textMuted,
     },

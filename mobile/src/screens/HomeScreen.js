@@ -30,7 +30,17 @@ import PlaylistDetailModal from '../components/PlaylistDetailModal';
 import AddToPlaylistModal from '../components/AddToPlaylistModal';
 import UpdateModal from '../components/UpdateModal';
 import { checkAppUpdateAPI } from '../services/versionChecker';
-import { THEMES, THEME, APP_BASE_URL } from '../config';
+import {
+    THEMES,
+    THEME,
+    APP_BASE_URL,
+    space,
+    shape,
+    font,
+    elevation,
+    ripple,
+    touchTarget,
+} from '../config';
 
 export default function HomeScreen() {
     const insets = useSafeAreaInsets();
@@ -240,6 +250,10 @@ export default function HomeScreen() {
                                 <View style={styles.toggleGroup}>
                                     <TouchableOpacity
                                         onPress={() => handleToggleView('grid')}
+                                        android_ripple={ripple.borderless(
+                                            'rgba(255,255,255,0.16)',
+                                            22,
+                                        )}
                                         style={[
                                             styles.toggleBtn,
                                             viewMode === 'grid' && [
@@ -270,6 +284,10 @@ export default function HomeScreen() {
 
                                     <TouchableOpacity
                                         onPress={() => handleToggleView('list')}
+                                        android_ripple={ripple.borderless(
+                                            'rgba(255,255,255,0.16)',
+                                            22,
+                                        )}
                                         style={[
                                             styles.toggleBtn,
                                             viewMode === 'list' && [
@@ -458,6 +476,7 @@ export default function HomeScreen() {
                                 })
                             }
                             activeOpacity={0.8}
+                            android_ripple={ripple.bounded()}
                         >
                             <Ionicons name="add" size={16} color="#000" />
                             <Text style={styles.createPlText}>
@@ -533,7 +552,7 @@ export default function HomeScreen() {
                                 paddingBottom: currentSong
                                     ? insets.bottom + 140
                                     : insets.bottom + 80,
-                                gap: 16,
+                                gap: space.lg,
                             },
                         ]}
                     >
@@ -582,6 +601,7 @@ export default function HomeScreen() {
                                         style={styles.logoutBtn}
                                         onPress={handleLogoutPress}
                                         activeOpacity={0.7}
+                                        android_ripple={ripple.bounded()}
                                     >
                                         <Ionicons
                                             name="log-out-outline"
@@ -610,6 +630,7 @@ export default function HomeScreen() {
                                         ]}
                                         onPress={() => setIsLoginOpen(true)}
                                         activeOpacity={0.8}
+                                        android_ripple={ripple.bounded()}
                                     >
                                         <Ionicons
                                             name="log-in-outline"
@@ -645,6 +666,7 @@ export default function HomeScreen() {
                                             { backgroundColor: accentColor },
                                         ]}
                                         onPress={handleSaveProfileName}
+                                        android_ripple={ripple.bounded()}
                                     >
                                         <Text style={styles.saveBtnText}>
                                             Simpan
@@ -679,6 +701,7 @@ export default function HomeScreen() {
                                                     handleSelectTheme(t)
                                                 }
                                                 activeOpacity={0.7}
+                                                android_ripple={ripple.bounded()}
                                             >
                                                 <View
                                                     style={[
@@ -725,6 +748,7 @@ export default function HomeScreen() {
                                     ).catch(() => {});
                                 }}
                                 activeOpacity={0.8}
+                                android_ripple={ripple.bounded()}
                             >
                                 <Ionicons
                                     name="shield-checkmark"
@@ -761,6 +785,7 @@ export default function HomeScreen() {
                         style={styles.navBarItem}
                         onPress={() => handleNavTabPress('tracks')}
                         activeOpacity={0.7}
+                        android_ripple={ripple.bounded()}
                     >
                         <View
                             style={[
@@ -801,6 +826,7 @@ export default function HomeScreen() {
                         style={styles.navBarItem}
                         onPress={() => handleNavTabPress('search')}
                         activeOpacity={0.7}
+                        android_ripple={ripple.bounded()}
                     >
                         <View
                             style={[
@@ -841,6 +867,7 @@ export default function HomeScreen() {
                         style={styles.navBarItem}
                         onPress={() => handleNavTabPress('playlists')}
                         activeOpacity={0.7}
+                        android_ripple={ripple.bounded()}
                     >
                         <View
                             style={[
@@ -881,6 +908,7 @@ export default function HomeScreen() {
                         style={styles.navBarItem}
                         onPress={() => handleNavTabPress('settings')}
                         activeOpacity={0.7}
+                        android_ripple={ripple.bounded()}
                     >
                         <View
                             style={[
@@ -971,64 +999,64 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     tabScreenHeader: {
-        paddingHorizontal: 16,
-        paddingTop: 10,
-        paddingBottom: 6,
+        paddingHorizontal: space.lg,
+        paddingTop: space.md,
+        paddingBottom: space.sm,
     },
     tabScreenTitle: {
-        fontSize: 26,
+        ...font.headlineSmall,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: -0.5,
     },
     tabScreenSub: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
-        marginTop: 2,
-        marginBottom: 6,
+        marginTop: space.xs,
+        marginBottom: space.sm,
     },
     scrollContent: {
-        paddingHorizontal: 8,
-        paddingTop: 4,
+        paddingHorizontal: space.sm,
+        paddingTop: space.xs,
     },
     gridContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
-        paddingHorizontal: 8,
+        paddingHorizontal: space.sm,
     },
     listContainer: {
-        paddingHorizontal: 4,
+        paddingHorizontal: space.xs,
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 12,
-        marginBottom: 12,
-        paddingTop: 8,
+        paddingHorizontal: space.md,
+        marginBottom: space.md,
+        paddingTop: space.sm,
     },
     sectionTitleRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: space.sm,
     },
     sectionTitle: {
-        fontSize: 18,
+        ...font.titleMedium,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: -0.3,
     },
     countBadge: {
         backgroundColor: THEME.elevated,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 12,
+        paddingHorizontal: space.sm,
+        paddingVertical: space.xs,
+        borderRadius: shape.md,
         borderWidth: 1,
         borderColor: THEME.border,
     },
     countText: {
-        fontSize: 9,
+        ...font.labelSmall,
         fontWeight: '700',
         color: THEME.textMuted,
         letterSpacing: 0.4,
@@ -1036,37 +1064,40 @@ const styles = StyleSheet.create({
     toggleGroup: {
         flexDirection: 'row',
         backgroundColor: THEME.surface,
-        borderRadius: 8,
-        padding: 2,
+        borderRadius: shape.full,
+        padding: space.xs,
         borderWidth: 1,
         borderColor: THEME.border,
     },
     toggleBtn: {
-        width: 32,
-        height: 32,
-        borderRadius: 6,
+        width: 44,
+        height: 44,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     toggleBtnActive: {},
     playlistHeaderRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        marginBottom: 12,
-        paddingTop: 8,
+        paddingHorizontal: space.lg,
+        marginBottom: space.md,
+        paddingTop: space.sm,
     },
     createPlBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 20,
+        justifyContent: 'center',
+        gap: space.sm,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.sm,
+        borderRadius: shape.full,
+        overflow: 'hidden',
     },
     createPlText: {
-        fontSize: 12,
+        ...font.labelMedium,
         fontWeight: '800',
         color: '#000',
     },
@@ -1074,30 +1105,29 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 12,
+        gap: space.md,
     },
     loadingText: {
-        fontSize: 13,
+        ...font.bodyMedium,
         color: THEME.textMuted,
         fontWeight: '500',
     },
     emptyBox: {
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 48,
-        paddingHorizontal: 24,
-        gap: 8,
+        paddingVertical: space.xxl,
+        paddingHorizontal: space.xl,
+        gap: space.sm,
     },
     emptyTitle: {
-        fontSize: 16,
+        ...font.titleMedium,
         fontWeight: '700',
         color: '#fff',
     },
     emptySubtitle: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
         textAlign: 'center',
-        lineHeight: 18,
     },
     bottomNavBarWrapper: {
         position: 'absolute',
@@ -1107,6 +1137,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: 'rgba(255, 255, 255, 0.12)',
         overflow: 'hidden',
+        ...elevation[3],
     },
     glassNavBar: {
         flex: 1,
@@ -1117,20 +1148,19 @@ const styles = StyleSheet.create({
     },
     navBarItem: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: 6,
-        gap: 3,
+        ...touchTarget,
+        paddingTop: space.sm,
+        gap: space.xs,
     },
     iconPill: {
-        paddingHorizontal: 12,
-        paddingVertical: 3,
-        borderRadius: 12,
+        paddingHorizontal: space.md,
+        paddingVertical: space.xs,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
     },
     navBarLabel: {
-        fontSize: 10,
+        ...font.labelSmall,
         fontWeight: '600',
         color: THEME.textMuted,
     },
@@ -1138,36 +1168,37 @@ const styles = StyleSheet.create({
         fontWeight: '800',
     },
     settingsSection: {
-        gap: 8,
+        gap: space.sm,
     },
     settingsSectionLabel: {
-        fontSize: 10,
+        ...font.labelSmall,
         fontWeight: '800',
         color: THEME.textMuted,
         letterSpacing: 0.8,
     },
     card: {
         backgroundColor: THEME.surface,
-        borderRadius: 16,
+        borderRadius: shape.lg,
         borderWidth: 1,
         borderColor: THEME.border,
-        padding: 16,
+        padding: space.lg,
+        ...elevation[1],
     },
     userRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-        marginBottom: 12,
+        gap: space.md,
+        marginBottom: space.md,
     },
     avatar: {
         width: 44,
         height: 44,
-        borderRadius: 22,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
     },
     avatarText: {
-        fontSize: 18,
+        ...font.titleMedium,
         fontWeight: '800',
         color: '#000',
     },
@@ -1175,25 +1206,25 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     userName: {
-        fontSize: 16,
+        ...font.titleMedium,
         fontWeight: '800',
         color: '#fff',
     },
     userEmail: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
-        marginTop: 2,
+        marginTop: space.xs,
     },
     roleBadge: {
         alignSelf: 'flex-start',
         backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
-        marginTop: 4,
+        paddingHorizontal: space.sm,
+        paddingVertical: space.xs,
+        borderRadius: shape.xs,
+        marginTop: space.xs,
     },
     roleText: {
-        fontSize: 9,
+        ...font.labelSmall,
         fontWeight: '800',
         color: '#fff',
     },
@@ -1201,108 +1232,111 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 6,
-        paddingVertical: 10,
-        borderRadius: 10,
+        gap: space.sm,
+        paddingVertical: space.md,
+        borderRadius: shape.md,
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         borderWidth: 1,
         borderColor: 'rgba(239, 68, 68, 0.25)',
+        overflow: 'hidden',
     },
     logoutBtnText: {
-        fontSize: 12,
+        ...font.labelMedium,
         fontWeight: '700',
         color: '#fca5a5',
     },
     guestTitle: {
-        fontSize: 14,
+        ...font.titleSmall,
         fontWeight: '700',
         color: '#fff',
-        marginBottom: 4,
+        marginBottom: space.xs,
     },
     guestSubtitle: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
-        lineHeight: 18,
-        marginBottom: 14,
+        marginBottom: space.lg,
     },
     loginBtn: {
         height: 42,
-        borderRadius: 21,
+        borderRadius: shape.full,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        gap: space.sm,
+        overflow: 'hidden',
     },
     loginBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },
     inputRow: {
         flexDirection: 'row',
-        gap: 8,
+        gap: space.sm,
     },
     textInput: {
+        ...font.bodyMedium,
         flex: 1,
         height: 42,
         backgroundColor: THEME.elevated,
-        borderRadius: 10,
+        borderRadius: shape.md,
         borderWidth: 1,
         borderColor: THEME.border,
-        paddingHorizontal: 12,
+        paddingHorizontal: space.md,
         color: '#fff',
-        fontSize: 14,
     },
     saveBtn: {
         height: 42,
-        paddingHorizontal: 16,
-        borderRadius: 10,
+        paddingHorizontal: space.lg,
+        borderRadius: shape.md,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     saveBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },
     themesGrid: {
-        gap: 8,
+        gap: space.sm,
     },
     themeItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
-        borderRadius: 12,
+        padding: space.md,
+        borderRadius: shape.md,
         borderWidth: 1,
         borderColor: 'transparent',
         backgroundColor: THEME.elevated,
+        overflow: 'hidden',
     },
     colorDot: {
         width: 18,
         height: 18,
-        borderRadius: 9,
-        marginRight: 12,
+        borderRadius: shape.full,
+        marginRight: space.md,
     },
     themeName: {
-        fontSize: 13,
-        fontWeight: '600',
+        ...font.labelLarge,
         color: THEME.textMuted,
         flex: 1,
     },
     checkIcon: {
-        marginLeft: 8,
+        marginLeft: space.sm,
     },
     adminBtn: {
         height: 46,
-        borderRadius: 23,
+        borderRadius: shape.full,
         backgroundColor: '#fff',
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        gap: 8,
+        paddingHorizontal: space.lg,
+        gap: space.sm,
+        overflow: 'hidden',
     },
     adminBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
     },

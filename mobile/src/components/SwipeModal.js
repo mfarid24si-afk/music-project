@@ -9,7 +9,7 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { THEME } from '../config';
+import { THEME, shape, elevation } from '../config';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -127,11 +127,12 @@ const styles = StyleSheet.create({
     sheet: {
         width: '100%',
         backgroundColor: THEME.bg,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
+        borderTopLeftRadius: shape.xl,
+        borderTopRightRadius: shape.xl,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.12)',
         overflow: 'hidden',
+        ...elevation[3],
     },
     dragHandleArea: {
         width: '100%',
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
     dragBar: {
         width: 48,
         height: 5,
-        borderRadius: 2.5,
+        borderRadius: shape.full,
         backgroundColor: 'rgba(255, 255, 255, 0.4)',
     },
     content: {

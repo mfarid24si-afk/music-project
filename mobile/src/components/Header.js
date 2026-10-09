@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudio } from '../context/AudioContext';
-import { THEME } from '../config';
+import { THEME, space, shape, font } from '../config';
 
 export default function Header({ trackCount }) {
     const { activeTheme } = useAudio();
@@ -48,24 +48,24 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingTop: 8,
-        paddingBottom: 10,
+        paddingHorizontal: space.lg,
+        paddingTop: space.sm,
+        paddingBottom: space.md,
     },
     leftRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: space.sm,
     },
     iconCircle: {
         width: 28,
         height: 28,
-        borderRadius: 14,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
     },
     title: {
-        fontSize: 22,
+        ...font.titleLarge,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: -0.5,
@@ -78,19 +78,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
+        paddingHorizontal: space.md,
+        paddingVertical: space.xs,
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 20,
+        borderRadius: shape.full,
         borderWidth: 1,
     },
     liveDot: {
         width: 6,
         height: 6,
-        borderRadius: 3,
+        borderRadius: shape.full,
     },
     badgeText: {
-        fontSize: 10,
+        ...font.labelSmall,
         fontWeight: '800',
         letterSpacing: 0.5,
     },

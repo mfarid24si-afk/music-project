@@ -55,6 +55,14 @@ export function AudioProvider({ children }) {
     const playerRef = useRef(null);
     const isSeekingRef = useRef(false);
 
+    // Refs mirroring playback state so the native status listener always reads
+    // fresh values instead of the stale closure captured when the song started.
+    const currentSongRef = useRef(null);
+    const activeQueueRef = useRef([]);
+    const songsRef = useRef([]);
+    const isShuffleRef = useRef(false);
+    const repeatModeRef = useRef('off');
+
     // Configure background playback for iOS & Android
     const ensureBackgroundAudioMode = async () => {
         try {
@@ -89,6 +97,23 @@ export function AudioProvider({ children }) {
         void refreshData();
     }, []);
 
+    // Keep mirror refs in sync with state for playback callbacks
+    useEffect(() => {
+        songsRef.current = songs;
+    }, [songs]);
+
+    useEffect(() => {
+        activeQueueRef.current = activeQueue;
+    }, [activeQueue]);
+
+    useEffect(() => {
+        isShuffleRef.current = isShuffle;
+    }, [isShuffle]);
+
+    useEffect(() => {
+        repeatModeRef.current = repeatMode;
+    }, [repeatMode]);
+
     // Cleanup on unmount
     useEffect(() => {
         return () => {
@@ -117,6 +142,7 @@ export function AudioProvider({ children }) {
             }
 
             setCurrentSong(song);
+            currentSongRef.current = song;
             setCurrentTime(0);
             setDuration(0);
             setIsPlaying(true);
@@ -136,7 +162,7 @@ export function AudioProvider({ children }) {
                     keepAudioSessionActive: true,
                 },
             );
-            player.loop = repeatMode === 'one';
+            player.loop = repeatModeRef.current === 'one';
 
             player.addListener('playbackStatusUpdate', (status) => {
                 if (!isSeekingRef.current) {
@@ -217,7 +243,7 @@ export function AudioProvider({ children }) {
     };
 
     const handleSongFinished = () => {
-        if (repeatMode === 'one') {
+        if (repeatModeRef.current === 'one') {
             if (playerRef.current) {
                 playerRef.current.seekTo(0);
                 playerRef.current.play();
@@ -228,11 +254,17 @@ export function AudioProvider({ children }) {
     };
 
     const nextSong = () => {
-        const list = activeQueue.length > 0 ? activeQueue : songs;
-        if (!currentSong || list.length === 0) return;
+        const list =
+            activeQueueRef.current.length > 0
+                ? activeQueueRef.current
+                : songsRef.current;
+        const current = currentSongRef.current;
+        if (!current || list.length === 0) return;
 
-        if (isShuffle) {
-            const remaining = list.filter((s) => s.id !== currentSong.id);
+        if (isShuffleRef.current) {
+            const remaining = list.filter(
+                (s) => String(s.id) !== String(current.id),
+            );
             if (remaining.length > 0) {
                 const randomSong =
                     remaining[Math.floor(Math.random() * remaining.length)];
@@ -241,10 +273,14 @@ export function AudioProvider({ children }) {
             }
         }
 
-        const currentIndex = list.findIndex((s) => s.id === currentSong.id);
+        const currentIndex = list.findIndex(
+            (s) => String(s.id) === String(current.id),
+        );
         if (currentIndex >= 0 && currentIndex < list.length - 1) {
             void playSong(list[currentIndex + 1]);
-        } else if (repeatMode === 'all') {
+        } else if (currentIndex === -1) {
+            void playSong(list[0]);
+        } else if (repeatModeRef.current === 'all') {
             void playSong(list[0]);
         } else {
             setIsPlaying(false);
@@ -252,15 +288,21 @@ export function AudioProvider({ children }) {
     };
 
     const prevSong = () => {
-        const list = activeQueue.length > 0 ? activeQueue : songs;
-        if (!currentSong || list.length === 0) return;
+        const list =
+            activeQueueRef.current.length > 0
+                ? activeQueueRef.current
+                : songsRef.current;
+        const current = currentSongRef.current;
+        if (!current || list.length === 0) return;
 
         if (currentTime > 3) {
             seekTo(0);
             return;
         }
 
-        const currentIndex = list.findIndex((s) => s.id === currentSong.id);
+        const currentIndex = list.findIndex(
+            (s) => String(s.id) === String(current.id),
+        );
         if (currentIndex > 0) {
             void playSong(list[currentIndex - 1]);
         } else {

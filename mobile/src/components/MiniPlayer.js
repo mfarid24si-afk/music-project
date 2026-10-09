@@ -5,7 +5,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
-import { THEME } from '../config';
+import { THEME, space, shape, font, elevation, ripple } from '../config';
 
 const DEFAULT_COVER =
     'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
@@ -87,6 +87,7 @@ export default function MiniPlayer() {
                 <TouchableOpacity
                     style={styles.container}
                     activeOpacity={0.9}
+                    android_ripple={ripple.bounded()}
                     onPress={() => setIsNowPlayingOpen(true)}
                 >
                     {/* Cover Art */}
@@ -113,6 +114,10 @@ export default function MiniPlayer() {
                             onPress={handleOpenLyrics}
                             style={styles.controlBtn}
                             hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                20,
+                            )}
                         >
                             <Ionicons name="mic" size={19} color="#fff" />
                         </TouchableOpacity>
@@ -122,6 +127,10 @@ export default function MiniPlayer() {
                             onPress={handleToggleLike}
                             style={styles.controlBtn}
                             hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                20,
+                            )}
                         >
                             <Ionicons
                                 name={isLiked ? 'heart' : 'heart-outline'}
@@ -138,6 +147,10 @@ export default function MiniPlayer() {
                                 { backgroundColor: accentColor },
                             ]}
                             hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                20,
+                            )}
                         >
                             <Ionicons
                                 name={isPlaying ? 'pause' : 'play'}
@@ -152,6 +165,10 @@ export default function MiniPlayer() {
                             onPress={handleNext}
                             style={styles.controlBtn}
                             hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+                            android_ripple={ripple.borderless(
+                                'rgba(255,255,255,0.16)',
+                                20,
+                            )}
                         >
                             <Ionicons
                                 name="play-skip-forward"
@@ -169,17 +186,13 @@ export default function MiniPlayer() {
 const styles = StyleSheet.create({
     wrapper: {
         position: 'absolute',
-        left: 10,
-        right: 10,
-        borderRadius: 16,
+        left: space.md,
+        right: space.md,
+        borderRadius: shape.lg,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.16)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.6,
-        shadowRadius: 16,
-        elevation: 10,
+        ...elevation[5],
     },
     blurBackground: {
         width: '100%',
@@ -196,54 +209,53 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 10,
+        paddingHorizontal: space.md,
+        paddingVertical: space.md,
         minHeight: 56,
     },
     cover: {
         width: 44,
         height: 44,
-        borderRadius: 8,
+        borderRadius: shape.sm,
         backgroundColor: THEME.elevated,
     },
     info: {
         flex: 1,
-        marginLeft: 10,
-        marginRight: 6,
+        marginLeft: space.md,
+        marginRight: space.sm,
         justifyContent: 'center',
     },
     title: {
-        fontSize: 14,
+        ...font.titleSmall,
         fontWeight: '700',
         color: '#fff',
         letterSpacing: -0.2,
     },
     artist: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
         marginTop: 2,
     },
     controls: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: space.xs,
     },
     controlBtn: {
-        width: 34,
-        height: 34,
+        width: 40,
+        height: 40,
         alignItems: 'center',
         justifyContent: 'center',
+        borderRadius: shape.full,
+        overflow: 'hidden',
     },
     playBtn: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
+        width: 40,
+        height: 40,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.5,
-        shadowRadius: 8,
-        elevation: 4,
+        overflow: 'hidden',
+        ...elevation[3],
     },
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../config';
+import { THEME, space, shape, font, ripple } from '../config';
 
 const DEFAULT_COVER =
     'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
@@ -27,6 +27,7 @@ export default function SongItem({
         <TouchableOpacity
             style={[styles.row, isCurrent && styles.rowCurrent]}
             onPress={onPlay}
+            android_ripple={ripple.bounded()}
             activeOpacity={0.65}
         >
             {/* Artwork */}
@@ -71,6 +72,10 @@ export default function SongItem({
                     <TouchableOpacity
                         onPress={onAddToPlaylist}
                         style={styles.actionBtn}
+                        android_ripple={ripple.borderless(
+                            'rgba(255,255,255,0.16)',
+                            20,
+                        )}
                         hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
                     >
                         <Ionicons
@@ -84,6 +89,10 @@ export default function SongItem({
                 <TouchableOpacity
                     onPress={onToggleLike}
                     style={styles.actionBtn}
+                    android_ripple={ripple.borderless(
+                        'rgba(255,255,255,0.16)',
+                        20,
+                    )}
                     hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
                 >
                     <Ionicons
@@ -101,9 +110,10 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 12,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.sm,
+        borderRadius: shape.md,
+        overflow: 'hidden',
     },
     rowCurrent: {
         backgroundColor: 'rgba(255, 255, 255, 0.04)',
@@ -111,7 +121,7 @@ const styles = StyleSheet.create({
     coverWrapper: {
         width: 50,
         height: 50,
-        borderRadius: 8,
+        borderRadius: shape.sm,
         overflow: 'hidden',
         backgroundColor: THEME.elevated,
         position: 'relative',
@@ -131,26 +141,31 @@ const styles = StyleSheet.create({
     },
     info: {
         flex: 1,
-        marginLeft: 12,
-        marginRight: 8,
+        marginLeft: space.md,
+        marginRight: space.sm,
         justifyContent: 'center',
     },
     title: {
-        fontSize: 15,
+        ...font.titleSmall,
         fontWeight: '600',
         color: '#fff',
-        marginBottom: 4,
+        marginBottom: space.xs,
     },
     artist: {
-        fontSize: 12,
+        ...font.bodySmall,
         color: THEME.textMuted,
     },
     actions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: space.sm,
     },
     actionBtn: {
-        padding: 4,
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: shape.full,
+        overflow: 'hidden',
     },
 });

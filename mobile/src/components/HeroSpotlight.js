@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudio } from '../context/AudioContext';
-import { THEME } from '../config';
+import { THEME, space, shape, font, elevation, ripple } from '../config';
 
 const DEFAULT_COVER =
     'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
@@ -108,6 +108,7 @@ export default function HeroSpotlight() {
             <TouchableOpacity
                 style={styles.showcase}
                 activeOpacity={0.9}
+                android_ripple={ripple.bounded()}
                 onPress={() => {
                     if (!currentSong) {
                         playSong(displaySong);
@@ -177,6 +178,10 @@ export default function HeroSpotlight() {
                         style={styles.likeBtn}
                         onPress={() => toggleFavorite(displaySong.id)}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        android_ripple={ripple.borderless(
+                            'rgba(255, 255, 255, 0.16)',
+                            22,
+                        )}
                     >
                         <Ionicons
                             name={isLiked ? 'heart' : 'heart-outline'}
@@ -192,6 +197,7 @@ export default function HeroSpotlight() {
                         ]}
                         onPress={handlePlayPress}
                         activeOpacity={0.8}
+                        android_ripple={ripple.bounded()}
                     >
                         <Ionicons
                             name={isCurrentlyPlayingThis ? 'pause' : 'play'}
@@ -213,49 +219,45 @@ export default function HeroSpotlight() {
 
 const styles = StyleSheet.create({
     card: {
-        marginHorizontal: 12,
-        marginTop: 8,
-        marginBottom: 20,
+        marginHorizontal: space.md,
+        marginTop: space.sm,
+        marginBottom: space.lg,
         backgroundColor: THEME.surface,
-        borderRadius: 20,
+        borderRadius: shape.lg,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.1)',
-        padding: 16,
+        padding: space.lg,
         overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.5,
-        shadowRadius: 18,
-        elevation: 8,
+        ...elevation[4],
     },
     topBadgeRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 16,
+        marginBottom: space.lg,
     },
     hiresPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        gap: space.xs,
+        paddingHorizontal: space.sm,
+        paddingVertical: space.xs,
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 6,
+        borderRadius: shape.sm,
         borderWidth: 1,
     },
     pulseDot: {
         width: 5,
         height: 5,
-        borderRadius: 2.5,
+        borderRadius: shape.full,
     },
     hiresText: {
-        fontSize: 9,
+        ...font.labelSmall,
         fontWeight: '800',
         letterSpacing: 0.5,
     },
     editorialLabel: {
-        fontSize: 10,
+        ...font.labelSmall,
         fontWeight: '700',
         color: THEME.textMuted,
         letterSpacing: 0.6,
@@ -264,7 +266,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         height: 170,
-        marginVertical: 4,
+        marginVertical: space.xs,
     },
     recordCombo: {
         width: 220,
@@ -278,17 +280,13 @@ const styles = StyleSheet.create({
         left: 8,
         width: 152,
         height: 152,
-        borderRadius: 14,
+        borderRadius: shape.md,
         overflow: 'hidden',
         backgroundColor: THEME.elevated,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.15)',
         zIndex: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: -2, height: 8 },
-        shadowOpacity: 0.6,
-        shadowRadius: 12,
-        elevation: 8,
+        ...elevation[4],
     },
     coverImage: {
         width: '100%',
@@ -299,14 +297,14 @@ const styles = StyleSheet.create({
         top: 8,
         left: 8,
         backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 4,
+        paddingHorizontal: space.sm,
+        paddingVertical: space.xs,
+        borderRadius: shape.xs,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     coverBadgeText: {
-        fontSize: 8,
+        ...font.labelSmall,
         fontWeight: '800',
         letterSpacing: 0.5,
     },
@@ -315,23 +313,19 @@ const styles = StyleSheet.create({
         left: 68,
         width: 142,
         height: 142,
-        borderRadius: 71,
+        borderRadius: shape.full,
         backgroundColor: '#050507',
         borderWidth: 2.5,
         borderColor: '#1e2025',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 4, height: 4 },
-        shadowOpacity: 0.7,
-        shadowRadius: 10,
-        elevation: 4,
+        ...elevation[2],
     },
     vinylGroove1: {
         width: 114,
         height: 114,
-        borderRadius: 57,
+        borderRadius: shape.full,
         borderWidth: 1,
         borderColor: '#23262d',
         alignItems: 'center',
@@ -340,7 +334,7 @@ const styles = StyleSheet.create({
     vinylGroove2: {
         width: 86,
         height: 86,
-        borderRadius: 43,
+        borderRadius: shape.full,
         borderWidth: 1,
         borderColor: '#2b2e38',
         alignItems: 'center',
@@ -349,66 +343,64 @@ const styles = StyleSheet.create({
     vinylCenterLabel: {
         width: 46,
         height: 46,
-        borderRadius: 23,
+        borderRadius: shape.full,
         alignItems: 'center',
         justifyContent: 'center',
     },
     vinylCenterHole: {
         width: 10,
         height: 10,
-        borderRadius: 5,
+        borderRadius: shape.full,
         backgroundColor: '#000',
     },
     metaContainer: {
-        marginTop: 14,
-        gap: 12,
+        marginTop: space.md,
+        gap: space.md,
     },
     textContainer: {
         alignItems: 'flex-start',
     },
     title: {
-        fontSize: 20,
+        ...font.titleLarge,
         fontWeight: '800',
         color: '#fff',
         letterSpacing: -0.4,
     },
     artist: {
-        fontSize: 13,
+        ...font.bodyMedium,
         fontWeight: '500',
         color: THEME.textMuted,
-        marginTop: 3,
+        marginTop: space.xs,
     },
     actionsRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: space.md,
     },
     likeBtn: {
         width: 44,
         height: 44,
-        borderRadius: 22,
+        borderRadius: shape.full,
         backgroundColor: THEME.elevated,
         borderWidth: 1,
         borderColor: THEME.border,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     playBtn: {
         flex: 1,
         height: 44,
-        borderRadius: 22,
+        borderRadius: shape.full,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 10,
-        elevation: 4,
+        gap: space.sm,
+        overflow: 'hidden',
+        ...elevation[2],
     },
     playBtnText: {
-        fontSize: 13,
+        ...font.labelLarge,
         fontWeight: '800',
         color: '#000',
         letterSpacing: -0.2,

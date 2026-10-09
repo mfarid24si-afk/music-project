@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { THEME } from '../config';
+import { THEME, space, shape, font, ripple } from '../config';
 
 export default function SearchBar({ value, onChangeText, onClear }) {
     return (
@@ -27,6 +27,10 @@ export default function SearchBar({ value, onChangeText, onClear }) {
                     <TouchableOpacity
                         onPress={onClear}
                         style={styles.clearBtn}
+                        android_ripple={ripple.borderless(
+                            'rgba(255,255,255,0.16)',
+                            16,
+                        )}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                         <Ionicons
@@ -43,29 +47,31 @@ export default function SearchBar({ value, onChangeText, onClear }) {
 
 const styles = StyleSheet.create({
     container: {
-        paddingHorizontal: 16,
-        marginBottom: 12,
+        paddingHorizontal: space.lg,
+        marginBottom: space.md,
     },
     searchBox: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: THEME.elevated,
-        borderRadius: 24,
+        borderRadius: shape.full,
         borderWidth: 1,
         borderColor: THEME.border,
-        paddingHorizontal: 14,
-        height: 44,
+        paddingHorizontal: space.lg,
+        height: 48,
     },
     searchIcon: {
-        marginRight: 8,
+        marginRight: space.sm,
     },
     input: {
+        ...font.bodyMedium,
         flex: 1,
         color: '#fff',
-        fontSize: 14,
         paddingVertical: 0,
     },
     clearBtn: {
-        marginLeft: 6,
+        marginLeft: space.xs,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });
