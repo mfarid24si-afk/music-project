@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { THEME, space, shape, font, elevation, ripple } from '../config';
 import { openUpdateLink } from '../services/versionChecker';
 

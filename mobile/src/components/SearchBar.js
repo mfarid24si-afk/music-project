@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { THEME, space, shape, font, ripple } from '../config';
 
 export default function SearchBar({ value, onChangeText, onClear }) {

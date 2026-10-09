@@ -13,7 +13,7 @@ import {
     PanResponder,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
