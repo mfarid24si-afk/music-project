@@ -10,10 +10,15 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAudio } from '../context/AudioContext';
-import { THEME, space, shape, font, elevation, ripple } from '../config';
-
-const DEFAULT_COVER =
-    'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
+import {
+    DEFAULT_COVER,
+    THEME,
+    space,
+    shape,
+    font,
+    elevation,
+    ripple,
+} from '../config';
 
 export default function HeroSpotlight() {
     const {

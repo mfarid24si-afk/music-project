@@ -16,6 +16,7 @@ import SongItem from './SongItem';
 import MiniPlayer from './MiniPlayer';
 import { useAudio } from '../context/AudioContext';
 import {
+    DEFAULT_COVER,
     THEME,
     space,
     shape,
@@ -24,9 +25,6 @@ import {
     ripple,
     touchTarget,
 } from '../config';
-
-const DEFAULT_COVER =
-    'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
 
 export default function PlaylistDetailModal({ visible, playlist, onClose }) {
     const {

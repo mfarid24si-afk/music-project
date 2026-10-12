@@ -1,6 +1,9 @@
 export const API_BASE_URL = 'https://farid-peminjaman.alwaysdata.net/api';
 export const APP_BASE_URL = 'https://farid-peminjaman.alwaysdata.net';
 
+export const DEFAULT_COVER =
+    'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
+
 export const THEMES = [
     { id: 'default', color: '#ccf228', name: 'Acid Lime' },
     { id: 'purple', color: '#a855f7', name: 'Electric Violet' },

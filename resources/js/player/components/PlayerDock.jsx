@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { useAudio } from '../context/AudioContext';
 import { LuExternalLink, LuHeart, LuListMusic, LuMic, LuMusic2, LuPause, LuPlay, LuRepeat, LuRepeat1, LuShuffle, LuSkipBack, LuSkipForward, LuVolume2, LuVolumeX } from 'react-icons/lu';
-function formatSeconds(sec) {
-    if (!sec || isNaN(sec)) return '0:00';
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-}
+import { formatSeconds } from '../format';
 
 export default function PlayerDock({
     onToggleLyrics,

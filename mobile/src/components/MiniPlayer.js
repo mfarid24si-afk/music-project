@@ -5,10 +5,15 @@ import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
-import { THEME, space, shape, font, elevation, ripple } from '../config';
-
-const DEFAULT_COVER =
-    'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
+import {
+    DEFAULT_COVER,
+    THEME,
+    space,
+    shape,
+    font,
+    elevation,
+    ripple,
+} from '../config';
 
 export default function MiniPlayer({ embedded = false }) {
     const insets = useSafeAreaInsets();

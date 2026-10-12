@@ -18,12 +18,18 @@ import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
 import { fetchLyricsFromAPI } from '../services/api';
-import { THEME, space, shape, font, elevation, ripple } from '../config';
+import {
+    DEFAULT_COVER,
+    THEME,
+    space,
+    shape,
+    font,
+    elevation,
+    ripple,
+} from '../config';
 
 const { width, height } = Dimensions.get('window');
 const TURNTABLE_SIZE = Math.min(width - 64, height * 0.35, 300);
-const DEFAULT_COVER =
-    'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg';
 
 function formatSeconds(sec) {
     if (!sec || isNaN(sec)) return '0:00';
@@ -56,7 +62,7 @@ export default function NowPlayingModal() {
     } = useAudio();
 
     const accentColor = activeTheme?.color || THEME.accent;
-    const [imgError] = useState(false);
+    const [imgError, setImgError] = useState(false);
     const [sliderValue, setSliderValue] = useState(null);
     const [activeTab, setActiveTab] = useState('turntable'); // 'turntable' | 'lyrics'
     const [lyricsData, setLyricsData] = useState(null);
@@ -402,6 +408,9 @@ export default function NowPlayingModal() {
                                                 <Image
                                                     source={{ uri: coverUri }}
                                                     style={styles.centerArt}
+                                                    onError={() =>
+                                                        setImgError(true)
+                                                    }
                                                 />
                                                 <View
                                                     style={styles.spindleHole}

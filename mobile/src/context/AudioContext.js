@@ -21,7 +21,7 @@ import {
     loginAPI,
     logoutAPI,
 } from '../services/api';
-import { THEMES } from '../config';
+import { THEMES, DEFAULT_COVER } from '../config';
 import { recordLocalPlay } from '../services/localStats';
 
 const AudioContext = createContext(null);
@@ -388,9 +388,7 @@ export function AudioProvider({ children }) {
             name: name.trim(),
             creator_name: author,
             songs: [],
-            cover:
-                currentSong?.img ||
-                'https://farid-peminjaman.alwaysdata.net/assets/covers/believer.jpg',
+            cover: currentSong?.img || DEFAULT_COVER,
         };
 
         setPlaylists((prev) => [newPl, ...prev]);
