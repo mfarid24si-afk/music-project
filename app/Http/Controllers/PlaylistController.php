@@ -22,6 +22,9 @@ class PlaylistController extends Controller
                 return Playlist::with(['songs' => function ($q) {
                     $q->where('is_active', 1);
                 }])
+                    ->where(function ($q) {
+                        $q->whereNull('status')->orWhere('status', '!=', 'rejected');
+                    })
                     ->orderBy('created_at', 'desc')
                     ->get()
                     ->map(function (Playlist $pl) {

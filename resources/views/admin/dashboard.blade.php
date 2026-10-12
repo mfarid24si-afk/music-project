@@ -1285,9 +1285,9 @@
                           </button>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.playlists.reject', $pl->id) }}" style="display:inline;">
+                        <form method="POST" action="{{ route('admin.playlists.reject', $pl->id) }}" onsubmit="return confirm('Tolak &amp; hapus playlist ini secara permanen?');" style="display:inline;">
                           @csrf
-                          <button type="submit" class="btn-action btn-warning" title="Tolak">
+                          <button type="submit" class="btn-action btn-warning" title="Tolak & Hapus">
                             <svg class="icon icon-sm" viewBox="0 0 24 24">
                               <line x1="18" y1="6" x2="6" y2="18"/>
                               <line x1="6" y1="6" x2="18" y2="18"/>

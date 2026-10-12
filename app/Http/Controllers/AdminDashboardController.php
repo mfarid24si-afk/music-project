@@ -218,20 +218,19 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Reject playlist submission.
+     * Reject a submitted playlist by deleting it entirely.
      */
     public function rejectPlaylist(int|string $id): RedirectResponse
     {
         try {
             $playlist = Playlist::findOrFail($id);
-            $playlist->update([
-                'status' => 'rejected',
-                'is_public' => 0,
-            ]);
+            $name = $playlist->name;
+            $playlist->songs()->detach();
+            $playlist->delete();
             Cache::flush();
 
             return redirect()->route('admin.dashboard', ['tab' => 'playlists'])
-                ->with('info', "Playlist \"{$playlist->name}\" ditolak.");
+                ->with('info', "Playlist \"{$name}\" ditolak dan dihapus dari sistem.");
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal menolak playlist: '.$e->getMessage());
         }

@@ -222,6 +222,42 @@ test('admin can approve pending playlist to unlock it', function () {
     expect($playlist->is_public)->toBeTrue();
 });
 
+test('admin rejecting a pending playlist deletes it from database', function () {
+    $playlist = Playlist::create([
+        'slug' => 'test-playlist-reject',
+        'name' => 'Playlist Ditolak',
+        'status' => 'pending',
+        'is_public' => false,
+    ]);
+
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@spotirid.com'],
+        ['name' => 'Administrator', 'password' => bcrypt('password')]
+    );
+
+    $response = $this->actingAs($admin)->post(route('admin.playlists.reject', $playlist->id));
+
+    $response->assertRedirect(route('admin.dashboard', ['tab' => 'playlists']));
+    $response->assertSessionHas('info');
+
+    expect(Playlist::find($playlist->id))->toBeNull();
+});
+
+test('rejected playlists no longer appear in the public playlists endpoint', function () {
+    Playlist::create([
+        'slug' => 'test-playlist-rejected-public',
+        'name' => 'Playlist Rejected',
+        'status' => 'rejected',
+        'is_public' => false,
+    ]);
+
+    $response = $this->getJson('/api/playlists');
+
+    $response->assertOk();
+    $names = collect($response->json('data'))->pluck('name');
+    expect($names)->not->toContain('Playlist Rejected');
+});
+
 test('guest cannot delete a playlist', function () {
     $playlist = Playlist::create([
         'slug' => 'test-playlist-guest-delete',
