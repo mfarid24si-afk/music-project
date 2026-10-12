@@ -8,6 +8,8 @@ import {
     formatTotalDuration,
     parseDurationToSeconds,
 } from '../playlistHelpers';
+import PlaylistCoverArt from './PlaylistCoverArt';
+import PlaylistRecommendedSongs from './PlaylistRecommendedSongs';
 
 export default function PlaylistView({ playlistId, onBack }) {
     const {
@@ -203,67 +205,6 @@ export default function PlaylistView({ playlistId, onBack }) {
         handleCloseEdit();
     };
 
-    // Collage artwork component
-    // Artwork component (custom cover > 4-image collage > single cover > gradient emoji)
-    const renderCoverArt = () => {
-        if (playlist.customCover) {
-            return (
-                <div className="group relative h-40 w-40 flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-raised shadow-2xl md:h-52 md:w-52">
-                    <img
-                        src={playlist.customCover}
-                        alt={playlist.name}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-lg shadow-md backdrop-blur-md">
-                        {playlist.emoji || '🎧'}
-                    </div>
-                </div>
-            );
-        }
-
-        const covers = playlistSongs
-            .slice(0, 4)
-            .map((s) => s.img)
-            .filter(Boolean);
-        if (covers.length >= 4) {
-            return (
-                <div className="group grid h-40 w-40 flex-shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl md:h-52 md:w-52">
-                    {covers.slice(0, 4).map((c, i) => (
-                        <img
-                            key={i}
-                            src={c}
-                            alt="Cover"
-                            className="h-full w-full object-cover"
-                        />
-                    ))}
-                </div>
-            );
-        }
-        if (covers.length > 0) {
-            return (
-                <div className="relative h-40 w-40 flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-raised shadow-2xl md:h-52 md:w-52">
-                    <img
-                        src={covers[0]}
-                        alt={playlist.name}
-                        className="h-full w-full object-cover"
-                    />
-                    <div className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-lg backdrop-blur-md">
-                        {playlist.emoji || '🎧'}
-                    </div>
-                </div>
-            );
-        }
-        return (
-            <div
-                className={`h-40 w-40 rounded-2xl bg-gradient-to-br md:h-52 md:w-52 ${currentGradient.class} border ${currentGradient.border} flex flex-shrink-0 flex-col items-center justify-center gap-2 shadow-2xl`}
-            >
-                <span className="text-5xl">{playlist.emoji || '🎧'}</span>
-                <span className="font-mono text-[10px] font-bold tracking-wider text-white/60 uppercase">
-                    Curated Mix
-                </span>
-            </div>
-        );
-    };
     return (
         <div className="animate-fadeIn flex flex-col gap-8">
             {/* Editorial Hero Header */}
@@ -320,7 +261,11 @@ export default function PlaylistView({ playlistId, onBack }) {
                         onClick={handleOpenEdit}
                         title="Click to edit playlist details"
                     >
-                        {renderCoverArt()}
+                                <PlaylistCoverArt
+                                    playlist={playlist}
+                                    gradient={currentGradient}
+                                    songs={playlistSongs}
+                                />
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-black/50 text-xs font-semibold text-white opacity-0 backdrop-blur-xs transition-opacity group-hover:opacity-100">
                             <LuPencil className="h-5 w-5 text-primary-container" />
                             <span>Edit Details</span>
@@ -882,58 +827,10 @@ export default function PlaylistView({ playlistId, onBack }) {
                 </div>
             )}
 
-            {/* ================= QUICK ADD / RECOMMENDED SECTION ================= */}
-            {candidateSongs.length > 0 && (
-                <section className="mt-4 flex flex-col gap-4 border-t border-line-strong/30 pt-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <LuSparkles className="h-4 w-4 text-primary-container" />
-                            <h3 className="font-display text-base font-bold text-white">
-                                Recommended for this Playlist
-                            </h3>
-                        </div>
-                        <span className="font-mono text-[11px] text-on-surface-variant">
-                            Quickly build your soundtrack
-                        </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {candidateSongs.map((song) => (
-                            <div
-                                key={song.id}
-                                className="group flex items-center justify-between rounded-xl border border-line-strong/20 bg-raised p-2.5 transition-all hover:border-primary-container/40"
-                            >
-                                <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
-                                    <img
-                                        src={song.img}
-                                        alt={song.title}
-                                        className="h-10 w-10 flex-shrink-0 rounded-md bg-chip object-cover"
-                                    />
-                                    <div className="min-w-0">
-                                        <p className="truncate font-display text-xs font-semibold text-white">
-                                            {song.title}
-                                        </p>
-                                        <p className="truncate text-[11px] text-on-surface-variant">
-                                            {song.artist}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={() =>
-                                        addToPlaylist(playlist.id, song.id)
-                                    }
-                                    className="flex h-8 flex-shrink-0 items-center gap-1.5 rounded-full bg-chip px-3 font-mono text-xs font-semibold text-primary-container shadow-xs transition-all hover:bg-primary-container hover:text-on-primary-container"
-                                    title="Add to this playlist"
-                                >
-                                    <LuPlus className="h-3.5 w-3.5" />
-                                    <span>Add</span>
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
+            <PlaylistRecommendedSongs
+                songs={candidateSongs}
+                onAdd={(songId) => addToPlaylist(playlist.id, songId)}
+            />
 
             {/* ================= EDIT PLAYLIST MODAL ================= */}
             {isEditing &&
