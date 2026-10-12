@@ -27,7 +27,6 @@ export default function MiniPlayer({ embedded = false }) {
         favorites,
         toggleFavorite,
         setIsNowPlayingOpen,
-        setIsLyricsOpen,
         activeTheme,
     } = useAudio();
 
@@ -61,11 +60,6 @@ export default function MiniPlayer({ embedded = false }) {
     const handleNext = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
         nextSong();
-    };
-
-    const handleOpenLyrics = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-        setIsLyricsOpen(true);
     };
 
     return (
@@ -116,19 +110,6 @@ export default function MiniPlayer({ embedded = false }) {
 
                     {/* Action Buttons */}
                     <View style={styles.controls}>
-                        {/* Dedicated Lyrics Button (Mic Icon) */}
-                        <TouchableOpacity
-                            onPress={handleOpenLyrics}
-                            style={styles.controlBtn}
-                            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-                            android_ripple={ripple.borderless(
-                                'rgba(255,255,255,0.16)',
-                                20,
-                            )}
-                        >
-                            <Ionicons name="mic" size={19} color="#fff" />
-                        </TouchableOpacity>
-
                         {/* Like Button */}
                         <TouchableOpacity
                             onPress={handleToggleLike}

@@ -47,7 +47,6 @@ export function AudioProvider({ children }) {
 
     // Modal & Sheet visibility states
     const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
-    const [isLyricsOpen, setIsLyricsOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [selectedPlaylist, setSelectedPlaylist] = useState(null);
@@ -527,8 +526,6 @@ export function AudioProvider({ children }) {
                 setActiveTheme,
                 isNowPlayingOpen,
                 setIsNowPlayingOpen,
-                isLyricsOpen,
-                setIsLyricsOpen,
                 isSettingsOpen,
                 setIsSettingsOpen,
                 isLoginOpen,

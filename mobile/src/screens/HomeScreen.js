@@ -25,7 +25,6 @@ import SongItem from '../components/SongItem';
 import PlaylistCard from '../components/PlaylistCard';
 import MiniPlayer from '../components/MiniPlayer';
 import NowPlayingModal from '../components/NowPlayingModal';
-import LyricsModal from '../components/LyricsModal';
 import LoginModal from '../components/LoginModal';
 import PlaylistDetailModal from '../components/PlaylistDetailModal';
 import AddToPlaylistModal from '../components/AddToPlaylistModal';
@@ -63,8 +62,6 @@ export default function HomeScreen() {
         setProfileName,
         currentUser,
         logout,
-        isLyricsOpen,
-        setIsLyricsOpen,
         isLoginOpen,
         setIsLoginOpen,
         selectedPlaylist,
@@ -990,12 +987,6 @@ export default function HomeScreen() {
 
             {/* Fullscreen Vinyl Turntable Modal with Synced Lyrics & Swipe Down to Minimize */}
             <NowPlayingModal />
-
-            {/* Synced Lyrics Sheet Modal */}
-            <LyricsModal
-                visible={isLyricsOpen}
-                onClose={() => setIsLyricsOpen(false)}
-            />
 
             {/* Login Modal */}
             <LoginModal
