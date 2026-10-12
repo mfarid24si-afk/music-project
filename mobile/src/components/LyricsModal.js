@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -11,67 +11,21 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import SwipeModal from './SwipeModal';
 import { useAudio } from '../context/AudioContext';
-import { fetchLyricsFromAPI } from '../services/api';
+import { useLyrics } from '../hooks/useLyrics';
 import { THEME, space, shape, font, touchTarget, ripple } from '../config';
 
 export default function LyricsModal({ visible, onClose }) {
     const { currentSong, currentTime, seekTo, activeTheme } = useAudio();
-    const [lyricsData, setLyricsData] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const {
+        lyricsData,
+        loading,
+        lines: parsedLines,
+        activeIndex,
+    } = useLyrics(currentSong, currentTime);
     const scrollRef = useRef(null);
     const lineYMap = useRef({});
 
     const accentColor = activeTheme?.color || THEME.accent;
-
-    // Load lyrics on song change
-    useEffect(() => {
-        if (!currentSong) return;
-        let isCancelled = false;
-
-        async function getLyrics() {
-            setLoading(true);
-            const data = await fetchLyricsFromAPI(
-                currentSong.artist,
-                currentSong.title,
-            );
-            if (!isCancelled) {
-                setLyricsData(data);
-                setLoading(false);
-            }
-        }
-
-        void getLyrics();
-        return () => {
-            isCancelled = true;
-        };
-    }, [currentSong?.id]);
-
-    // Parse LRC Synced lyrics
-    const parsedLines = useMemo(() => {
-        if (!lyricsData || !lyricsData.syncedLyrics) return null;
-        const lines = [];
-        for (const rawLine of lyricsData.syncedLyrics.split('\n')) {
-            if (!rawLine.trim()) continue;
-            const match = rawLine.match(/^\[(\d+):(\d+)(?:[.,](\d+))?\](.*)/);
-            if (!match) continue;
-            const m = parseInt(match[1], 10);
-            const s = parseInt(match[2], 10);
-            let ms = match[3] ? parseInt(match[3], 10) : 0;
-            if (match[3] && match[3].length === 2) ms *= 10;
-            lines.push({ time: m * 60 + s + ms / 1000, text: match[4].trim() });
-        }
-        return lines.length > 0 ? lines : null;
-    }, [lyricsData]);
-
-    // Active line index
-    const activeIndex = useMemo(() => {
-        if (!parsedLines) return -1;
-        let idx = -1;
-        for (let i = 0; i < parsedLines.length; i++) {
-            if (currentTime >= parsedLines[i].time) idx = i;
-        }
-        return idx;
-    }, [parsedLines, currentTime]);
 
     // Auto scroll to active line
     useEffect(() => {

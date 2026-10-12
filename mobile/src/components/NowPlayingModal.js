@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -17,7 +17,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import { useAudio } from '../context/AudioContext';
-import { fetchLyricsFromAPI } from '../services/api';
+import { useLyrics } from '../hooks/useLyrics';
 import {
     DEFAULT_COVER,
     THEME,
@@ -65,8 +65,13 @@ export default function NowPlayingModal() {
     const [imgError, setImgError] = useState(false);
     const [sliderValue, setSliderValue] = useState(null);
     const [activeTab, setActiveTab] = useState('turntable'); // 'turntable' | 'lyrics'
-    const [lyricsData, setLyricsData] = useState(null);
-    const [lyricsLoading, setLyricsLoading] = useState(false);
+
+    const {
+        lyricsData,
+        loading: lyricsLoading,
+        lines: parsedLines,
+        activeIndex: activeLyricIndex,
+    } = useLyrics(currentSong, currentTime);
 
     const spinAnim = useRef(new Animated.Value(0)).current;
     const modalTranslateY = useRef(new Animated.Value(0)).current;
@@ -101,56 +106,6 @@ export default function NowPlayingModal() {
             },
         }),
     ).current;
-
-    // Fetch lyrics whenever song changes
-    useEffect(() => {
-        if (!currentSong) return;
-        let isCancelled = false;
-
-        async function loadLyrics() {
-            setLyricsLoading(true);
-            const data = await fetchLyricsFromAPI(
-                currentSong.artist,
-                currentSong.title,
-            );
-            if (!isCancelled) {
-                setLyricsData(data);
-                setLyricsLoading(false);
-            }
-        }
-
-        void loadLyrics();
-        return () => {
-            isCancelled = true;
-        };
-    }, [currentSong?.id]);
-
-    // Parse LRC Synced lyrics
-    const parsedLines = useMemo(() => {
-        if (!lyricsData || !lyricsData.syncedLyrics) return null;
-        const lines = [];
-        for (const rawLine of lyricsData.syncedLyrics.split('\n')) {
-            if (!rawLine.trim()) continue;
-            const match = rawLine.match(/^\[(\d+):(\d+)(?:[.,](\d+))?\](.*)/);
-            if (!match) continue;
-            const m = parseInt(match[1], 10);
-            const s = parseInt(match[2], 10);
-            let ms = match[3] ? parseInt(match[3], 10) : 0;
-            if (match[3] && match[3].length === 2) ms *= 10;
-            lines.push({ time: m * 60 + s + ms / 1000, text: match[4].trim() });
-        }
-        return lines.length > 0 ? lines : null;
-    }, [lyricsData]);
-
-    // Find active lyric index
-    const activeLyricIndex = useMemo(() => {
-        if (!parsedLines) return -1;
-        let idx = -1;
-        for (let i = 0; i < parsedLines.length; i++) {
-            if (currentTime >= parsedLines[i].time) idx = i;
-        }
-        return idx;
-    }, [parsedLines, currentTime]);
 
     // Auto-scroll lyrics smoothly centered
     useEffect(() => {

@@ -232,15 +232,57 @@ export async function deleteSongFromAPI(songId) {
     }
 }
 
+const LYRICS_HEADERS = { Accept: 'application/json' };
+
+// Clean title/artist strings for maximum LRCLIB match rate
+function cleanQueryTerm(str) {
+    if (!str) return '';
+    return str
+        .replace(
+            /\s*[([](feat|ft|with|remix|single|version|official|video)[.\s][^)\]]+[)\]]/gi,
+            '',
+        )
+        .replace(/\s*[([].*?[)\]]/g, '')
+        .trim();
+}
+
+// Mirrors the mobile fetcher: clean the query, try exact, raw, then search.
 export async function fetchLyricsFromAPI(artist, title) {
-    try {
-        const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Not found');
-        return await res.json();
-    } catch (err) {
-        return null;
+    const rawArtist = (artist || '').trim();
+    const rawTitle = (title || '').trim();
+    const cleanArtist = cleanQueryTerm(rawArtist) || rawArtist;
+    const cleanTitle = cleanQueryTerm(rawTitle) || rawTitle;
+
+    const request = async (url) => {
+        try {
+            const res = await fetch(url, { headers: LYRICS_HEADERS });
+            if (!res.ok) return null;
+            return await res.json();
+        } catch (err) {
+            return null;
+        }
+    };
+
+    const exact = await request(
+        `https://lrclib.net/api/get?artist_name=${encodeURIComponent(cleanArtist)}&track_name=${encodeURIComponent(cleanTitle)}`,
+    );
+    if (exact && (exact.syncedLyrics || exact.plainLyrics)) return exact;
+
+    if (cleanArtist !== rawArtist) {
+        const raw = await request(
+            `https://lrclib.net/api/get?artist_name=${encodeURIComponent(rawArtist)}&track_name=${encodeURIComponent(rawTitle)}`,
+        );
+        if (raw && (raw.syncedLyrics || raw.plainLyrics)) return raw;
     }
+
+    const results = await request(
+        `https://lrclib.net/api/search?q=${encodeURIComponent(cleanArtist + ' ' + cleanTitle)}`,
+    );
+    if (Array.isArray(results) && results.length > 0) {
+        return results.find((item) => item.syncedLyrics) || results[0];
+    }
+
+    return null;
 }
 
 export async function fetchCommunityPlaylists() {

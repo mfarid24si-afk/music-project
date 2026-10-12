@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAudio } from '../context/AudioContext';
-import { fetchLyricsFromAPI } from '../services/api';
+import { useLyrics } from '../hooks/useLyrics';
 import {
     LuAudioWaveform,
     LuChevronDown,
@@ -76,8 +76,13 @@ export default function NowPlayingView({ isOpen, onClose }) {
         addToQueue,
     } = useAudio();
 
-    const [lyricsData, setLyricsData] = useState(null);
-    const [lyricsLoading, setLyricsLoading] = useState(false);
+    const {
+        lyricsData,
+        loading: lyricsLoading,
+        lines: parsedLines,
+        activeIndex,
+    } = useLyrics(currentSong, currentTime, isOpen);
+
     const [artFailed, setArtFailed] = useState(false);
     const [artSongId, setArtSongId] = useState(null);
     const [rpm, setRpm] = useState(33);
@@ -91,56 +96,6 @@ export default function NowPlayingView({ isOpen, onClose }) {
         setArtSongId(currentSong.id);
         setArtFailed(false);
     }
-
-    // Reload lyrics whenever the focused track changes.
-    useEffect(() => {
-        if (!isOpen || !currentSong) return;
-
-        let isMounted = true;
-        setLyricsData(null);
-
-        async function loadLyrics() {
-            setLyricsLoading(true);
-            const data = await fetchLyricsFromAPI(
-                currentSong.artist,
-                currentSong.title,
-            );
-            if (isMounted) {
-                setLyricsData(data);
-                setLyricsLoading(false);
-            }
-        }
-        loadLyrics();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [isOpen, currentSong]);
-
-    const parsedLines = useMemo(() => {
-        if (!lyricsData || !lyricsData.syncedLyrics) return null;
-        const parsed = [];
-        for (const line of lyricsData.syncedLyrics.split('\n')) {
-            if (!line.trim()) continue;
-            const match = line.match(/^\[(\d+):(\d+)(?:[.,](\d+))?\](.*)/);
-            if (!match) continue;
-            const m = parseInt(match[1], 10);
-            const s = parseInt(match[2], 10);
-            let ms = match[3] ? parseInt(match[3], 10) : 0;
-            if (match[3] && match[3].length === 2) ms *= 10;
-            parsed.push({ time: m * 60 + s + ms / 1000, text: match[4].trim() });
-        }
-        return parsed.length > 0 ? parsed : null;
-    }, [lyricsData]);
-
-    const activeIndex = useMemo(() => {
-        if (!parsedLines) return -1;
-        let idx = -1;
-        for (let i = 0; i < parsedLines.length; i++) {
-            if (currentTime >= parsedLines[i].time) idx = i;
-        }
-        return idx;
-    }, [parsedLines, currentTime]);
 
     // Scroll ONLY the lyrics panel so a line change never drags the whole
     // viewport/page along with it (that felt forced, especially on mobile).

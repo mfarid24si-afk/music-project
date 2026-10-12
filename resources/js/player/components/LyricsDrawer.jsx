@@ -1,67 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAudio } from '../context/AudioContext';
-import { fetchLyricsFromAPI } from '../services/api';
+import { useLyrics } from '../hooks/useLyrics';
 import { LuMic, LuMusic2, LuX } from 'react-icons/lu';
 export default function LyricsDrawer({ isOpen, onClose }) {
     const { currentSong, currentTime, seekTo } = useAudio();
-    const [lyricsData, setLyricsData] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const {
+        lyricsData,
+        loading,
+        lines: parsedLines,
+        activeIndex,
+    } = useLyrics(currentSong, currentTime, isOpen);
     const scrollRef = useRef(null);
     const activeLineRef = useRef(null);
-
-    // Fetch lyrics when song changes or drawer opens
-    useEffect(() => {
-        if (!isOpen || !currentSong) return;
-
-        let isMounted = true;
-        async function loadLyrics() {
-            setLoading(true);
-            const data = await fetchLyricsFromAPI(
-                currentSong.artist,
-                currentSong.title,
-            );
-            if (isMounted) {
-                setLyricsData(data);
-                setLoading(false);
-            }
-        }
-        loadLyrics();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [isOpen, currentSong]);
-
-    // Parse synced lyrics if available
-    const parsedLines = React.useMemo(() => {
-        if (!lyricsData || !lyricsData.syncedLyrics) return null;
-        const raw = lyricsData.syncedLyrics.split('\n').filter((l) => l.trim());
-        const parsed = [];
-        for (const line of raw) {
-            const match = line.match(/^\[(\d+):(\d+)(?:[.,](\d+))?\](.*)/);
-            if (match) {
-                const m = parseInt(match[1], 10);
-                const s = parseInt(match[2], 10);
-                let ms = match[3] ? parseInt(match[3], 10) : 0;
-                if (match[3] && match[3].length === 2) ms *= 10;
-                const time = m * 60 + s + ms / 1000;
-                parsed.push({ time, text: match[4].trim() });
-            }
-        }
-        return parsed.length > 0 ? parsed : null;
-    }, [lyricsData]);
-
-    // Active line calculation
-    const activeIndex = React.useMemo(() => {
-        if (!parsedLines) return -1;
-        let idx = -1;
-        for (let i = 0; i < parsedLines.length; i++) {
-            if (currentTime >= parsedLines[i].time) {
-                idx = i;
-            }
-        }
-        return idx;
-    }, [parsedLines, currentTime]);
 
     // Auto-scroll active line into center
     useEffect(() => {
