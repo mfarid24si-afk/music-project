@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminVisitorController;
 use App\Http\Controllers\MusicController;
 use App\Support\VisitorLogMaintenance;
@@ -34,11 +35,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/music/{id}/reject', [AdminDashboardController::class, 'rejectSong'])->name('admin.music.reject');
     Route::post('/music/{id}/approve-edit', [AdminDashboardController::class, 'updateAndApproveSong'])->name('admin.music.approve-edit');
 
-    Route::post('/profile', [AdminDashboardController::class, 'updateAdminProfile'])->name('admin.profile.update');
-    Route::post('/password', [AdminDashboardController::class, 'updateAdminPassword'])->name('admin.password.update');
-    Route::post('/users', [AdminDashboardController::class, 'storeUser'])->name('admin.users.store');
-    Route::delete('/users/{id}', [AdminDashboardController::class, 'deleteUser'])->name('admin.users.delete');
-    Route::post('/users/{id}', [AdminDashboardController::class, 'updateUser'])->name('admin.users.update');
+    Route::post('/profile', [AdminUserController::class, 'updateAdminProfile'])->name('admin.profile.update');
+    Route::post('/password', [AdminUserController::class, 'updateAdminPassword'])->name('admin.password.update');
+    Route::post('/users', [AdminUserController::class, 'storeUser'])->name('admin.users.store');
+    Route::delete('/users/{id}', [AdminUserController::class, 'deleteUser'])->name('admin.users.delete');
+    Route::post('/users/{id}', [AdminUserController::class, 'updateUser'])->name('admin.users.update');
 
     Route::get('/visitors/export', [AdminVisitorController::class, 'export'])->name('admin.visitors.export');
     Route::post('/visitors/tracking', [AdminVisitorController::class, 'updateTracking'])->name('admin.visitors.tracking.update');

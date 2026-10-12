@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MusicController;
+use App\Http\Controllers\PlaylistController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -72,16 +73,16 @@ Route::get('/user', function (Request $request) {
 });
 
 // Community Shared Playlists Endpoints
-Route::get('/playlists', [MusicController::class, 'getPlaylists']);
-Route::post('/playlists', [MusicController::class, 'storePlaylist']);
-Route::put('/playlists/{id}', [MusicController::class, 'updatePlaylist']);
+Route::get('/playlists', [PlaylistController::class, 'getPlaylists']);
+Route::post('/playlists', [PlaylistController::class, 'storePlaylist']);
+Route::put('/playlists/{id}', [PlaylistController::class, 'updatePlaylist']);
 // Deletion is admin-only. The `web` group is applied so the admin session is
 // readable here; the API group carries no session, and CSRF is dropped because
 // the session cookie is already SameSite-protected.
-Route::delete('/playlists/{id}', [MusicController::class, 'destroyPlaylist'])
+Route::delete('/playlists/{id}', [PlaylistController::class, 'destroyPlaylist'])
     ->middleware(['web', 'auth'])
     ->withoutMiddleware(ValidateCsrfToken::class);
-Route::post('/playlists/{id}/songs', [MusicController::class, 'togglePlaylistSong']);
+Route::post('/playlists/{id}/songs', [PlaylistController::class, 'togglePlaylistSong']);
 // Backward-compatible endpoints for old paths
 Route::get('/music.php', [MusicController::class, 'index']);
 Route::post('/upload_music.php', [MusicController::class, 'store']);
