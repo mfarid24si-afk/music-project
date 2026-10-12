@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminSongController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminVisitorController;
 use App\Http\Controllers\MusicController;
@@ -27,13 +28,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/playlists/{id}/reject', [AdminDashboardController::class, 'rejectPlaylist'])->name('admin.playlists.reject');
     Route::delete('/playlists/{id}', [AdminDashboardController::class, 'deletePlaylist'])->name('admin.playlists.delete');
 
-    Route::post('/music', [AdminDashboardController::class, 'storeSong'])->name('admin.music.store');
-    Route::post('/music/bulk', [AdminDashboardController::class, 'storeBulkSongs'])->name('admin.music.bulk');
-    Route::post('/music/{id}', [AdminDashboardController::class, 'updateSong'])->name('admin.music.update');
-    Route::delete('/music/{id}', [AdminDashboardController::class, 'deleteSong'])->name('admin.music.delete');
-    Route::post('/music/{id}/approve', [AdminDashboardController::class, 'approveSong'])->name('admin.music.approve');
-    Route::post('/music/{id}/reject', [AdminDashboardController::class, 'rejectSong'])->name('admin.music.reject');
-    Route::post('/music/{id}/approve-edit', [AdminDashboardController::class, 'updateAndApproveSong'])->name('admin.music.approve-edit');
+    Route::post('/music', [AdminSongController::class, 'storeSong'])->name('admin.music.store');
+    Route::post('/music/bulk', [AdminSongController::class, 'storeBulkSongs'])->name('admin.music.bulk');
+    Route::post('/music/{id}', [AdminSongController::class, 'updateSong'])->name('admin.music.update');
+    Route::delete('/music/{id}', [AdminSongController::class, 'deleteSong'])->name('admin.music.delete');
+    Route::post('/music/{id}/approve', [AdminSongController::class, 'approveSong'])->name('admin.music.approve');
+    Route::post('/music/{id}/reject', [AdminSongController::class, 'rejectSong'])->name('admin.music.reject');
+    Route::post('/music/{id}/approve-edit', [AdminSongController::class, 'updateAndApproveSong'])->name('admin.music.approve-edit');
 
     Route::post('/profile', [AdminUserController::class, 'updateAdminProfile'])->name('admin.profile.update');
     Route::post('/password', [AdminUserController::class, 'updateAdminPassword'])->name('admin.password.update');
