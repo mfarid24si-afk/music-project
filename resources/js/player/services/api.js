@@ -1,5 +1,7 @@
 // API Service connecting to Laravel endpoints
 
+import { durationToSeconds } from '../lyrics';
+
 export function getAppBaseUrl() {
     if (typeof document !== 'undefined') {
         const meta = document.querySelector('meta[name="app-url"]');
@@ -246,12 +248,17 @@ function cleanQueryTerm(str) {
         .trim();
 }
 
-// Mirrors the mobile fetcher: clean the query, try exact, raw, then search.
-export async function fetchLyricsFromAPI(artist, title) {
+// Mirrors the mobile fetcher: clean the query, try exact (scoped to our track
+// length when known), raw, then search. Pinning the duration makes LRCLIB
+// return the recording version whose timings actually line up with our audio,
+// which is the difference between perfectly synced and drifting lyrics on
+// imports.
+export async function fetchLyricsFromAPI(artist, title, duration) {
     const rawArtist = (artist || '').trim();
     const rawTitle = (title || '').trim();
     const cleanArtist = cleanQueryTerm(rawArtist) || rawArtist;
     const cleanTitle = cleanQueryTerm(rawTitle) || rawTitle;
+    const seconds = durationToSeconds(duration);
 
     const request = async (url) => {
         try {
@@ -263,23 +270,50 @@ export async function fetchLyricsFromAPI(artist, title) {
         }
     };
 
+    const exactUrl = (a, t) => {
+        const base = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(a)}&track_name=${encodeURIComponent(t)}`;
+        return seconds ? `${base}&duration=${seconds}` : base;
+    };
+
+    // 1. Exact match first (identical to the previous behaviour, so tracks that
+    //    already synced perfectly are left untouched).
     const exact = await request(
         `https://lrclib.net/api/get?artist_name=${encodeURIComponent(cleanArtist)}&track_name=${encodeURIComponent(cleanTitle)}`,
     );
     if (exact && (exact.syncedLyrics || exact.plainLyrics)) return exact;
 
-    if (cleanArtist !== rawArtist) {
+    // 2. Exact match pinned to our track length, so importing a different
+    //    version still lines up with the audio we actually play.
+    if (seconds) {
+        const scoped = await request(exactUrl(cleanArtist, cleanTitle));
+        if (scoped && (scoped.syncedLyrics || scoped.plainLyrics)) {
+            return scoped;
+        }
+    }
+
+    // 3. Raw title/artist variants.
+    if (cleanArtist !== rawArtist || cleanTitle !== rawTitle) {
         const raw = await request(
             `https://lrclib.net/api/get?artist_name=${encodeURIComponent(rawArtist)}&track_name=${encodeURIComponent(rawTitle)}`,
         );
         if (raw && (raw.syncedLyrics || raw.plainLyrics)) return raw;
     }
 
+    // 4. Search fallback, preferring a version whose length matches ours.
     const results = await request(
         `https://lrclib.net/api/search?q=${encodeURIComponent(cleanArtist + ' ' + cleanTitle)}`,
     );
     if (Array.isArray(results) && results.length > 0) {
-        return results.find((item) => item.syncedLyrics) || results[0];
+        const synced = results.filter((item) => item.syncedLyrics);
+        if (seconds) {
+            const matched = synced.find(
+                (item) =>
+                    typeof item.duration === 'number' &&
+                    Math.abs(item.duration - seconds) <= 3,
+            );
+            if (matched) return matched;
+        }
+        return synced[0] || results[0];
     }
 
     return null;

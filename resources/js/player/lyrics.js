@@ -26,3 +26,25 @@ export function findActiveLyricIndex(lines, time) {
     }
     return idx;
 }
+
+// Converts a track length ("3:24", "1:02:03" or a number of seconds) into
+// whole seconds so lyrics can be matched to the exact recording version.
+export function durationToSeconds(value) {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) && value > 0 ? Math.round(value) : null;
+    }
+    if (typeof value !== 'string') {
+        return null;
+    }
+    const parts = value.trim().split(':').map(Number);
+    if (parts.length === 0 || parts.some((n) => !Number.isFinite(n))) {
+        return null;
+    }
+    if (parts.length === 2) {
+        return Math.round(parts[0] * 60 + parts[1]);
+    }
+    if (parts.length === 3) {
+        return Math.round(parts[0] * 3600 + parts[1] * 60 + parts[2]);
+    }
+    return null;
+}

@@ -11,12 +11,14 @@ export function useLyrics(song, time, enabled = true) {
 
         let isCancelled = false;
         setLoading(true);
-        void fetchLyricsFromAPI(song.artist, song.title).then((data) => {
-            if (!isCancelled) {
-                setLyricsData(data);
-                setLoading(false);
-            }
-        });
+        void fetchLyricsFromAPI(song.artist, song.title, song.duration).then(
+            (data) => {
+                if (!isCancelled) {
+                    setLyricsData(data);
+                    setLoading(false);
+                }
+            },
+        );
 
         return () => {
             isCancelled = true;

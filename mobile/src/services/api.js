@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config';
+import { durationToSeconds } from '../utils/lyrics';
 
 const LYRICS_HEADERS = {
     'User-Agent': 'Spotirid/1.0.0 (https://farid-peminjaman.alwaysdata.net)',
@@ -187,45 +188,78 @@ function cleanQueryTerm(str) {
         .trim();
 }
 
-// Robust Synced Lyrics Fetcher from LRCLIB
-export async function fetchLyricsFromAPI(artist, title) {
+// Robust Synced Lyrics Fetcher from LRCLIB.
+//
+// Pinning the track duration makes LRCLIB return the recording version whose
+// timings actually match the audio we play. This is what keeps imported
+// (English/other) songs from drifting without touching the local tracks that
+// already matched.
+export async function fetchLyricsFromAPI(artist, title, duration) {
     try {
         const rawArtist = (artist || '').trim();
         const rawTitle = (title || '').trim();
         const cleanArtist = cleanQueryTerm(rawArtist) || rawArtist;
         const cleanTitle = cleanQueryTerm(rawTitle) || rawTitle;
+        const seconds = durationToSeconds(duration);
 
-        // 1. Try exact match with cleaned title & artist
-        const exactUrl = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(cleanArtist)}&track_name=${encodeURIComponent(cleanTitle)}`;
-        const res = await fetch(exactUrl, { headers: LYRICS_HEADERS });
-        if (res.ok) {
-            const data = await res.json();
-            if (data && (data.syncedLyrics || data.plainLyrics)) {
-                return data;
+        const getJson = async (url) => {
+            const res = await fetch(url, { headers: LYRICS_HEADERS });
+            if (!res.ok) {
+                return null;
+            }
+            return await res.json();
+        };
+
+        const exactUrl = (a, t) => {
+            const base = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(a)}&track_name=${encodeURIComponent(t)}`;
+            return seconds ? `${base}&duration=${seconds}` : base;
+        };
+
+        // 1. Exact match first (identical to the previous behaviour, so tracks
+        //    that already synced perfectly are left untouched).
+        const exact = await getJson(
+            `https://lrclib.net/api/get?artist_name=${encodeURIComponent(cleanArtist)}&track_name=${encodeURIComponent(cleanTitle)}`,
+        );
+        if (exact && (exact.syncedLyrics || exact.plainLyrics)) {
+            return exact;
+        }
+
+        // 2. Exact match pinned to our track length, so importing a different
+        //    version still lines up with the audio we actually play.
+        if (seconds) {
+            const scoped = await getJson(exactUrl(cleanArtist, cleanTitle));
+            if (scoped && (scoped.syncedLyrics || scoped.plainLyrics)) {
+                return scoped;
             }
         }
 
-        // 2. Try raw title & artist if cleaned was different
+        // 3. Raw title/artist variants.
         if (cleanArtist !== rawArtist || cleanTitle !== rawTitle) {
-            const rawUrl = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(rawArtist)}&track_name=${encodeURIComponent(rawTitle)}`;
-            const rawRes = await fetch(rawUrl, { headers: LYRICS_HEADERS });
-            if (rawRes.ok) {
-                const rawData = await rawRes.json();
-                if (rawData && (rawData.syncedLyrics || rawData.plainLyrics)) {
-                    return rawData;
+            const raw = await getJson(
+                `https://lrclib.net/api/get?artist_name=${encodeURIComponent(rawArtist)}&track_name=${encodeURIComponent(rawTitle)}`,
+            );
+            if (raw && (raw.syncedLyrics || raw.plainLyrics)) {
+                return raw;
+            }
+        }
+
+        // 4. Search fallback, preferring a version whose length matches ours.
+        const searchData = await getJson(
+            `https://lrclib.net/api/search?q=${encodeURIComponent(cleanArtist + ' ' + cleanTitle)}`,
+        );
+        if (Array.isArray(searchData) && searchData.length > 0) {
+            const synced = searchData.filter((item) => item.syncedLyrics);
+            if (seconds) {
+                const matched = synced.find(
+                    (item) =>
+                        typeof item.duration === 'number' &&
+                        Math.abs(item.duration - seconds) <= 3,
+                );
+                if (matched) {
+                    return matched;
                 }
             }
-        }
-
-        // 3. Fallback: Search endpoint (returns array of matching tracks)
-        const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(cleanArtist + ' ' + cleanTitle)}`;
-        const searchRes = await fetch(searchUrl, { headers: LYRICS_HEADERS });
-        if (searchRes.ok) {
-            const searchData = await searchRes.json();
-            if (Array.isArray(searchData) && searchData.length > 0) {
-                const withSync = searchData.find((item) => item.syncedLyrics);
-                return withSync || searchData[0];
-            }
+            return synced[0] || searchData[0];
         }
 
         return null;
