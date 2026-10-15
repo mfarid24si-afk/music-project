@@ -4,10 +4,13 @@ export default function PlaylistCoverArt({ playlist, gradient, songs }) {
             <div className="group relative h-40 w-40 flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-raised shadow-2xl md:h-52 md:w-52">
                 <img
                     src={playlist.customCover}
-                    alt={playlist.name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105 motion-reduce:transition-none"
                 />
-                <div className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-lg shadow-md backdrop-blur-md">
+                <div
+                    aria-hidden="true"
+                    className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-lg shadow-md backdrop-blur-md"
+                >
                     {playlist.emoji || '🎧'}
                 </div>
             </div>
@@ -20,12 +23,13 @@ export default function PlaylistCoverArt({ playlist, gradient, songs }) {
         .filter(Boolean);
     if (covers.length >= 4) {
         return (
-            <div className="group grid h-40 w-40 flex-shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl md:h-52 md:w-52">
+            <div className="grid h-40 w-40 flex-shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl md:h-52 md:w-52">
                 {covers.slice(0, 4).map((c, i) => (
                     <img
                         key={i}
                         src={c}
-                        alt="Cover"
+                        alt=""
+                        loading="lazy"
                         className="h-full w-full object-cover"
                     />
                 ))}
@@ -37,10 +41,14 @@ export default function PlaylistCoverArt({ playlist, gradient, songs }) {
             <div className="relative h-40 w-40 flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-raised shadow-2xl md:h-52 md:w-52">
                 <img
                     src={covers[0]}
-                    alt={playlist.name}
+                    alt=""
+                    loading="lazy"
                     className="h-full w-full object-cover"
                 />
-                <div className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-lg backdrop-blur-md">
+                <div
+                    aria-hidden="true"
+                    className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-lg backdrop-blur-md"
+                >
                     {playlist.emoji || '🎧'}
                 </div>
             </div>
@@ -48,10 +56,12 @@ export default function PlaylistCoverArt({ playlist, gradient, songs }) {
     }
     return (
         <div
-            className={`h-40 w-40 rounded-2xl bg-gradient-to-br md:h-52 md:w-52 ${gradient.class} border ${gradient.border} flex flex-shrink-0 flex-col items-center justify-center gap-2 shadow-2xl`}
+            className={`flex h-40 w-40 flex-shrink-0 flex-col items-center justify-center gap-2 rounded-2xl border bg-linear-to-br shadow-2xl md:h-52 md:w-52 ${gradient.class} ${gradient.border}`}
         >
-            <span className="text-5xl">{playlist.emoji || '🎧'}</span>
-            <span className="font-mono text-[10px] font-bold tracking-wider text-white/60 uppercase">
+            <span aria-hidden="true" className="text-5xl">
+                {playlist.emoji || '🎧'}
+            </span>
+            <span className="font-mono text-xs font-bold tracking-wider text-white/60 uppercase">
                 Curated Mix
             </span>
         </div>

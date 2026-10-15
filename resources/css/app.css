@@ -375,6 +375,17 @@ html.light .hover\:text-white:hover {
     background: #454934;
 }
 
+/* Theme-aware keyboard focus ring. Uses `outline` so it never
+   triggers layout shift and stays visible over any surface. */
+@utility focus-ring {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+
+    &:focus-visible {
+        outline-color: var(--accent-color);
+    }
+}
+
 @keyframes spinVinyl {
     from {
         transform: rotate(0deg);

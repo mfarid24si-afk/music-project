@@ -7,14 +7,17 @@ export default function PlaylistRecommendedSongs({ songs, onAdd }) {
 
     return (
         <section className="mt-4 flex flex-col gap-4 border-t border-line-strong/30 pt-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <LuSparkles className="h-4 w-4 text-primary-container" />
+                    <LuSparkles
+                        className="h-4 w-4 text-primary-container"
+                        aria-hidden="true"
+                    />
                     <h3 className="font-display text-base font-bold text-white">
                         Recommended for this Playlist
                     </h3>
                 </div>
-                <span className="font-mono text-[11px] text-on-surface-variant">
+                <span className="font-mono text-xs text-on-surface-variant">
                     Quickly build your soundtrack
                 </span>
             </div>
@@ -23,30 +26,32 @@ export default function PlaylistRecommendedSongs({ songs, onAdd }) {
                 {songs.map((song) => (
                     <div
                         key={song.id}
-                        className="group flex items-center justify-between rounded-xl border border-line-strong/20 bg-raised p-2.5 transition-all hover:border-primary-container/40"
+                        className="group flex items-center justify-between gap-3 rounded-xl border border-line-strong/20 bg-raised p-2.5 transition-colors duration-200 ease-out hover:border-primary-container/40 motion-reduce:transition-none"
                     >
                         <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
                             <img
                                 src={song.img}
-                                alt={song.title}
+                                alt=""
+                                loading="lazy"
                                 className="h-10 w-10 flex-shrink-0 rounded-md bg-chip object-cover"
                             />
                             <div className="min-w-0">
                                 <p className="truncate font-display text-xs font-semibold text-white">
                                     {song.title}
                                 </p>
-                                <p className="truncate text-[11px] text-on-surface-variant">
+                                <p className="truncate text-xs text-on-surface-variant">
                                     {song.artist}
                                 </p>
                             </div>
                         </div>
 
                         <button
+                            type="button"
                             onClick={() => onAdd(song.id)}
-                            className="flex h-8 flex-shrink-0 items-center gap-1.5 rounded-full bg-chip px-3 font-mono text-xs font-semibold text-primary-container shadow-xs transition-all hover:bg-primary-container hover:text-on-primary-container"
-                            title="Add to this playlist"
+                            aria-label={`Add ${song.title} to this playlist`}
+                            className="focus-ring inline-flex h-10 flex-shrink-0 items-center gap-1.5 rounded-full bg-chip px-3.5 font-mono text-xs font-semibold text-primary-container shadow-xs transition-colors duration-200 ease-out hover:bg-primary-container hover:text-on-primary-container motion-reduce:transition-none"
                         >
-                            <LuPlus className="h-3.5 w-3.5" />
+                            <LuPlus className="h-3.5 w-3.5" aria-hidden="true" />
                             <span>Add</span>
                         </button>
                     </div>
