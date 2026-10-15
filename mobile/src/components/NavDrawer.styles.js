@@ -2,7 +2,7 @@ import { Dimensions, StyleSheet } from 'react-native';
 import { THEME, space, shape, font, elevation } from '../config';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const DRAWER_WIDTH = Math.min(320, SCREEN_WIDTH * 0.82);
+export const DRAWER_WIDTH = Math.min(320, SCREEN_WIDTH * 0.82);
 
 export const styles = StyleSheet.create({
     overlay: {

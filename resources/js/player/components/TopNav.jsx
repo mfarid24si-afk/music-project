@@ -34,7 +34,7 @@ export default function TopNav({
             <div className="flex max-w-xl flex-1 items-center gap-3">
                 <button
                     onClick={onToggleMobileMenu}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-line-strong/30 bg-raised text-on-surface-variant hover:text-white lg:hidden"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-line-strong/30 bg-raised text-on-surface-variant hover:text-ink-strong lg:hidden"
                     title="Toggle Menu"
                 >
                     <LuMenu className="h-5 w-5" />
@@ -43,15 +43,17 @@ export default function TopNav({
                 <div className="hidden items-center gap-1 sm:flex">
                     <button
                         onClick={() => window.history.back()}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-raised text-on-surface-variant transition-colors hover:bg-chip hover:text-white"
+                        className="focus-ring flex h-8 w-8 items-center justify-center rounded-full bg-raised text-on-surface-variant transition-colors hover:bg-chip hover:text-ink-strong"
                         title="Back"
+                        aria-label="Kembali"
                     >
                         <LuChevronLeft className="h-4 w-4" />
                     </button>
                     <button
                         onClick={() => window.history.forward()}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-raised text-on-surface-variant transition-colors hover:bg-chip hover:text-white"
+                        className="focus-ring flex h-8 w-8 items-center justify-center rounded-full bg-raised text-on-surface-variant transition-colors hover:bg-chip hover:text-ink-strong"
                         title="Forward"
+                        aria-label="Maju"
                     >
                         <LuChevronRight className="h-4 w-4" />
                     </button>
@@ -65,12 +67,12 @@ export default function TopNav({
                         value={searchVal}
                         onChange={(e) => setSearchVal(e.target.value)}
                         placeholder="What do you want to listen to?"
-                        className="h-10 w-full rounded-full border border-line-strong/30 bg-raised pr-9 pl-10 text-sm text-white transition-all placeholder:text-on-surface-variant/70 focus:border-primary-container focus:ring-1 focus:ring-primary-container focus:outline-none"
+                        className="h-10 w-full rounded-full border border-line-strong/30 bg-raised pr-9 pl-10 text-sm text-ink-strong transition-all placeholder:text-on-surface-variant/70 focus:border-primary-container focus:ring-1 focus:ring-primary-container focus:outline-none"
                     />
                     {searchVal && (
                         <button
                             onClick={() => setSearchVal('')}
-                            className="absolute top-1/2 right-3 -translate-y-1/2 text-on-surface-variant hover:text-white"
+                            className="absolute top-1/2 right-3 -translate-y-1/2 text-on-surface-variant hover:text-ink-strong"
                         >
                             <LuX className="h-4 w-4" />
                         </button>
@@ -86,7 +88,7 @@ export default function TopNav({
                         {(user.role === 'admin' || user.email === 'admin@spotirid.com' || user.email?.startsWith('admin@')) ? (
                             <a
                                 href={getPortalUrl('admin')}
-                                className="flex h-9 items-center gap-1.5 rounded-full border border-primary-container/40 bg-raised px-3 text-xs font-bold text-primary-container transition-all hover:bg-primary-container hover:text-on-primary-container"
+                                className="focus-ring flex h-9 items-center gap-1.5 rounded-full border border-primary-container/40 bg-raised px-3 text-xs font-bold text-primary-container transition-colors duration-150 ease-out hover:bg-primary-container hover:text-on-primary-container motion-reduce:transition-none"
                                 title="Buka Admin Control Center"
                             >
                                 <LuLock className="h-3.5 w-3.5" />
@@ -97,7 +99,7 @@ export default function TopNav({
                             <button
                                 type="button"
                                 onClick={onOpenSuggestSong}
-                                className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-primary-container/50 bg-primary-container/15 px-3.5 text-xs font-bold text-primary-container shadow-sm transition-all hover:bg-primary-container hover:text-on-primary-container"
+                                className="focus-ring flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-primary-container/50 bg-primary-container/15 px-3.5 text-xs font-bold text-primary-container shadow-sm transition-colors duration-150 ease-out hover:bg-primary-container hover:text-on-primary-container motion-reduce:transition-none"
                                 title="Ajukan Lagu Baru (Khusus Member)"
                             >
                                 <LuPlus className="h-4 w-4" />
@@ -110,10 +112,10 @@ export default function TopNav({
                             className="flex items-center gap-2 rounded-full border border-line-strong/30 bg-raised py-1 pr-3 pl-2"
                             title={`Login sebagai ${user.name}`}
                         >
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-container font-mono text-[10px] font-bold text-on-primary-container">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-container font-mono text-[11px] font-bold text-on-primary-container">
                                 {getInitials(user.name)}
                             </div>
-                            <span className="hidden max-w-[120px] truncate text-xs font-medium text-white sm:inline">
+                            <span className="hidden max-w-[120px] truncate text-xs font-medium text-ink-strong sm:inline">
                                 {user.name}
                             </span>
                         </div>
@@ -133,7 +135,7 @@ export default function TopNav({
                         {/* Single Unified Login Button for Guests */}
                         <a
                             href={getPortalUrl('admin/login')}
-                            className="flex h-9 items-center gap-1.5 rounded-full border border-line-strong/30 bg-raised px-4 text-xs font-bold text-white transition-all hover:border-primary-container hover:bg-chip hover:text-primary-container shadow-sm"
+                            className="flex h-9 items-center gap-1.5 rounded-full border border-line-strong/30 bg-raised px-4 text-xs font-bold text-ink-strong transition-all hover:border-primary-container hover:bg-chip hover:text-primary-container shadow-sm"
                             title="Masuk ke Akun"
                         >
                             <LuLogIn className="h-3.5 w-3.5 text-primary-container" />
@@ -141,25 +143,26 @@ export default function TopNav({
                         </a>
 
                         {/* Guest: Listener Profile Chip */}
-                        <div
+                        <button
+                            type="button"
                             onClick={onOpenSettings}
-                            className="flex cursor-pointer items-center gap-2 rounded-full border border-line-strong/30 bg-raised py-1 pr-3 pl-2 transition-colors hover:border-primary-container"
+                            className="focus-ring flex cursor-pointer items-center gap-2 rounded-full border border-line-strong/30 bg-raised py-1 pr-3 pl-2 transition-colors hover:border-primary-container"
                             title="Klik untuk membuka pengaturan profil & tema"
                         >
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-container font-mono text-[10px] font-bold text-on-primary-container">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-container font-mono text-[11px] font-bold text-on-primary-container">
                                 {getInitials(profileName)}
                             </div>
-                            <span className="hidden text-xs font-medium text-white sm:inline">
+                            <span className="hidden text-xs font-medium text-ink-strong sm:inline">
                                 {profileName || 'Listener'}
                             </span>
-                        </div>
+                        </button>
                     </>
                 )}
 
                 <button
                     type="button"
                     onClick={onOpenSettings}
-                    className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-line-strong/30 bg-raised px-3 text-xs font-semibold text-on-surface-variant transition-all hover:bg-chip hover:text-white"
+                    className="focus-ring flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-line-strong/30 bg-raised px-3 text-xs font-semibold text-on-surface-variant transition-colors duration-150 ease-out hover:bg-chip hover:text-ink-strong motion-reduce:transition-none"
                     title="Pengaturan Player"
                 >
                     <LuSettings className="h-3.5 w-3.5" />

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useAudio } from '../context/AudioContext';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 import { LuCheck, LuListMusic, LuLock, LuPlus, LuX } from 'react-icons/lu';
 import PlaylistIcon from './PlaylistIcon';
 export default function PlaylistModal({ song, isOpen, onClose }) {
     const { playlists, createPlaylist, addToPlaylist, removeFromPlaylist } =
         useAudio();
     const [newPlName, setNewPlName] = useState('');
+    const dialogRef = useDialogA11y({ isOpen, onClose });
 
     if (!isOpen || !song) return null;
 
@@ -32,27 +34,45 @@ export default function PlaylistModal({ song, isOpen, onClose }) {
         <>
             {/* Backdrop */}
             <div
-                className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm transition-opacity"
+                aria-hidden="true"
+                className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm transition-opacity motion-reduce:transition-none"
                 onClick={onClose}
             />
 
             {/* Modal Dialog */}
-            <div className="animate-scaleUp fixed top-1/2 left-1/2 z-50 flex w-full max-w-sm -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-2xl border border-line-strong/40 bg-overlay p-6 shadow-2xl">
+            <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="playlist-modal-title"
+                tabIndex={-1}
+                className="animate-scaleUp fixed inset-x-4 top-1/2 z-50 mx-auto flex w-full max-w-sm -translate-y-1/2 flex-col gap-4 rounded-2xl border border-line-strong/40 bg-overlay p-6 shadow-2xl focus:outline-none sm:inset-x-0"
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-line/60 pb-3">
-                    <div>
-                        <h3 className="font-display text-base font-bold text-white">
-                            Add to Playlist
-                        </h3>
-                        <p className="mt-0.5 max-w-[260px] truncate text-xs text-on-surface-variant">
-                            &quot;{song.title}&quot; by {song.artist}
-                        </p>
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary-container/30 bg-primary-container/10 text-primary-container">
+                            <LuListMusic className="h-4 w-4" aria-hidden="true" />
+                        </div>
+                        <div>
+                            <h3
+                                id="playlist-modal-title"
+                                className="font-display text-base font-bold text-ink-strong"
+                            >
+                                Add to Playlist
+                            </h3>
+                            <p className="mt-0.5 max-w-[220px] truncate text-xs text-on-surface-variant">
+                                &quot;{song.title}&quot; by {song.artist}
+                            </p>
+                        </div>
                     </div>
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-chip text-on-surface-variant transition-colors hover:text-white"
+                        aria-label="Close add to playlist"
+                        className="focus-ring flex h-8 w-8 items-center justify-center rounded-full bg-chip text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong motion-reduce:transition-none"
                     >
-                        <LuX className="h-4 w-4" />
+                        <LuX className="h-4 w-4" aria-hidden="true" />
                     </button>
                 </div>
 
@@ -70,18 +90,20 @@ export default function PlaylistModal({ song, isOpen, onClose }) {
                             return (
                                 <button
                                     key={pl.id}
+                                    type="button"
                                     onClick={() => handleToggle(pl)}
-                                    className={`flex items-center justify-between rounded-lg border p-3 text-left transition-all ${
+                                    aria-pressed={isAdded}
+                                    className={`focus-ring flex items-center justify-between rounded-lg border p-3 text-left transition-colors duration-200 ease-out motion-reduce:transition-none ${
                                         isAdded
                                             ? 'border-primary-container/50 bg-primary-container/10 text-primary-container'
-                                            : 'border-line-strong/20 bg-raised text-white hover:bg-chip'
+                                            : 'border-line-strong/20 bg-raised text-ink-strong hover:bg-chip'
                                     }`}
                                 >
                                     <div className="flex min-w-0 items-center gap-2.5">
                                         {pl.customCover ? (
                                             <img
                                                 src={pl.customCover}
-                                                alt={pl.name}
+                                                alt=""
                                                 className="h-5 w-5 flex-shrink-0 rounded object-cover"
                                             />
                                         ) : (
@@ -97,20 +119,26 @@ export default function PlaylistModal({ song, isOpen, onClose }) {
                                             pl.isLocked !== false && (
                                                 <span
                                                     title="Menunggu persetujuan Admin"
-                                                    className="flex flex-shrink-0 items-center gap-0.5 text-[10px] text-amber-400"
+                                                    className="flex flex-shrink-0 items-center gap-0.5 text-warning"
                                                 >
-                                                    <LuLock className="h-2.5 w-2.5" />
+                                                    <LuLock
+                                                        className="h-2.5 w-2.5"
+                                                        aria-hidden="true"
+                                                    />
                                                 </span>
                                             )}
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                        <span className="font-mono text-[10px] text-on-surface-variant">
+                                        <span className="font-mono text-[11px] text-on-surface-variant">
                                             {pl.songs.length} tracks
                                         </span>
                                         {isAdded && (
                                             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-container text-on-primary-container">
-                                                <LuCheck className="h-3 w-3 stroke-[3]" />
+                                                <LuCheck
+                                                    className="h-3 w-3 stroke-[3]"
+                                                    aria-hidden="true"
+                                                />
                                             </span>
                                         )}
                                     </div>
@@ -131,23 +159,21 @@ export default function PlaylistModal({ song, isOpen, onClose }) {
                         onChange={(e) => setNewPlName(e.target.value)}
                         placeholder="New playlist name..."
                         maxLength={40}
-                        className="flex-1 rounded-lg border border-line-strong/30 bg-canvas px-3 py-2 text-xs text-white transition-colors placeholder:text-on-surface-variant/60 focus:border-primary-container focus:outline-none"
+                        aria-label="New playlist name"
+                        className="focus-ring flex-1 rounded-lg border border-line-strong/30 bg-canvas px-3 py-2 text-xs text-ink-strong transition-colors duration-200 ease-out placeholder:text-on-surface-variant/60 motion-reduce:transition-none"
                     />
                     <button
                         type="submit"
                         disabled={!newPlName.trim()}
-                        className="flex flex-shrink-0 items-center gap-1 rounded-lg bg-primary-container px-3.5 py-2 font-display text-xs font-bold text-on-primary-container transition-all hover:opacity-90 disabled:opacity-40"
+                        className="focus-ring flex flex-shrink-0 items-center gap-1 rounded-lg bg-primary-container px-3.5 py-2 font-display text-xs font-bold text-on-primary-container transition-opacity duration-200 ease-out hover:opacity-90 disabled:opacity-40 motion-reduce:transition-none"
                     >
-                        <LuPlus className="h-3.5 w-3.5" />
+                        <LuPlus className="h-3.5 w-3.5" aria-hidden="true" />
                         <span>Create</span>
                     </button>
                 </form>
-                <p className="flex items-center gap-1.5 px-0.5 font-mono text-[10px] text-amber-300/80">
-                    <LuLock className="h-3 w-3 flex-shrink-0 text-amber-400" />
-                    <span>
-                        Pembuatan playlist baru memerlukan izin Administrator
-                        sebelum dapat diputar.
-                    </span>
+                <p className="flex items-center gap-1.5 px-0.5 font-mono text-xs text-warning/90">
+                    <LuLock className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+                    <span>Playlist baru menunggu izin Admin sebelum bisa diputar.</span>
                 </p>
             </div>
         </>

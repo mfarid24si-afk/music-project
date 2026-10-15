@@ -36,15 +36,20 @@ export default function TracklistTable({ songs, onOpenPlaylistModal }) {
                     return (
                         <div
                             key={song.id}
-                            onClick={() => playSong(song)}
-                            className={`group flex cursor-pointer items-center justify-between rounded-lg p-3 transition-colors ${
+                            className={`group relative flex items-center justify-between rounded-lg p-3 transition-colors duration-150 ease-out motion-reduce:transition-none ${
                                 isCurrent
-                                    ? 'border border-primary-container/40 bg-chip text-white'
+                                    ? 'border border-primary-container/40 bg-chip text-ink-strong'
                                     : 'text-ink-strong hover:bg-raised'
                             }`}
                         >
+                            <button
+                                type="button"
+                                onClick={() => playSong(song)}
+                                aria-label={`Putar ${song.title}`}
+                                className="focus-ring absolute inset-0 z-0 rounded-lg"
+                            />
                             {/* Left col: Number/Equalizer + Title/Artist */}
-                            <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-6">
+                            <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 items-center gap-3 sm:gap-6">
                                 <div className="flex w-5 flex-shrink-0 items-center justify-center font-mono text-xs">
                                     {isSongPlaying ? (
                                         <div className="flex h-3.5 items-end gap-0.5">
@@ -71,7 +76,7 @@ export default function TracklistTable({ songs, onOpenPlaylistModal }) {
 
                                 <div className="min-w-0">
                                     <p
-                                        className={`truncate font-display text-sm font-semibold ${isCurrent ? 'text-primary-container' : 'text-white group-hover:text-primary-container'}`}
+                                        className={`truncate font-display text-sm font-semibold ${isCurrent ? 'text-primary-container' : 'text-ink-strong group-hover:text-primary-container'}`}
                                     >
                                         {song.title}
                                     </p>
@@ -80,7 +85,7 @@ export default function TracklistTable({ songs, onOpenPlaylistModal }) {
                                             {song.artist}
                                         </span>
                                         {song.uploader_name && (
-                                            <span className="hidden flex-shrink-0 font-mono text-[10px] text-primary-container/80 md:inline">
+                                            <span className="hidden flex-shrink-0 font-mono text-[11px] text-primary-container/80 md:inline">
                                                 &bull; by {song.uploader_name}
                                             </span>
                                         )}
@@ -89,7 +94,7 @@ export default function TracklistTable({ songs, onOpenPlaylistModal }) {
                             </div>
 
                             {/* Right col: Fidelity + Time + Actions */}
-                            <div className="flex flex-shrink-0 items-center gap-2 font-mono text-xs sm:gap-6 md:gap-10">
+                            <div className="pointer-events-none relative z-10 flex flex-shrink-0 items-center gap-2 font-mono text-xs sm:gap-6 md:gap-10">
                                 <span className="hidden rounded border border-primary-container/20 bg-primary-container/10 px-2.5 py-0.5 text-[11px] text-primary-container md:inline">
                                     {song.genre === 'Rock'
                                         ? '24-bit / 96kHz'
@@ -101,34 +106,45 @@ export default function TracklistTable({ songs, onOpenPlaylistModal }) {
                                 </span>
 
                                 {/* Actions */}
-                                <div
-                                    className="flex items-center justify-end gap-0.5 sm:gap-1.5"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
+                                <div className="pointer-events-auto flex items-center justify-end gap-0.5 sm:gap-1.5">
                                     <button
+                                        type="button"
                                         onClick={() => toggleFavorite(song.id)}
-                                        className={`rounded p-1.5 transition-colors hover:bg-white/10 ${isLiked ? 'text-primary-container' : 'text-on-surface-variant hover:text-white'}`}
-                                        title={isLiked ? 'Unlike' : 'Like'}
+                                        aria-label={
+                                            isLiked
+                                                ? `Hapus ${song.title} dari favorit`
+                                                : `Tambah ${song.title} ke favorit`
+                                        }
+                                        className={`focus-ring rounded-full p-1.5 transition-colors hover:bg-overlay ${isLiked ? 'text-primary-container' : 'text-on-surface-variant hover:text-ink-strong'}`}
                                     >
                                         <LuHeart
-                                            className={`h-3.5 w-3.5 ${isLiked ? 'fill-current' : ''}`}
+                                            className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`}
+                                            aria-hidden="true"
                                         />
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() =>
                                             onOpenPlaylistModal(song)
                                         }
-                                        className="rounded p-1.5 text-on-surface-variant transition-colors hover:bg-white/10 hover:text-white"
-                                        title="Add to Playlist"
+                                        aria-label={`Tambah ${song.title} ke playlist`}
+                                        className="focus-ring rounded-full p-1.5 text-on-surface-variant transition-colors hover:bg-overlay hover:text-ink-strong"
                                     >
-                                        <LuPlus className="h-3.5 w-3.5" />
+                                        <LuPlus
+                                            className="h-4 w-4"
+                                            aria-hidden="true"
+                                        />
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => addToQueue(song.id)}
-                                        className="rounded p-1.5 text-on-surface-variant transition-colors hover:bg-white/10 hover:text-white"
-                                        title="Add to Queue"
+                                        aria-label={`Antrikan ${song.title}`}
+                                        className="focus-ring rounded-full p-1.5 text-on-surface-variant transition-colors hover:bg-overlay hover:text-ink-strong"
                                     >
-                                        <LuListPlus className="h-3.5 w-3.5" />
+                                        <LuListPlus
+                                            className="h-4 w-4"
+                                            aria-hidden="true"
+                                        />
                                     </button>
                                 </div>
                             </div>

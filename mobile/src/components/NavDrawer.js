@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 import BrandMark from './BrandMark';
 import { useAudio } from '../context/AudioContext';
 import { THEME, space, ripple } from '../config';
-import { styles } from './NavDrawer.styles';
+import { styles, DRAWER_WIDTH } from './NavDrawer.styles';
 import { CURRENT_APP_VERSION } from '../services/versionChecker';
 import { getLocalStats } from '../services/localStats';
 import {

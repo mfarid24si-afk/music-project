@@ -3,6 +3,9 @@ import { useAudio } from '../context/AudioContext';
 import { LuExternalLink, LuHeart, LuListMusic, LuMic, LuMusic2, LuPause, LuPlay, LuRepeat, LuRepeat1, LuShuffle, LuSkipBack, LuSkipForward, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import { formatSeconds } from '../format';
 
+const TRANSPORT_BUTTON =
+    'focus-ring rounded-full p-1.5 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong motion-reduce:transition-none';
+
 export default function PlayerDock({
     onToggleLyrics,
     onToggleQueue,
@@ -50,6 +53,7 @@ export default function PlayerDock({
         <footer className="fixed right-0 bottom-0 left-0 z-50 flex h-18 items-center justify-between border-t border-line-strong/30 bg-chrome/95 px-3 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:h-22 md:px-6">
             {/* Thin Top Scrubber for Mobile with generous touch target */}
             <div
+                aria-hidden="true"
                 className="absolute -top-2 right-0 left-0 z-10 flex h-4 cursor-pointer items-center bg-transparent md:hidden"
                 onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -59,7 +63,7 @@ export default function PlayerDock({
             >
                 <div className="h-1 w-full bg-chip">
                     <div
-                        className="h-full bg-primary-container transition-all"
+                        className="h-full bg-primary-container transition-[width] duration-200 ease-out motion-reduce:transition-none"
                         style={{ width: `${progressPct}%` }}
                     />
                 </div>
@@ -72,7 +76,7 @@ export default function PlayerDock({
                     onClick={onOpenNowPlaying}
                     title="Open now playing view"
                     aria-label="Open now playing view"
-                    className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity hover:opacity-75 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-container/60 md:gap-4"
+                    className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity duration-200 ease-out hover:opacity-75 motion-reduce:transition-none md:gap-4"
                 >
                     <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-md border border-line-strong/30 bg-chip md:h-14 md:w-14">
                         {artFailed ? (
@@ -92,11 +96,11 @@ export default function PlayerDock({
                     <div className="flex min-w-0 flex-1 flex-col">
                         <div className="flex items-center gap-1.5">
                             <span
-                                className={`truncate font-display text-xs font-semibold md:text-sm ${isPlaying ? 'text-primary-container' : 'text-white'}`}
+                                className={`truncate font-display text-xs font-semibold md:text-sm ${isPlaying ? 'text-primary-container' : 'text-ink-strong'}`}
                             >
                                 {currentSong.title}
                             </span>
-                            <span className="py-0.2 hidden flex-shrink-0 rounded border border-primary-container/30 bg-primary-container/20 px-1.5 font-mono text-[9px] text-primary-container uppercase lg:inline">
+                            <span className="hidden flex-shrink-0 rounded border border-primary-container/30 bg-primary-container/20 px-1.5 py-0.5 font-mono text-[10px] text-primary-container uppercase lg:inline">
                                 LOSSLESS
                             </span>
                         </div>
@@ -108,47 +112,42 @@ export default function PlayerDock({
 
                 {/* Favorite */}
                 <button
+                    type="button"
                     onClick={() => toggleFavorite(currentSong.id)}
-                    className={`flex-shrink-0 rounded-full p-1.5 transition-all ${
+                    aria-label={
+                        isLiked
+                            ? `Remove ${currentSong.title} from liked songs`
+                            : `Add ${currentSong.title} to liked songs`
+                    }
+                    aria-pressed={isLiked}
+                    className={`focus-ring flex-shrink-0 rounded-full p-1 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         isLiked
                             ? 'text-primary-container'
-                            : 'text-on-surface-variant hover:text-white'
+                            : 'text-on-surface-variant hover:text-ink-strong'
                     }`}
-                    title={isLiked ? 'Unlike' : 'Like'}
                 >
                     <LuHeart
                         className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`}
                     />
                 </button>
-
-                {/* YouTube link if exists (large desktop only) */}
-                {currentSong.youtubeUrl && (
-                    <a
-                        href={currentSong.youtubeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hidden flex-shrink-0 rounded-full p-1.5 text-on-surface-variant transition-colors hover:text-red-400 xl:block"
-                        title="Watch on YouTube"
-                    >
-                        <LuExternalLink className="h-4 w-4" />
-                    </a>
-                )}
             </div>
 
             {/* Mobile Right Controls (< md) */}
             <div className="flex flex-shrink-0 items-center gap-0.5 sm:gap-1 md:hidden">
                 <button
+                    type="button"
                     onClick={prevSong}
-                    className="xs:flex hidden p-2 text-on-surface-variant transition-all hover:text-white active:scale-95"
-                    title="Previous"
+                    aria-label="Previous track"
+                    className="focus-ring p-2 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong active:scale-95 motion-reduce:transition-none"
                 >
                     <LuSkipBack className="h-4 w-4 fill-current" />
                 </button>
 
                 <button
+                    type="button"
                     onClick={togglePlay}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_12px_var(--accent-glow)] transition-all active:scale-90"
-                    title={isPlaying ? 'Pause' : 'Play'}
+                    aria-label={isPlaying ? 'Pause' : 'Play'}
+                    className="focus-ring flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_12px_var(--accent-glow)] transition-transform duration-200 ease-out active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100"
                 >
                     {isPlaying ? (
                         <LuPause className="h-4 w-4 fill-current" />
@@ -158,37 +157,42 @@ export default function PlayerDock({
                 </button>
 
                 <button
+                    type="button"
                     onClick={() => nextSong()}
-                    className="p-2 text-on-surface-variant transition-all hover:text-white active:scale-95"
-                    title="Next"
+                    aria-label="Next track"
+                    className="focus-ring p-2 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong motion-reduce:transition-none"
                 >
                     <LuSkipForward className="h-4 w-4 fill-current" />
                 </button>
 
                 <button
+                    type="button"
                     onClick={onToggleLyrics}
-                    className={`rounded-lg p-2 transition-colors ${
+                    aria-label="Toggle lyrics"
+                    aria-pressed={isLyricsOpen}
+                    className={`focus-ring rounded-lg p-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         isLyricsOpen
                             ? 'text-primary-container'
                             : 'text-on-surface-variant'
                     }`}
-                    title="Lyrics"
                 >
                     <LuMic className="h-4 w-4" />
                 </button>
 
                 <button
+                    type="button"
                     onClick={onToggleQueue}
-                    className={`relative rounded-lg p-2 transition-colors ${
+                    aria-label="Toggle queue"
+                    aria-pressed={isQueueOpen}
+                    className={`focus-ring relative rounded-lg p-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         isQueueOpen
                             ? 'text-primary-container'
                             : 'text-on-surface-variant'
                     }`}
-                    title="Queue"
                 >
                     <LuListMusic className="h-4 w-4" />
                     {queue.length > 0 && (
-                        <span className="absolute top-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary-container font-mono text-[8px] font-bold text-on-primary-container">
+                        <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-container font-mono text-[10px] font-bold text-on-primary-container">
                             {queue.length}
                         </span>
                     )}
@@ -200,29 +204,33 @@ export default function PlayerDock({
                 {/* Buttons */}
                 <div className="flex items-center gap-4">
                     <button
+                        type="button"
                         onClick={toggleShuffle}
-                        className={`rounded-full p-1.5 transition-colors ${
+                        aria-label="Toggle shuffle"
+                        aria-pressed={isShuffle}
+                        className={`focus-ring rounded-full p-1.5 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                             isShuffle
                                 ? 'text-primary-container'
-                                : 'text-on-surface-variant hover:text-white'
+                                : 'text-on-surface-variant hover:text-ink-strong'
                         }`}
-                        title="Shuffle"
                     >
                         <LuShuffle className="h-4 w-4" />
                     </button>
 
                     <button
+                        type="button"
                         onClick={prevSong}
-                        className="p-1.5 text-on-surface-variant transition-colors hover:text-white"
-                        title="Previous (or restart)"
+                        aria-label="Previous track"
+                        className={TRANSPORT_BUTTON}
                     >
                         <LuSkipBack className="h-5 w-5 fill-current" />
                     </button>
 
                     <button
+                        type="button"
                         onClick={togglePlay}
-                        className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_12px_var(--accent-glow)] transition-all hover:scale-105 active:scale-95"
-                        title={isPlaying ? 'Pause' : 'Play'}
+                        aria-label={isPlaying ? 'Pause' : 'Play'}
+                        className="focus-ring flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_12px_var(--accent-glow)] transition-transform duration-200 ease-out hover:scale-105 active:scale-95 motion-reduce:transition-none"
                     >
                         {isPlaying ? (
                             <LuPause className="h-4 w-4 fill-current" />
@@ -232,21 +240,23 @@ export default function PlayerDock({
                     </button>
 
                     <button
+                        type="button"
                         onClick={() => nextSong()}
-                        className="p-1.5 text-on-surface-variant transition-colors hover:text-white"
-                        title="Next"
+                        aria-label="Next track"
+                        className={TRANSPORT_BUTTON}
                     >
                         <LuSkipForward className="h-5 w-5 fill-current" />
                     </button>
 
                     <button
+                        type="button"
                         onClick={cycleRepeat}
-                        className={`rounded-full p-1.5 transition-colors ${
+                        aria-label={`Repeat: ${repeatMode}`}
+                        className={`focus-ring rounded-full p-1.5 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                             repeatMode !== 'off'
                                 ? 'text-primary-container'
-                                : 'text-on-surface-variant hover:text-white'
+                                : 'text-on-surface-variant hover:text-ink-strong'
                         }`}
-                        title={`Repeat: ${repeatMode.toUpperCase()}`}
                     >
                         {repeatMode === 'one' ? (
                             <LuRepeat1 className="h-4 w-4" />
@@ -270,10 +280,11 @@ export default function PlayerDock({
                             step={0.1}
                             value={currentTime || 0}
                             onChange={(e) => seekTo(parseFloat(e.target.value))}
-                            className="h-1 w-full cursor-pointer appearance-none rounded-lg bg-chip accent-primary-container focus:outline-none"
+                            aria-label="Seek within track"
+                            className="h-1 w-full cursor-pointer appearance-none rounded-lg bg-chip accent-primary-container focus-ring"
                         />
                         <div
-                            className="pointer-events-none absolute top-1/2 left-0 h-1 -translate-y-1/2 rounded-lg bg-primary-container transition-all group-hover:h-1.5"
+                            className="pointer-events-none absolute top-1/2 left-0 h-1 -translate-y-1/2 rounded-lg bg-primary-container transition-[height] duration-200 ease-out group-hover:h-1.5 motion-reduce:transition-none"
                             style={{ width: `${progressPct}%` }}
                         />
                     </div>
@@ -288,13 +299,15 @@ export default function PlayerDock({
             <div className="hidden w-1/4 min-w-[200px] items-center justify-end gap-3 md:flex">
                 {/* Lyrics Button */}
                 <button
+                    type="button"
                     onClick={onToggleLyrics}
-                    className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-xs font-medium transition-all ${
+                    aria-label="Toggle lyrics"
+                    aria-pressed={isLyricsOpen}
+                    className={`focus-ring flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         isLyricsOpen
                             ? 'bg-primary-container text-on-primary-container shadow-[0_0_12px_var(--accent-glow)]'
-                            : 'border border-line-strong/30 bg-raised text-on-surface-variant hover:bg-chip hover:text-white'
+                            : 'border border-line-strong/30 bg-raised text-on-surface-variant hover:bg-chip hover:text-ink-strong'
                     }`}
-                    title="Toggle Lyrics"
                 >
                     <LuMic className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Lyrics</span>
@@ -302,17 +315,19 @@ export default function PlayerDock({
 
                 {/* Queue Button */}
                 <button
+                    type="button"
                     onClick={onToggleQueue}
-                    className={`relative rounded-lg p-2 transition-colors ${
+                    aria-label="Toggle queue"
+                    aria-pressed={isQueueOpen}
+                    className={`focus-ring relative rounded-lg p-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         isQueueOpen
                             ? 'bg-chip text-primary-container'
-                            : 'text-on-surface-variant hover:bg-raised hover:text-white'
+                            : 'text-on-surface-variant hover:bg-raised hover:text-ink-strong'
                     }`}
-                    title="Toggle Queue"
                 >
                     <LuListMusic className="h-5 w-5" />
                     {queue.length > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary-container font-mono text-[9px] font-bold text-on-primary-container">
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary-container font-mono text-[10px] font-bold text-on-primary-container">
                             {queue.length}
                         </span>
                     )}
@@ -321,9 +336,11 @@ export default function PlayerDock({
                 {/* Volume */}
                 <div className="group flex items-center gap-2">
                     <button
+                        type="button"
                         onClick={() => setIsMuted(!isMuted)}
-                        className="text-on-surface-variant hover:text-white"
-                        title={isMuted ? 'Unmute' : 'Mute'}
+                        aria-label={isMuted ? 'Unmute' : 'Mute'}
+                        aria-pressed={isMuted}
+                        className="focus-ring rounded-full text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong motion-reduce:transition-none"
                     >
                         {isMuted || volume === 0 ? (
                             <LuVolumeX className="h-4 w-4" />
@@ -341,7 +358,8 @@ export default function PlayerDock({
                             if (isMuted) setIsMuted(false);
                             setVolume(parseFloat(e.target.value));
                         }}
-                        className="h-1 w-20 cursor-pointer appearance-none rounded-lg bg-chip accent-primary-container"
+                        aria-label="Volume"
+                        className="h-1 w-20 cursor-pointer appearance-none rounded-lg bg-chip accent-primary-container focus-ring"
                     />
                 </div>
             </div>

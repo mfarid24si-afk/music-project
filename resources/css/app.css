@@ -36,6 +36,12 @@
     --color-ink-dim: var(--text-dim);
     --color-ink-strong: var(--text-strong);
 
+    /* Status palette, so alerts/toasts never rely on raw Tailwind hues. */
+    --color-danger: #f87171;
+    --color-warning: #fbbf24;
+    --color-success: #34d399;
+    --color-info: #60a5fa;
+
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -460,7 +466,9 @@ html.light .hover\:text-white:hover {
     .animate-fadeIn,
     .animate-fadeSlideUp,
     .animate-scaleUp,
+    .animate-spin,
     .animate-spin-slow,
+    .animate-pulse,
     .spinning-vinyl {
         animation: none;
     }

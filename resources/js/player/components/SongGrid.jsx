@@ -30,7 +30,7 @@ export default function SongGrid({
             {/* Header and Filter chips */}
             <div className="flex flex-col justify-between gap-3 border-b border-line-strong/20 pb-4 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-3">
-                    <h3 className="font-display text-xl font-bold tracking-tight text-white">
+                    <h3 className="font-display text-xl font-bold tracking-tight text-ink-strong">
                         Essential Tracks
                     </h3>
                     <span className="rounded-full border border-line-strong/30 bg-chip px-2.5 py-0.5 font-mono text-[11px] text-on-surface-variant">
@@ -43,11 +43,13 @@ export default function SongGrid({
                     {filterChips.map((chip) => (
                         <button
                             key={chip.id}
+                            type="button"
                             onClick={() => setActiveFilter(chip.id)}
-                            className={`rounded-full px-3.5 py-1.5 font-mono text-xs font-medium transition-all ${
+                            aria-pressed={activeFilter === chip.id}
+                            className={`focus-ring rounded-full px-3.5 py-1.5 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
                                 activeFilter === chip.id
-                                    ? 'border border-primary-container bg-chip text-white shadow-[0_0_12px_var(--accent-glow)]'
-                                    : 'border border-line-strong/20 bg-raised text-on-surface-variant hover:bg-chip hover:text-white'
+                                    ? 'border border-primary-container bg-chip text-ink-strong shadow-[0_0_12px_var(--accent-glow)]'
+                                    : 'border border-line-strong/20 bg-raised text-on-surface-variant hover:bg-chip hover:text-ink-strong'
                             }`}
                         >
                             {chip.label}
@@ -75,7 +77,7 @@ export default function SongGrid({
                         return (
                             <div
                                 key={song.id}
-                                className={`group relative flex flex-col rounded-2xl border bg-raised p-2.5 transition-all duration-200 hover:bg-overlay sm:p-3.5 ${
+                                className={`group relative flex flex-col rounded-2xl border bg-raised p-2.5 transition-colors duration-200 ease-out hover:bg-overlay motion-reduce:transition-none sm:p-3.5 ${
                                     isCurrent
                                         ? 'border-primary-container/60 shadow-[0_0_16px_var(--accent-glow)]'
                                         : 'border-line-strong/20 hover:border-line-strong/60'
@@ -86,7 +88,7 @@ export default function SongGrid({
                                     <img
                                         src={song.img}
                                         alt={song.title}
-                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none"
                                         loading="lazy"
                                         onError={(e) => {
                                             e.target.src =
@@ -96,7 +98,7 @@ export default function SongGrid({
 
                                      {/* Hi-Fi Badge / Genre */}
                                      <span 
-                                         className="absolute top-2 left-2 max-w-[calc(100%-4rem)] truncate rounded bg-black/75 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-primary-container backdrop-blur-sm"
+                                         className="absolute top-2 left-2 max-w-[calc(100%-4rem)] truncate rounded bg-black/75 px-1.5 py-0.5 font-mono text-[11px] font-semibold tracking-wider text-primary-container backdrop-blur-sm"
                                          title={song.genre || 'FLAC'}
                                      >
                                          {song.genre || 'FLAC'}
@@ -105,29 +107,34 @@ export default function SongGrid({
                                     {/* Quick Action Overlay (Queue & Playlist) */}
                                     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-90 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                                         <button
+                                            type="button"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 addToQueue(song.id);
                                             }}
-                                            className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/80 text-white backdrop-blur-sm transition-transform hover:scale-110 hover:text-primary-container active:scale-95 sm:h-8 sm:w-8"
+                                            className="focus-ring flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/80 text-white backdrop-blur-sm transition-transform duration-200 hover:scale-110 hover:text-primary-container active:scale-95 motion-reduce:transition-none sm:h-8 sm:w-8"
                                             title="Add to Queue"
+                                            aria-label={`Tambahkan ${song.title} ke antrean`}
                                         >
-                                            <LuListPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                            <LuListPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onOpenPlaylistModal(song);
                                             }}
-                                            className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/80 text-white backdrop-blur-sm transition-transform hover:scale-110 hover:text-primary-container active:scale-95 sm:h-8 sm:w-8"
+                                            className="focus-ring flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/80 text-white backdrop-blur-sm transition-transform duration-200 hover:scale-110 hover:text-primary-container active:scale-95 motion-reduce:transition-none sm:h-8 sm:w-8"
                                             title="Add to Playlist"
+                                            aria-label={`Tambah ${song.title} ke playlist`}
                                         >
-                                            <LuPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                            <LuPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
                                         </button>
                                     </div>
 
                                     {/* Play Button (Always accessible on mobile touch) */}
                                     <button
+                                        type="button"
                                         onClick={() => {
                                             if (isCurrent) {
                                                 togglePlay();
@@ -135,7 +142,12 @@ export default function SongGrid({
                                                 playSong(song);
                                             }
                                         }}
-                                        className={`absolute right-2.5 bottom-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-xl transition-all duration-200 hover:scale-110 active:scale-95 sm:h-11 sm:w-11 ${
+                                        aria-label={
+                                            isSongPlaying
+                                                ? `Jeda ${song.title}`
+                                                : `Putar ${song.title}`
+                                        }
+                                        className={`focus-ring absolute right-2.5 bottom-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-xl transition-transform duration-200 hover:scale-110 active:scale-95 motion-reduce:transition-none sm:h-11 sm:w-11 ${
                                             isSongPlaying
                                                 ? 'translate-y-0 opacity-100'
                                                 : 'translate-y-0 opacity-90 sm:translate-y-2 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100'
@@ -143,9 +155,9 @@ export default function SongGrid({
                                         title={isSongPlaying ? 'Pause' : 'Play'}
                                     >
                                         {isSongPlaying ? (
-                                            <LuPause className="h-4 w-4 fill-current sm:h-5 sm:w-5" />
+                                            <LuPause className="h-4 w-4 fill-current sm:h-5 sm:w-5" aria-hidden="true" />
                                         ) : (
-                                            <LuPlay className="ml-0.5 h-4 w-4 fill-current sm:h-5 sm:w-5" />
+                                            <LuPlay className="ml-0.5 h-4 w-4 fill-current sm:h-5 sm:w-5" aria-hidden="true" />
                                         )}
                                     </button>
                                 </div>
@@ -153,18 +165,19 @@ export default function SongGrid({
                                 {/* Details */}
                                 <div className="flex min-w-0 items-start justify-between gap-1.5">
                                     <div className="min-w-0 flex-1">
-                                        <h4
+                                        <button
+                                            type="button"
                                             onClick={() => playSong(song)}
-                                            className="cursor-pointer truncate font-display text-xs font-bold text-white transition-colors hover:text-primary-container sm:text-sm"
+                                            className="focus-ring block w-full truncate text-left font-display text-xs font-bold text-ink-strong transition-colors hover:text-primary-container sm:text-sm"
                                         >
                                             {song.title}
-                                        </h4>
+                                        </button>
                                         <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-on-surface-variant sm:text-xs">
                                             <span className="truncate">
                                                 {song.artist}
                                             </span>
                                             {song.uploader_name && (
-                                                <span className="hidden flex-shrink-0 font-mono text-[9px] text-primary-container/80 sm:inline">
+                                                <span className="hidden flex-shrink-0 font-mono text-[11px] text-primary-container/80 sm:inline">
                                                     &bull; {song.uploader_name}
                                                 </span>
                                             )}
@@ -173,16 +186,23 @@ export default function SongGrid({
 
                                     {/* Favorite button */}
                                     <button
+                                        type="button"
                                         onClick={() => toggleFavorite(song.id)}
-                                        className={`flex-shrink-0 rounded-full p-1.5 transition-colors ${
+                                        aria-label={
+                                            isLiked
+                                                ? `Hapus ${song.title} dari favorit`
+                                                : `Tambah ${song.title} ke favorit`
+                                        }
+                                        className={`focus-ring flex-shrink-0 rounded-full p-1.5 transition-colors ${
                                             isLiked
                                                 ? 'text-primary-container'
-                                                : 'text-on-surface-variant hover:text-white'
+                                                : 'text-on-surface-variant hover:text-ink-strong'
                                         }`}
                                         title={isLiked ? 'Unlike' : 'Like'}
                                     >
                                         <LuHeart
                                             className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isLiked ? 'fill-current' : ''}`}
+                                            aria-hidden="true"
                                         />
                                     </button>
                                 </div>

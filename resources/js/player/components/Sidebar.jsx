@@ -4,14 +4,7 @@ import { useAudio } from '../context/AudioContext';
 import { LuBadgeCheck, LuCheck, LuDisc3, LuHouse, LuLibrary, LuListMusic, LuLock, LuPin, LuPlus, LuSearch, LuX } from 'react-icons/lu';
 import { getAppBaseUrl } from '../services/api';
 import PlaylistIcon from './PlaylistIcon';
-const THEMES = [
-    { id: 'default', color: '#ccf228', name: 'Acid Lime' },
-    { id: 'purple', color: '#a855f7', name: 'Electric Violet' },
-    { id: 'blue', color: '#3b82f6', name: 'Deep Cobalt' },
-    { id: 'cyberpunk', color: '#ec4899', name: 'Hot Pink' },
-    { id: 'sunset', color: '#f97316', name: 'Safety Amber' },
-    { id: 'ocean', color: '#06b6d4', name: 'Cyan Laser' },
-];
+import { THEMES } from '../themes';
 
 export default function Sidebar({
     currentView,
@@ -63,7 +56,7 @@ export default function Sidebar({
             )}
 
             <aside
-                className={`fixed top-0 left-0 z-40 flex h-screen w-64 flex-col justify-between border-r border-line-strong/30 bg-chrome p-4 transition-transform duration-300 ${
+                className={`fixed top-0 left-0 z-40 flex h-dvh w-64 flex-col justify-between border-r border-line-strong/30 bg-chrome p-4 transition-transform duration-300 motion-reduce:transition-none ${
                     isMobileOpen
                         ? 'translate-x-0'
                         : '-translate-x-full lg:translate-x-0'
@@ -73,8 +66,9 @@ export default function Sidebar({
                 <div className="flex min-h-0 flex-1 flex-col gap-6">
                     {/* Brand Header */}
                     <div className="flex items-center justify-between px-2 pt-2">
-                        <div
-                            className="flex cursor-pointer items-center gap-3"
+                        <button
+                            type="button"
+                            className="focus-ring flex items-center gap-3 rounded-lg"
                             onClick={() => {
                                 setView('home');
                                 setActivePlaylistId(null);
@@ -85,17 +79,19 @@ export default function Sidebar({
                                 <LuDisc3 className="animate-spin-slow h-5 w-5 text-primary-container" />
                             </div>
                             <div>
-                                <h1 className="font-display text-base leading-none font-bold tracking-tight text-white">
+                                <h1 className="font-display text-base leading-none font-bold tracking-tight text-ink-strong">
                                     Spotirid
                                 </h1>
                             </div>
-                        </div>
+                        </button>
                         <button
+                            type="button"
                             onClick={() => setIsMobileOpen(false)}
-                            className="rounded-lg p-1.5 text-on-surface-variant hover:bg-overlay hover:text-white lg:hidden"
+                            className="focus-ring rounded-lg p-1.5 text-on-surface-variant hover:bg-overlay hover:text-ink-strong lg:hidden"
                             title="Close Menu"
+                            aria-label="Tutup menu"
                         >
-                            <LuX className="h-5 w-5" />
+                            <LuX className="h-5 w-5" aria-hidden="true" />
                         </button>
                     </div>
 
@@ -117,10 +113,10 @@ export default function Sidebar({
                                         if (setIsMobileOpen)
                                             setIsMobileOpen(false);
                                     }}
-                                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium transition-all duration-150 ${
+                                    className={`focus-ring flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium transition-colors duration-150 ease-out motion-reduce:transition-none ${
                                         isActive
-                                            ? 'border-l-2 border-primary-container bg-chip font-semibold text-white shadow-sm'
-                                            : 'text-on-surface-variant hover:bg-overlay hover:text-white'
+                                            ? 'border-l-2 border-primary-container bg-chip font-semibold text-ink-strong shadow-sm'
+                                            : 'text-on-surface-variant hover:bg-overlay hover:text-ink-strong'
                                     }`}
                                 >
                                     <Icon
@@ -139,7 +135,7 @@ export default function Sidebar({
                                 onOpenSuggestSong?.();
                                 if (setIsMobileOpen) setIsMobileOpen(false);
                             }}
-                            className="flex items-center gap-3 rounded-xl border border-primary-container/40 bg-primary-container/10 px-4 py-2.5 text-left text-sm font-bold text-primary-container transition-all hover:bg-primary-container hover:text-on-primary-container shadow-sm"
+                            className="focus-ring flex items-center gap-3 rounded-xl border border-primary-container/40 bg-primary-container/10 px-4 py-2.5 text-left text-sm font-bold text-primary-container shadow-sm transition-colors duration-150 ease-out hover:bg-primary-container hover:text-on-primary-container motion-reduce:transition-none"
                         >
                             <LuPlus className="h-5 w-5" />
                             <span>Ajukan Lagu Baru</span>
@@ -154,11 +150,13 @@ export default function Sidebar({
                         <div className="flex shrink-0 items-center justify-between px-3 font-display text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
                             <span>SHARED PLAYLISTS</span>
                             <button
+                                type="button"
                                 onClick={handleCreatePlaylist}
-                                className="flex items-center justify-center rounded p-1 text-on-surface-variant transition-colors hover:bg-chip hover:text-primary-container"
+                                className="focus-ring flex items-center justify-center rounded p-1 text-on-surface-variant transition-colors hover:bg-chip hover:text-primary-container"
                                 title="Create Playlist"
+                                aria-label="Buat playlist baru"
                             >
-                                <LuPlus className="h-4 w-4" />
+                                <LuPlus className="h-4 w-4" aria-hidden="true" />
                             </button>
                         </div>
 
@@ -182,10 +180,10 @@ export default function Sidebar({
                                                 if (setIsMobileOpen)
                                                     setIsMobileOpen(false);
                                             }}
-                                            className={`group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition-all ${
+                                            className={`group focus-ring flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition-colors duration-150 ease-out motion-reduce:transition-none ${
                                                 isActive
-                                                    ? 'border border-primary-container/40 bg-chip text-white'
-                                                    : 'text-ink-strong hover:bg-chip hover:text-white'
+                                                    ? 'border border-primary-container/40 bg-chip text-ink-strong'
+                                                    : 'text-ink-strong hover:bg-chip hover:text-ink-strong'
                                             }`}
                                         >
                                             <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -205,7 +203,7 @@ export default function Sidebar({
                                                     <span className="truncate text-xs font-medium">
                                                         {pl.name}
                                                     </span>
-                                                    <span className="truncate font-mono text-[9px] text-on-surface-variant/70">
+                                                    <span className="truncate font-mono text-[11px] text-on-surface-variant/70">
                                                         by{' '}
                                                         {pl.creator_name ||
                                                             'Admin'}
@@ -224,7 +222,7 @@ export default function Sidebar({
                                                         </span>
                                                     )}
                                             </div>
-                                            <span className="rounded border border-line-strong/30 bg-raised px-1.5 py-0.5 font-mono text-[10px] text-on-surface-variant">
+                                            <span className="rounded border border-line-strong/30 bg-raised px-1.5 py-0.5 font-mono text-[11px] text-on-surface-variant">
                                                 {pl.songs.length}
                                             </span>
                                         </button>
@@ -239,7 +237,7 @@ export default function Sidebar({
                 <div className="flex shrink-0 flex-col gap-4 border-t border-line/60 pt-4">
                     {/* Themes */}
                     <div className="px-2">
-                        <p className="mb-2 font-display text-[10px] font-bold tracking-wider text-on-surface-variant uppercase">
+                        <p className="mb-2 font-display text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
                             THEMES
                         </p>
                         <div className="flex items-center gap-2">
@@ -247,16 +245,18 @@ export default function Sidebar({
                                 <button
                                     key={t.id}
                                     onClick={() => setTheme(t.id)}
-                                    className={`flex h-5 w-5 items-center justify-center rounded-full transition-transform hover:scale-110 ${
+                                    className={`focus-ring flex h-5 w-5 items-center justify-center rounded-full transition-transform duration-150 ease-out hover:scale-110 motion-reduce:transition-none ${
                                         theme === t.id
-                                            ? 'ring-2 ring-primary-container ring-offset-2 ring-offset-[#0d0e11]'
+                                            ? 'ring-2 ring-primary-container ring-offset-2 ring-offset-chrome'
                                             : 'opacity-70 hover:opacity-100'
                                     }`}
                                     style={{ backgroundColor: t.color }}
                                     title={t.name}
+                                    aria-label={`Ganti tema ke ${t.name}`}
+                                    aria-pressed={theme === t.id}
                                 >
                                     {theme === t.id && (
-                                        <LuCheck className="h-3 w-3 stroke-[3] text-black" />
+                                        <LuCheck className="h-3 w-3 stroke-[3] text-black" aria-hidden="true" />
                                     )}
                                 </button>
                             ))}
@@ -265,31 +265,32 @@ export default function Sidebar({
 
                     {/* Profile Card */}
                     <div className="flex items-center justify-between rounded-lg border border-line-strong/20 bg-raised p-2.5">
-                        <div
+                        <button
+                            type="button"
                             onClick={onOpenSettings}
-                            className="group flex min-w-0 flex-1 cursor-pointer items-center gap-2.5"
+                            className="group focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-md text-left"
                             title="Buka Pengaturan Player"
                         >
-                            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-container font-mono text-xs font-bold text-on-primary-container transition-transform group-hover:scale-105">
+                            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-container font-mono text-xs font-bold text-on-primary-container transition-transform duration-150 ease-out group-hover:scale-105 motion-reduce:transition-none">
                                 {profileName
                                     ? profileName.slice(0, 2).toUpperCase()
                                     : 'US'}
                             </div>
                             <div className="flex min-w-0 flex-col">
-                                <span className="truncate text-xs leading-tight font-semibold text-white transition-colors group-hover:text-primary-container">
+                                <span className="truncate text-xs leading-tight font-semibold text-ink-strong transition-colors group-hover:text-primary-container">
                                     {profileName || 'Music Listener'}
                                 </span>
-                                <span className="truncate font-mono text-[10px] text-on-surface-variant">
+                                <span className="truncate font-mono text-[11px] text-on-surface-variant">
                                     Pengaturan Player
                                 </span>
                             </div>
-                        </div>
+                        </button>
                         <a
                             href={`${getAppBaseUrl()}admin/login`}
-                            className="rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-white/5 hover:text-primary-container"
+                            className="focus-ring rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-overlay hover:text-primary-container"
                             title="Login Administrator"
                         >
-                            <LuLock className="h-4 w-4" />
+                            <LuLock className="h-4 w-4" aria-hidden="true" />
                         </a>
                     </div>
                 </div>
