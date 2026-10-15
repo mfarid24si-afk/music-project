@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/react';
 import { useAudio } from '../context/AudioContext';
 import { LuBadgeCheck, LuCheck, LuDisc3, LuHouse, LuLibrary, LuListMusic, LuLock, LuPin, LuPlus, LuSearch, LuX } from 'react-icons/lu';
 import { getAppBaseUrl } from '../services/api';
+import PlaylistIcon from './PlaylistIcon';
 const THEMES = [
     { id: 'default', color: '#ccf228', name: 'Acid Lime' },
     { id: 'purple', color: '#a855f7', name: 'Electric Violet' },
@@ -195,9 +196,10 @@ export default function Sidebar({
                                                         className="h-6 w-6 flex-shrink-0 rounded object-cover"
                                                     />
                                                 ) : (
-                                                    <span className="flex-shrink-0 text-sm">
-                                                        {pl.emoji || '🎧'}
-                                                    </span>
+                                                    <PlaylistIcon
+                                                        value={pl.emoji}
+                                                        className="h-4 w-4 flex-shrink-0 text-on-surface-variant"
+                                                    />
                                                 )}
                                                 <div className="flex min-w-0 flex-col leading-tight">
                                                     <span className="truncate text-xs font-medium">

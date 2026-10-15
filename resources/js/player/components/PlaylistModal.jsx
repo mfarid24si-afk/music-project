@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAudio } from '../context/AudioContext';
 import { LuCheck, LuListMusic, LuLock, LuPlus, LuX } from 'react-icons/lu';
+import PlaylistIcon from './PlaylistIcon';
 export default function PlaylistModal({ song, isOpen, onClose }) {
     const { playlists, createPlaylist, addToPlaylist, removeFromPlaylist } =
         useAudio();
@@ -84,9 +85,10 @@ export default function PlaylistModal({ song, isOpen, onClose }) {
                                                 className="h-5 w-5 flex-shrink-0 rounded object-cover"
                                             />
                                         ) : (
-                                            <span className="flex-shrink-0 text-sm">
-                                                {pl.emoji || '🎧'}
-                                            </span>
+                                            <PlaylistIcon
+                                                value={pl.emoji}
+                                                className="h-4 w-4 flex-shrink-0 text-on-surface-variant"
+                                            />
                                         )}
                                         <span className="truncate font-display text-xs font-semibold">
                                             {pl.name}

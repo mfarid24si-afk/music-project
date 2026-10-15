@@ -27,6 +27,7 @@ import {
 } from '../playlistHelpers';
 import PlaylistCoverArt from './PlaylistCoverArt';
 import PlaylistEditModal from './PlaylistEditModal';
+import PlaylistIcon from './PlaylistIcon';
 import PlaylistRecommendedSongs from './PlaylistRecommendedSongs';
 
 const ICON_BUTTON =
@@ -254,9 +255,10 @@ export default function PlaylistView({ playlistId, onBack }) {
                                 <span>LIBRARY</span>
                             </button>
                             <span className="inline-flex items-center gap-1 rounded border border-white/10 bg-black/40 px-2 py-1 font-mono text-xs font-bold tracking-wider text-primary-container uppercase">
-                                <span aria-hidden="true">
-                                    {playlist.emoji || '🎧'}
-                                </span>
+                                <PlaylistIcon
+                                    value={playlist.emoji}
+                                    className="h-3.5 w-3.5"
+                                />
                                 PERSONAL PLAYLIST
                             </span>
                             {playlist.isPinned && (
@@ -573,8 +575,11 @@ export default function PlaylistView({ playlistId, onBack }) {
             {/* Main Track Section */}
             {playlistSongs.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 rounded-2xl border border-line-strong/30 bg-raised px-6 py-16 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line-strong/40 bg-chip text-3xl">
-                        <span aria-hidden="true">{playlist.emoji || '🎧'}</span>
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line-strong/40 bg-chip text-primary-container">
+                        <PlaylistIcon
+                            value={playlist.emoji}
+                            className="h-7 w-7"
+                        />
                     </div>
                     <h3 className="font-display text-lg font-bold text-white">
                         This playlist is completely empty

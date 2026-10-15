@@ -23,6 +23,7 @@ import {
     extractYouTubeId,
     isDirectAudioSource,
 } from '../audioSources';
+import { DEFAULT_PLAYLIST_ICON } from '../playlistHelpers';
 
 const AudioContext = createContext(null);
 
@@ -965,7 +966,7 @@ export function AudioProvider({ children }) {
     const createPlaylist = async (
         name,
         description = '',
-        emoji = '🎧',
+        emoji = DEFAULT_PLAYLIST_ICON,
         gradient = 'default',
         customCover = null,
     ) => {
@@ -981,7 +982,7 @@ export function AudioProvider({ children }) {
             id: tempId,
             name: trimmed,
             description: description.trim(),
-            emoji: emoji || '🎧',
+            emoji: emoji || DEFAULT_PLAYLIST_ICON,
             gradient: gradient || 'default',
             customCover: customCover || null,
             creator_name: uploader,
@@ -1006,7 +1007,7 @@ export function AudioProvider({ children }) {
             const res = await publishPlaylistAPI({
                 name: trimmed,
                 description: description.trim(),
-                emoji: emoji || '🎧',
+                emoji: emoji || DEFAULT_PLAYLIST_ICON,
                 gradient: gradient || 'default',
                 custom_cover: customCover || null,
                 creator_name: uploader,
@@ -1194,7 +1195,7 @@ export function AudioProvider({ children }) {
         const res = await publishPlaylistAPI({
             name: pl.name,
             description: pl.description || '',
-            emoji: pl.emoji || '🎧',
+            emoji: pl.emoji || DEFAULT_PLAYLIST_ICON,
             gradient: pl.gradient || 'default',
             custom_cover: pl.customCover || null,
             creator_name: uploader,

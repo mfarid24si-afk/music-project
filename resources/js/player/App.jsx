@@ -11,6 +11,7 @@ import QueueDrawer from './components/QueueDrawer';
 import NowPlayingView from './components/NowPlayingView';
 import PlaylistModal from './components/PlaylistModal';
 import PlaylistView from './components/PlaylistView';
+import PlaylistIcon from './components/PlaylistIcon';
 import ToastContainer from './components/ToastContainer';
 import { LuMusic, LuPlay, LuSparkles } from 'react-icons/lu';
 import SettingsModal from './components/SettingsModal';
@@ -228,10 +229,12 @@ export default function App() {
                                                         />
                                                     ) : (
                                                         <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-chip to-canvas">
-                                                            <span className="text-4xl">
-                                                                {pl.emoji ||
-                                                                    '🎧'}
-                                                            </span>
+                                                            <PlaylistIcon
+                                                                value={
+                                                                    pl.emoji
+                                                                }
+                                                                className="h-10 w-10 text-on-surface-variant"
+                                                            />
                                                         </div>
                                                     )}
                                                     <button

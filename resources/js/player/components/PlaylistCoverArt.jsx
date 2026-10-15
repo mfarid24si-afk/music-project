@@ -1,3 +1,5 @@
+import PlaylistIcon from './PlaylistIcon';
+
 export default function PlaylistCoverArt({ playlist, gradient, songs }) {
     if (playlist.customCover) {
         return (
@@ -9,9 +11,9 @@ export default function PlaylistCoverArt({ playlist, gradient, songs }) {
                 />
                 <div
                     aria-hidden="true"
-                    className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-lg shadow-md backdrop-blur-md"
+                    className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white shadow-md backdrop-blur-md"
                 >
-                    {playlist.emoji || '🎧'}
+                    <PlaylistIcon value={playlist.emoji} className="h-4 w-4" />
                 </div>
             </div>
         );
@@ -47,9 +49,9 @@ export default function PlaylistCoverArt({ playlist, gradient, songs }) {
                 />
                 <div
                     aria-hidden="true"
-                    className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-lg backdrop-blur-md"
+                    className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white backdrop-blur-md"
                 >
-                    {playlist.emoji || '🎧'}
+                    <PlaylistIcon value={playlist.emoji} className="h-4 w-4" />
                 </div>
             </div>
         );
@@ -58,9 +60,10 @@ export default function PlaylistCoverArt({ playlist, gradient, songs }) {
         <div
             className={`flex h-40 w-40 flex-shrink-0 flex-col items-center justify-center gap-2 rounded-2xl border bg-linear-to-br shadow-2xl md:h-52 md:w-52 ${gradient.class} ${gradient.border}`}
         >
-            <span aria-hidden="true" className="text-5xl">
-                {playlist.emoji || '🎧'}
-            </span>
+            <PlaylistIcon
+                value={playlist.emoji}
+                className="h-12 w-12 text-white/80"
+            />
             <span className="font-mono text-xs font-bold tracking-wider text-white/60 uppercase">
                 Curated Mix
             </span>
