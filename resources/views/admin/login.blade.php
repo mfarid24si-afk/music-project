@@ -24,8 +24,23 @@
       --font-mono: 'Space Grotesk', monospace;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html.light { filter: none; }
+    html[data-theme="acid-lime"] { --accent: #ccf228; --accent-hover: #dbfa43; --accent-glow: rgba(204,242,40,0.22); --border-accent: rgba(204,242,40,0.35); }
+    html[data-theme="cyberpunk"] { --accent: #ff3b9d; --accent-hover: #ff5fb0; --accent-glow: rgba(255,59,157,0.28); --border-accent: rgba(255,59,157,0.4); }
+    html[data-theme="ocean"] { --accent: #22d3ee; --accent-hover: #38e8ff; --accent-glow: rgba(34,211,238,0.28); --border-accent: rgba(34,211,238,0.4); }
+    html[data-theme="violet"] { --accent: #a78bfa; --accent-hover: #b99bff; --accent-glow: rgba(167,139,250,0.28); --border-accent: rgba(167,139,250,0.4); }
+    html[data-theme="sunset"] { --accent: #fb923c; --accent-hover: #ff9f4a; --accent-glow: rgba(251,146,60,0.28); --border-accent: rgba(251,146,60,0.4); }
+    html[data-theme="emerald"] { --accent: #34d399; --accent-hover: #4adeaa; --accent-glow: rgba(52,211,153,0.28); --border-accent: rgba(52,211,153,0.4); }
+    html.light {
+      --bg-primary: #f8f9fb;
+      --bg-surface: #ffffff;
+      --bg-elevated: #f6f7fa;
+      --border-subtle: rgba(15,15,20,0.08);
+      --text-main: #15151a;
+      --text-muted: #5f616d;
+    }
     body {
-      background: radial-gradient(circle at 50% 20%, #1a1c22 0%, var(--bg-primary) 70%);
+      background: radial-gradient(circle at 50% 20%, rgba(255,255,255,0.02) 0%, var(--bg-primary) 70%);
       color: var(--text-main);
       font-family: var(--font-body);
       min-height: 100vh;
@@ -33,7 +48,29 @@
       align-items: center;
       justify-content: center;
       padding: 24px 16px;
+      position: relative;
+      overflow: hidden;
     }
+    .studio-atmosphere {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mix-blend-mode: screen;
+      opacity: 0.25;
+    }
+    .aurora {
+      position: fixed;
+      filter: blur(140px);
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .aurora-one { width: 520px; height: 520px; left: 10%; top: 10%; background: radial-gradient(circle, var(--accent-glow), transparent 70%); animation: auroraMove 18s ease-in-out infinite; }
+    .aurora-two { width: 620px; height: 620px; right: 12%; bottom: 12%; background: radial-gradient(circle, var(--accent-glow), transparent 70%); animation: auroraMove 22s ease-in-out infinite reverse; }
+    @keyframes auroraMove { 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(40px,-30px) scale(1.08); } }
     .login-container {
       width: 100%;
       max-width: 440px;
@@ -75,11 +112,15 @@
       margin-top: 4px;
     }
     .card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
+      background: color-mix(in oklab, var(--bg-surface) 92%, transparent);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 20px;
-      padding: 32px 28px;
-      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 16px 36px -12px rgba(0,0,0,0.35), inset 0 1px 0 0 rgba(255,255,255,0.1);
+      padding: 32px 30px 28px;
+      transform-style: preserve-3d;
+      will-change: transform;
     }
     .form-group {
       margin-bottom: 18px;
@@ -159,31 +200,53 @@
       cursor: pointer;
       user-select: none;
     }
-    .btn-submit {
-      width: 100%;
-      height: 48px;
-      background: var(--accent);
-      color: #000;
-      border: none;
-      border-radius: 50px;
-      font-size: 14px;
-      font-weight: 800;
-      font-family: var(--font-body);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      box-shadow: 0 8px 24px var(--accent-glow);
+      .btn-submit {
+        width: 100%;
+        height: 48px;
+        background: radial-gradient(120% 120% at 50% 0%, #fff 0%, var(--accent) 55%, var(--accent-hover) 100%);
+        color: #000;
+        border: none;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 800;
+        font-family: var(--font-body);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: transform 160ms ease, box-shadow 200ms ease;
+        box-shadow: 0 8px 24px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.4);
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-submit::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+        transform: translateX(-120%);
+      }
+      .btn-submit:hover { background: var(--accent-hover); box-shadow: 0 12px 30px var(--accent-glow); }
+      .btn-submit:hover::after { animation: shimmer 900ms ease; }
+      .btn-submit:active { transform: scale(0.98); }
+      @keyframes shimmer { to { transform: translateX(120%); } }
+    .btn-submit::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+      transform: translateX(-120%);
     }
     .btn-submit:hover {
       background: var(--accent-hover);
-      transform: translateY(-1px);
+      box-shadow: 0 12px 30px var(--accent-glow);
     }
+    .btn-submit:hover::after { animation: shimmer 900ms ease; }
     .btn-submit:active {
-      transform: translateY(1px);
+      transform: scale(0.98);
     }
+    @keyframes shimmer { to { transform: translateX(120%); } }
     .btn-submit svg {
       width: 16px;
       height: 16px;
@@ -237,21 +300,61 @@
     }
   </style>
 </head>
-<body>
-  <div class="login-container">
-    <div class="brand-header">
-      <div class="brand-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-        <span>Administrator Portal</span>
+  <body>
+    <div class="studio-atmosphere"></div>
+    <div class="aurora aurora-one"></div>
+    <div class="aurora aurora-two"></div>
+    <script>
+      (function(){
+        const t = localStorage.getItem('spotify_ultra_theme') || localStorage.getItem('spotirid_admin_theme') || 'default';
+        const m = localStorage.getItem('spotify_ultra_color_mode') || localStorage.getItem('spotirid_admin_mode') || 'dark';
+        if(t!=='default') document.documentElement.setAttribute('data-theme', t);
+        if(m==='light'){ document.documentElement.classList.add('light'); document.documentElement.classList.remove('dark'); }
+        else { document.documentElement.classList.add('dark'); document.documentElement.classList.remove('light'); }
+        try{ localStorage.setItem('spotify_ultra_theme',t); localStorage.setItem('spotirid_admin_theme',t); localStorage.setItem('spotify_ultra_color_mode',m); localStorage.setItem('spotirid_admin_mode',m);}catch(e){}
+      })();
+    </script>
+  <div class="login-container" id="loginTilt">
+      <div class="brand-header">
+        <div class="brand-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span>Administrator Portal</span>
+        </div>
+        <h1 class="brand-title" style="display:flex;align-items:center;justify-content:center;gap:10px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="animation:spin 14s linear infinite;filter:drop-shadow(0 0 12px var(--accent-glow));">
+            <circle cx="12" cy="12" r="8" stroke="var(--accent)" stroke-width="1.2" opacity="0.9"/>
+            <circle cx="12" cy="12" r="4" stroke="var(--accent)" stroke-width="1.2" opacity="0.7"/>
+            <circle cx="12" cy="12" r="1.2" fill="var(--accent)"/>
+            <path d="M12 4v2M12 18v2M4 12h2M18 12h2" stroke="var(--accent)" stroke-width="1.2" opacity="0.6"/>
+          </svg>
+          Spotirid Admin
+        </h1>
+        <p class="brand-subtitle">Studio Control Room</p>
+        <style>@keyframes spin{to{transform:rotate(360deg);}}</style>
       </div>
-      <h1 class="brand-title">Spotirid</h1>
-      <p class="brand-subtitle">Pusat Manajemen Musik & Moderasi Playlist</p>
-    </div>
 
-    <div class="card">
+      <div class="card">
+        <script>
+          (function(){
+            const card=document.currentScript.parentElement;
+            if(!card) return;
+            const clamp=(v,m,M)=>Math.max(m,Math.min(M,v));
+            card.addEventListener('mousemove',e=>{
+              const r=card.getBoundingClientRect();
+              const x=(e.clientX-r.left)/r.width-.5;
+              const y=(e.clientY-r.top)/r.height-.5;
+              card.style.transition='transform 70ms ease';
+              card.style.transform='perspective(900px) rotateX('+clamp(-y*4,-4,4)+'deg) rotateY('+clamp(x*4,-4,4)+'deg) translateZ(8px)';
+            });
+            card.addEventListener('mouseleave',()=>{
+              card.style.transition='transform 260ms ease';
+              card.style.transform='perspective(900px) rotateX(0) rotateY(0) translateZ(0)';
+            });
+          })();
+        </script>
       @if (session('error'))
         <div class="alert alert-error">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

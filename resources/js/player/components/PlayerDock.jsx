@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAudio } from '../context/AudioContext';
 import { LuExternalLink, LuHeart, LuListMusic, LuMic, LuMusic2, LuPause, LuPlay, LuRepeat, LuRepeat1, LuShuffle, LuSkipBack, LuSkipForward, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import { formatSeconds } from '../format';
+import { MagneticButton } from '../utils/magneticTilt.jsx';
+
 
 const TRANSPORT_BUTTON =
     'focus-ring rounded-full p-1.5 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong motion-reduce:transition-none';
@@ -51,6 +53,10 @@ export default function PlayerDock({
 
     return (
         <footer className="fixed right-0 bottom-0 left-0 z-50 flex h-18 items-center justify-between border-t border-line-strong/30 bg-chrome/95 px-3 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:h-22 md:px-6">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px">
+                <div className={`h-px w-full ${isPlaying ? 'dock-glow' : ''}`} style={{ background: 'linear-gradient(90deg, transparent, var(--accent-color), transparent)', boxShadow: isPlaying ? '0 0 24px var(--accent-glow)' : 'none' }} />
+            </div>
+
             {/* Thin Top Scrubber for Mobile with generous touch target */}
             <div
                 aria-hidden="true"
@@ -78,7 +84,11 @@ export default function PlayerDock({
                     aria-label="Open now playing view"
                     className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity duration-200 ease-out hover:opacity-75 motion-reduce:transition-none md:gap-4"
                 >
-                    <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-md border border-line-strong/30 bg-chip md:h-14 md:w-14">
+                    <div className={`relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-md border border-line-strong/30 bg-chip md:h-14 md:w-14 ${isPlaying ? 'spinning-vinyl' : 'spinning-vinyl paused'}`}>
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                            <span className="absolute inset-0 rounded-full border border-white/5" />
+                            <span className="absolute h-1/2 w-1/2 rounded-full border border-white/10" />
+                        </div>
                         {artFailed ? (
                             <span className="flex h-full w-full items-center justify-center">
                                 <LuMusic2 className="h-5 w-5 text-on-surface-variant opacity-50" />
@@ -88,7 +98,7 @@ export default function PlayerDock({
                                 src={currentSong.img}
                                 alt={currentSong.title}
                                 onError={() => setArtFailed(true)}
-                                className="h-full w-full object-cover"
+                                className="h-full w-full object-cover rounded-full scale-90"
                             />
                         )}
                     </div>
@@ -104,9 +114,22 @@ export default function PlayerDock({
                                 LOSSLESS
                             </span>
                         </div>
-                        <span className="truncate text-[11px] text-on-surface-variant md:text-xs">
-                            {currentSong.artist}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="truncate text-[11px] text-on-surface-variant md:text-xs">
+                                {currentSong.artist}
+                            </span>
+                            {isPlaying && (
+                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/40 backdrop-blur-sm">
+                                    {[0, 1, 2, 3].map((i) => (
+                                        <div
+                                            key={i}
+                                            className="eq-bar"
+                                            style={{ animationDelay: `${i * 70}ms` }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </button>
 
@@ -143,18 +166,19 @@ export default function PlayerDock({
                     <LuSkipBack className="h-4 w-4 fill-current" />
                 </button>
 
-                <button
+                <MagneticButton
                     type="button"
+                    strength={8}
                     onClick={togglePlay}
                     aria-label={isPlaying ? 'Pause' : 'Play'}
-                    className="focus-ring flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_12px_var(--accent-glow)] transition-transform duration-200 ease-out active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100"
+                    className="focus-ring flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_16px_var(--accent-glow)] transition-transform duration-200 ease-out active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100"
                 >
                     {isPlaying ? (
                         <LuPause className="h-4 w-4 fill-current" />
                     ) : (
                         <LuPlay className="ml-0.5 h-4 w-4 fill-current" />
                     )}
-                </button>
+                </MagneticButton>
 
                 <button
                     type="button"
@@ -226,18 +250,19 @@ export default function PlayerDock({
                         <LuSkipBack className="h-5 w-5 fill-current" />
                     </button>
 
-                    <button
+                    <MagneticButton
                         type="button"
+                        strength={8}
                         onClick={togglePlay}
                         aria-label={isPlaying ? 'Pause' : 'Play'}
-                        className="focus-ring flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_12px_var(--accent-glow)] transition-transform duration-200 ease-out hover:scale-105 active:scale-95 motion-reduce:transition-none"
+                        className="focus-ring flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_16px_var(--accent-glow)] transition-transform duration-200 ease-out hover:scale-105 active:scale-90 motion-reduce:transition-none"
                     >
-                        {isPlaying ? (
-                            <LuPause className="h-4 w-4 fill-current" />
-                        ) : (
-                            <LuPlay className="ml-0.5 h-4 w-4 fill-current" />
-                        )}
-                    </button>
+                    {isPlaying ? (
+                        <LuPause className="h-4 w-4 fill-current" />
+                    ) : (
+                        <LuPlay className="ml-0.5 h-4 w-4 fill-current" />
+                    )}
+                </MagneticButton>
 
                     <button
                         type="button"

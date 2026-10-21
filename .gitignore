@@ -19,8 +19,12 @@
 /ponytail
 .DS_Store
 .env
+.env.*
+!.env.example
 .env.backup
 .env.production
+Spotirid.zip
+*.zip
 .phpactor.json
 .phpunit.result.cache
 Homestead.json

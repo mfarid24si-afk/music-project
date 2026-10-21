@@ -57,26 +57,34 @@ class VisitorTracking
      */
     public static function record(Request $request): ?VisitorLog
     {
-        if (! self::isEnabled()) {
+        try {
+            if (! self::isEnabled()) {
+                return null;
+            }
+
+            $ip = $request->ip() ?: '127.0.0.1';
+            $ipHash = md5($ip.date('Y-m-d'));
+            $dedupeKey = self::dedupeKey($ipHash);
+
+            if (Cache::has($dedupeKey)) {
+                return null;
+            }
+
+            Cache::put($dedupeKey, 1, 3600);
+
+            return VisitorLog::create([
+                'ip_hash' => $ipHash,
+                'path' => $request->path() ?: '/',
+                'visit_date' => date('Y-m-d'),
+                'visit_hour' => (int) date('G'),
+            ]);
+        } catch (\Throwable $e) {
+            // Visitor counting must never break the page (serverless/read-only
+            // filesystems and not-yet-provisioned databases are non-fatal here).
+            report($e);
+
             return null;
         }
-
-        $ip = $request->ip() ?: '127.0.0.1';
-        $ipHash = md5($ip.date('Y-m-d'));
-        $dedupeKey = self::dedupeKey($ipHash);
-
-        if (Cache::has($dedupeKey)) {
-            return null;
-        }
-
-        Cache::put($dedupeKey, 1, 3600);
-
-        return VisitorLog::create([
-            'ip_hash' => $ipHash,
-            'path' => $request->path() ?: '/',
-            'visit_date' => date('Y-m-d'),
-            'visit_hour' => (int) date('G'),
-        ]);
     }
 
     /**

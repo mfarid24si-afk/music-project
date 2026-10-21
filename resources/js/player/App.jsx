@@ -16,6 +16,7 @@ import ToastContainer from './components/ToastContainer';
 import { LuMusic, LuPlay, LuSparkles } from 'react-icons/lu';
 import SettingsModal from './components/SettingsModal';
 import SuggestSongModal from './components/SuggestSongModal';
+import Preloader from './components/Preloader';
 
 export default function App() {
     const {
@@ -40,6 +41,7 @@ export default function App() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
     const [isSuggestSongOpen, setIsSuggestSongOpen] = useState(false);
+    const [showPreloader, setShowPreloader] = useState(true);
     // Library active tab
     const [libraryTab, setLibraryTab] = useState('liked'); // 'liked', 'recent'
 
@@ -101,8 +103,28 @@ export default function App() {
         recentlyPlayed,
     ]);
 
+    const { isPlaying } = useAudio();
+
     return (
-        <div className="flex h-dvh w-full overflow-hidden bg-canvas text-ink-strong select-none">
+        <>
+            {showPreloader && <Preloader onComplete={() => setShowPreloader(false)} />}
+            <div className="relative flex h-dvh w-full overflow-hidden bg-canvas text-ink-strong select-none">
+                <div
+                    className="pointer-events-none absolute -top-40 left-1/4 h-[520px] w-[520px] rounded-full blur-[130px] transition-opacity duration-700"
+                    style={{
+                        background: 'var(--accent-glow)',
+                        opacity: isPlaying ? 0.9 : 0.4,
+                        animation: isPlaying ? 'dockBreath 1800ms ease-in-out infinite' : 'none',
+                    }}
+                />
+                <div
+                    className="pointer-events-none absolute bottom-[-160px] right-1/4 h-[620px] w-[620px] rounded-full blur-[130px] transition-opacity duration-700"
+                    style={{
+                        background: 'var(--accent-glow)',
+                        opacity: isPlaying ? 0.8 : 0.35,
+                        animation: isPlaying ? 'dockBreath 2200ms ease-in-out infinite' : 'none',
+                    }}
+                />
             <ToastContainer />
 
             {/* Sidebar Navigation */}
@@ -418,5 +440,6 @@ export default function App() {
                 onClose={() => setIsSuggestSongOpen(false)}
             />
         </div>
+        </>
     );
 }

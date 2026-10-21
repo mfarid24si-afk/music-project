@@ -35,18 +35,8 @@ class AdminDashboardController extends Controller
             $pendingSongs = Music::where('is_active', 0)->orderBy('created_at', 'desc')->get();
             $totalPlays = Music::where('is_active', 1)->sum('play_count');
 
-            // Safe column check for status
+            // Column check for status (handled by migrations)
             $hasStatus = Schema::hasTable('playlists') && Schema::hasColumn('playlists', 'status');
-            if (! $hasStatus && Schema::hasTable('playlists')) {
-                try {
-                    Schema::table('playlists', function ($table) {
-                        $table->string('status', 20)->default('pending')->after('creator_name');
-                    });
-                    $hasStatus = true;
-                } catch (\Throwable $t) {
-                    $hasStatus = false;
-                }
-            }
 
             $approvedQuery = Playlist::query();
             if ($hasStatus) {

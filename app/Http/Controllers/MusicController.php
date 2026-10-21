@@ -130,6 +130,12 @@ class MusicController extends Controller
         $fileSize = 0;
 
         if ($request->hasFile('audio')) {
+            if (! is_writable(public_path('assets/music'))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Penyimpanan file tidak tersedia (filesystem read-only). Gunakan URL direct audio sebagai gantinya.',
+                ], 503);
+            }
             $file = $request->file('audio');
             $ext = strtolower($file->getClientOriginalExtension());
             $slug = Str::slug("{$artist} - {$title}") ?: 'track';
@@ -142,6 +148,12 @@ class MusicController extends Controller
         $savedCoverName = $coverUrl;
 
         if ($request->hasFile('cover')) {
+            if (! is_writable(public_path('assets/covers'))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Penyimpanan file tidak tersedia (filesystem read-only). Gunakan URL direct cover sebagai gantinya.',
+                ], 503);
+            }
             $coverFile = $request->file('cover');
             $coverExt = strtolower($coverFile->getClientOriginalExtension());
             $coverSlug = Str::slug("{$artist} - {$title}-cover") ?: 'cover';

@@ -41,6 +41,17 @@ const isDarkMode = (appearance: Appearance): boolean => {
     return appearance === 'dark' || (appearance === 'system' && prefersDark());
 };
 
+const updateThemeColorMeta = (isDark: boolean): void => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+        meta.setAttribute('content', isDark ? '#121316' : '#f4f5f8');
+    }
+};
+
 const applyTheme = (appearance: Appearance): void => {
     if (typeof document === 'undefined') {
         return;
@@ -48,8 +59,10 @@ const applyTheme = (appearance: Appearance): void => {
 
     const isDark = isDarkMode(appearance);
 
-    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(isDark ? 'dark' : 'light');
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    updateThemeColorMeta(isDark);
 };
 
 const subscribe = (callback: () => void) => {
@@ -106,6 +119,14 @@ export function useAppearance(): UseAppearanceReturn {
 
         // Store in cookie for SSR...
         setCookie('appearance', mode);
+
+        // Keep in sync with player color mode
+        try {
+            localStorage.setItem('spotify_ultra_color_mode', mode);
+            window.dispatchEvent(new CustomEvent('spotirid:color-mode-change', { detail: { mode } }));
+        } catch (e) {
+            // ignore
+        }
 
         applyTheme(mode);
         notify();

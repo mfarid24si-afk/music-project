@@ -103,10 +103,12 @@
   @vite(['resources/js/lib/admin-animations.ts'])
   <script>
     (function() {
-      const savedTheme = localStorage.getItem('spotirid_admin_theme') || 'default';
-      const savedMode = localStorage.getItem('spotirid_admin_mode') || 'dark';
+      const savedTheme = localStorage.getItem('spotify_ultra_theme') || localStorage.getItem('spotirid_admin_theme') || 'default';
+      const savedMode = localStorage.getItem('spotify_ultra_color_mode') || localStorage.getItem('spotirid_admin_mode') || 'dark';
       if (savedTheme !== 'default') {
         document.documentElement.setAttribute('data-theme', savedTheme);
+      } else {
+        document.documentElement.removeAttribute('data-theme');
       }
       if (savedMode === 'light') {
         document.documentElement.classList.add('light');
@@ -115,9 +117,25 @@
         document.documentElement.classList.add('dark');
         document.documentElement.classList.remove('light');
       }
+      try { localStorage.setItem('spotify_ultra_theme', savedTheme); localStorage.setItem('spotirid_admin_theme', savedTheme); localStorage.setItem('spotify_ultra_color_mode', savedMode); localStorage.setItem('spotirid_admin_mode', savedMode); } catch(e){}
     })();
   </script>
   <style>
+    .admin-atmosphere {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mix-blend-mode: screen;
+      opacity: 0.18;
+    }
+    .admin-aurora { position: fixed; filter: blur(160px); opacity: 0.32; pointer-events: none; z-index: -1; }
+    .admin-aurora-one { width: 640px; height: 640px; left: -12%; top: -18%; background: radial-gradient(circle, var(--accent-glow), transparent 70%); animation: adminAurora 26s ease-in-out infinite; }
+    .admin-aurora-two { width: 720px; height: 720px; right: -16%; bottom: -20%; background: radial-gradient(circle, var(--accent-glow), transparent 70%); animation: adminAurora 32s ease-in-out infinite reverse; }
+    @keyframes adminAurora { 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(60px,-40px) scale(1.08); } }
+    html.light .admin-atmosphere { opacity: 0.12; }
     :root {
       --bg-primary: #0d0e11;
       --bg-surface: #17181c;
@@ -814,7 +832,10 @@
     }
   </style>
 </head>
-<body>
+  <body>
+    <div class="admin-atmosphere"></div>
+    <div class="admin-aurora admin-aurora-one"></div>
+    <div class="admin-aurora admin-aurora-two"></div>
   <!-- Top Navigation Header -->
   <header class="admin-header">
     <a href="{{ route('admin.dashboard') }}" class="header-brand">
@@ -3057,6 +3078,18 @@
 
     // Auto initialize daily chart on load
     document.addEventListener('DOMContentLoaded', () => {
+      try {
+        const t = localStorage.getItem(THEME_KEY_ULTRA) || localStorage.getItem(THEME_KEY) || 'default';
+        const m = localStorage.getItem(MODE_KEY_ULTRA) || localStorage.getItem(MODE_KEY) || 'dark';
+        localStorage.setItem(THEME_KEY, t);
+        localStorage.setItem(THEME_KEY_ULTRA, t);
+        localStorage.setItem(MODE_KEY, m);
+        localStorage.setItem(MODE_KEY_ULTRA, m);
+        if (t !== 'default') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+        if (m === 'light') { document.documentElement.classList.add('light'); document.documentElement.classList.remove('dark'); } else { document.documentElement.classList.add('dark'); document.documentElement.classList.remove('light'); }
+        updateThemeUI(t);
+        updateModeUI(m);
+      } catch(e){}
       switchChart('daily');
     });
 
@@ -3065,17 +3098,20 @@
     // ==========================================
     const THEME_KEY = 'spotirid_admin_theme';
     const MODE_KEY = 'spotirid_admin_mode';
+    const THEME_KEY_ULTRA = 'spotify_ultra_theme';
+    const MODE_KEY_ULTRA = 'spotify_ultra_color_mode';
 
     function getCurrentMode() {
-      return localStorage.getItem(MODE_KEY) || 'dark';
+      return localStorage.getItem(MODE_KEY_ULTRA) || localStorage.getItem(MODE_KEY) || 'dark';
     }
 
     function getCurrentTheme() {
-      return localStorage.getItem(THEME_KEY) || 'default';
+      return localStorage.getItem(THEME_KEY_ULTRA) || localStorage.getItem(THEME_KEY) || 'default';
     }
 
     function setAdminMode(mode) {
       localStorage.setItem(MODE_KEY, mode);
+      localStorage.setItem(MODE_KEY_ULTRA, mode);
       if (mode === 'light') {
         document.documentElement.classList.add('light');
         document.documentElement.classList.remove('dark');
@@ -3091,6 +3127,7 @@
 
     function setAdminTheme(theme) {
       localStorage.setItem(THEME_KEY, theme);
+      localStorage.setItem(THEME_KEY_ULTRA, theme);
       if (theme === 'default') {
         document.documentElement.removeAttribute('data-theme');
       } else {

@@ -1,6 +1,9 @@
 import React from 'react';
 import { useAudio } from '../context/AudioContext';
 import { LuDisc3, LuHeart, LuMic, LuPause, LuPlay } from 'react-icons/lu';
+import { MagneticButton, useHoloTilt } from '../utils/magneticTilt.jsx';
+
+
 export default function HeroSpotlight({ onOpenLyrics }) {
     const {
         currentSong,
@@ -21,8 +24,36 @@ export default function HeroSpotlight({ onOpenLyrics }) {
             ? `0${queueIdx + 1} OF 0${queue.length} IN QUEUE`
             : `TRACK 01 OF 0${songs.length || 1} IN ROTATION`;
 
+    const { vars, onMouseMove, onMouseLeave } = useHoloTilt(7, 7, -4);
+
     return (
-        <section className="group relative flex flex-col items-center gap-6 overflow-hidden rounded-2xl border border-line-strong/30 bg-raised p-4 shadow-xl sm:p-6 md:gap-8 md:p-8 lg:flex-row">
+        <section
+            className="group relative flex flex-col items-center gap-6 overflow-hidden rounded-2xl border border-line-strong/30 bg-raised p-4 shadow-xl sm:p-6 md:gap-8 md:p-8 lg:flex-row"
+            style={{
+                ...vars,
+                transform: 'perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(var(--ty,0px))',
+                willChange: 'transform',
+            }}
+            onMouseMove={onMouseMove}
+            onMouseLeave={onMouseLeave}
+        >
+            <div className="pointer-events-none absolute inset-0">
+                <div
+                    className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    style={{
+                        background:
+                            'radial-gradient(320px circle at var(--spot-x,50%) var(--spot-y,50%), var(--accent-glow), transparent 70%)',
+                    }}
+                />
+                <div
+                    className="absolute inset-0 opacity-0 mix-blend-screen transition-opacity duration-300 group-hover:opacity-100"
+                    style={{
+                        background:
+                            'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.12) 48%, var(--accent-glow) 52%, transparent 70%)',
+                        backgroundPosition: 'var(--spot-x,50%) var(--spot-y,50%)',
+                    }}
+                />
+            </div>
             {/* Ambient background glow */}
             <div className="pointer-events-none absolute top-0 right-0 -mt-20 -mr-20 h-96 w-96 rounded-full bg-primary-container/10 blur-3xl" />
 
@@ -95,15 +126,16 @@ export default function HeroSpotlight({ onOpenLyrics }) {
                 {/* Action Buttons */}
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                     {/* Main Play Action */}
-                    <button
+                    <MagneticButton
                         type="button"
+                        strength={6}
                         onClick={togglePlay}
                         aria-label={
                             isPlaying
                                 ? `Jeda ${currentSong.title}`
                                 : `Putar ${currentSong.title}`
                         }
-                        className="focus-ring flex items-center gap-2 rounded-full bg-primary-container px-6 py-3 font-display text-xs font-bold tracking-wider text-on-primary-container uppercase shadow-[0_0_24px_var(--accent-glow)] transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-95 motion-reduce:transition-none"
+                        className="focus-ring flex items-center gap-2 rounded-full bg-primary-container px-6 py-3 font-display text-xs font-bold tracking-wider text-on-primary-container uppercase shadow-[0_0_28px_var(--accent-glow)] transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-90 motion-reduce:transition-none"
                     >
                         {isPlaying ? (
                             <>
@@ -116,7 +148,7 @@ export default function HeroSpotlight({ onOpenLyrics }) {
                                 <span>RESUME PLAYBACK</span>
                             </>
                         )}
-                    </button>
+                    </MagneticButton>
 
                     {/* Favorite */}
                     <button

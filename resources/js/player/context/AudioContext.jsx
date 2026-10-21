@@ -152,25 +152,29 @@ export function AudioProvider({ children }) {
                     window.matchMedia('(prefers-color-scheme: dark)').matches;
             }
 
-            if (isDark) {
-                document.documentElement.classList.add('dark');
-                document.documentElement.classList.remove('light');
+            if (typeof document !== 'undefined') {
+                document.documentElement.classList.remove('light', 'dark');
+                document.documentElement.classList.add(isDark ? 'dark' : 'light');
                 document.documentElement.setAttribute(
                     'data-color-mode',
-                    'dark',
+                    isDark ? 'dark' : 'light',
                 );
-            } else {
-                document.documentElement.classList.remove('dark');
-                document.documentElement.classList.add('light');
-                document.documentElement.setAttribute(
-                    'data-color-mode',
-                    'light',
-                );
+                document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+
+                const meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) {
+                    meta.setAttribute('content', isDark ? '#121316' : '#f4f5f8');
+                }
             }
         }
 
         applyColorMode(colorMode);
         localStorage.setItem(STORAGE_KEYS.COLOR_MODE, colorMode);
+        try {
+            localStorage.setItem('appearance', colorMode);
+        } catch (e) {
+            // ignore
+        }
 
         if (colorMode === 'system') {
             const mq = window.matchMedia('(prefers-color-scheme: dark)');

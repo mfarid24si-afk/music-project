@@ -440,6 +440,130 @@ html.light .hover\:text-white:hover {
     }
 }
 
+@keyframes spotiridFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes sonicBar {
+    0%,
+    100% {
+        height: 10px;
+    }
+    25% {
+        height: 26px;
+    }
+    50% {
+        height: 16px;
+    }
+    75% {
+        height: 30px;
+    }
+}
+
+.sonic-bar {
+    animation: sonicBar 900ms ease-in-out infinite;
+}
+
+.spotirid-stagger > * {
+    opacity: 0;
+    animation: spotiridFadeUp 520ms cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+.spotirid-stagger > *:nth-child(1) {
+    animation-delay: 35ms;
+}
+.spotirid-stagger > *:nth-child(2) {
+    animation-delay: 70ms;
+}
+.spotirid-stagger > *:nth-child(3) {
+    animation-delay: 105ms;
+}
+.spotirid-stagger > *:nth-child(4) {
+    animation-delay: 140ms;
+}
+.spotirid-stagger > *:nth-child(5) {
+    animation-delay: 175ms;
+}
+.spotirid-stagger > *:nth-child(6) {
+    animation-delay: 210ms;
+}
+.spotirid-stagger > *:nth-child(7) {
+    animation-delay: 245ms;
+}
+.spotirid-stagger > *:nth-child(8) {
+    animation-delay: 280ms;
+}
+.spotirid-stagger > *:nth-child(9) {
+    animation-delay: 315ms;
+}
+.spotirid-stagger > *:nth-child(10) {
+    animation-delay: 350ms;
+}
+.spotirid-stagger > *:nth-child(11) {
+    animation-delay: 385ms;
+}
+.spotirid-stagger > *:nth-child(12) {
+    animation-delay: 420ms;
+}
+
+@keyframes equalizerBar {
+    0%,
+    100% {
+        height: 4px;
+    }
+    50% {
+        height: 12px;
+    }
+}
+
+.eq-bar {
+    width: 3px;
+    border-radius: 9999px;
+    background: var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-glow);
+    animation: equalizerBar 520ms ease-in-out infinite;
+}
+
+.eq-bar.paused {
+    animation-play-state: paused;
+    height: 4px !important;
+}
+
+@keyframes dockBreath {
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 0.9;
+    }
+}
+
+.dock-glow {
+    animation: dockBreath 2200ms ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sonic-bar,
+    .eq-bar,
+    .dock-glow,
+    .spinning-vinyl {
+        animation: none !important;
+    }
+    .spotirid-stagger > * {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
 @keyframes spinSlow {
     to {
         transform: rotate(360deg);

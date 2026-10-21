@@ -56,15 +56,23 @@ class VisitorLogMaintenance
      */
     public static function runIfNeeded(): ?array
     {
-        $minutes = max(1, (int) config('visitor.maintenance_check_minutes', 60));
+        try {
+            $minutes = max(1, (int) config('visitor.maintenance_check_minutes', 60));
 
-        $acquired = Cache::add(self::MAINTENANCE_CHECK_KEY, now()->timestamp, now()->addMinutes($minutes));
+            $acquired = Cache::add(self::MAINTENANCE_CHECK_KEY, now()->timestamp, now()->addMinutes($minutes));
 
-        if (! $acquired) {
+            if (! $acquired) {
+                return null;
+            }
+
+            return self::run();
+        } catch (\Throwable $e) {
+            // Maintenance rides along ordinary page views, so a missing database
+            // or read-only filesystem must never break the request.
+            report($e);
+
             return null;
         }
-
-        return self::run();
     }
 
     /**

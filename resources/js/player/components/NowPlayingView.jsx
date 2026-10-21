@@ -32,6 +32,7 @@ import {
     qualityLabel,
 } from '../nowPlayingVisuals';
 
+
 const FOCUS_RING =
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-container/60';
 
@@ -160,6 +161,28 @@ export default function NowPlayingView({ isOpen, onClose }) {
                 <div className="absolute -top-32 left-1/4 h-[750px] w-[750px] rounded-full bg-primary-container/10 opacity-40 blur-[140px]" />
                 <div className="absolute top-1/3 -left-32 h-[600px] w-[600px] rounded-full bg-primary-container/10 opacity-30 blur-[160px]" />
                 <div className="absolute bottom-20 left-1/2 h-[450px] w-[850px] -translate-x-1/2 rounded-full bg-primary-container/10 opacity-50 blur-[150px]" />
+                {isPlaying && (
+                    <>
+                        <div className="absolute top-1/2 left-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary-container/30 animate-[scaleUp_2200ms_ease-out_infinite]" />
+                        <div className="absolute top-1/2 left-1/2 h-[620px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary-container/20 animate-[scaleUp_2800ms_ease-out_infinite]" style={{ animationDelay: '400ms' }} />
+                        <div className="absolute top-1/2 left-1/2 h-[720px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary-container/10 animate-[scaleUp_3400ms_ease-out_infinite]" style={{ animationDelay: '800ms' }} />
+                    </>
+                )}
+                <div className="absolute inset-0">
+                    {[...Array(16)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="absolute h-1 w-1 rounded-full bg-primary-container/40"
+                            style={{
+                                left: `${(i * 37) % 100}%`,
+                                top: `${(i * 19) % 100}%`,
+                                animation: `fadeIn 4200ms ease-in-out infinite`,
+                                animationDelay: `${i * 260}ms`,
+                                boxShadow: '0 0 14px var(--accent-glow)',
+                            }}
+                        />
+                    ))}
+                </div>
                 <div
                     className="absolute inset-0"
                     style={GRID_BACKDROP_STYLE}
@@ -486,7 +509,7 @@ export default function NowPlayingView({ isOpen, onClose }) {
                                             ? 'Pause playback'
                                             : 'Start playback'
                                     }
-                                    className={`flex items-center gap-2 rounded-full border border-line-strong/30 bg-overlay/80 px-4 py-2 font-mono text-xs font-semibold text-ink transition-colors duration-200 ease-out hover:bg-chip active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
+                                    className={`flex items-center gap-2 rounded-full border border-line-strong/30 bg-overlay/80 px-4 py-2 font-mono text-xs font-semibold text-ink transition-colors duration-200 ease-out hover:bg-chip active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
                                 >
                                     <span
                                         aria-hidden="true"
