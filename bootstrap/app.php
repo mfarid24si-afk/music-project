@@ -48,4 +48,17 @@ if (isset($_ENV['VERCEL']) || isset($_SERVER['VERCEL'])) {
     $app->useStoragePath($storagePath);
 }
 
+// Guard against a stray Vite "hot" file reaching production (e.g. via a
+// file-upload deploy such as Alwaysdata). If present, @vite emits dev-server
+// URLs (http://[::1]:5173) and every page renders blank. The hot file is only
+// meaningful for local `npm run dev`, so drop it when running in production.
+$app->booted(function () use ($app): void {
+    if (! $app->environment('production')) {
+        return;
+    }
+    if (is_file($hotFile = $app->publicPath('hot'))) {
+        @unlink($hotFile);
+    }
+});
+
 return $app;

@@ -56,6 +56,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Asset URL
+    |--------------------------------------------------------------------------
+    |
+    | This is the base URL used by the asset() helper. On hosts where the app is
+    | served from a sub-path (e.g. Alwaysdata) rather than a dedicated domain,
+    | set ASSET_URL to that sub-path with a trailing slash so built CSS/JS in
+    | public/build resolve correctly instead of 404-ing.
+    |
+    */
+
+    'asset_url' => env('ASSET_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

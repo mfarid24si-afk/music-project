@@ -41,12 +41,27 @@ export default function Preloader({ onComplete }) {
             });
         }, stepMs);
 
+        // Hard fail-safe: never let the preloader trap the user on a dark
+        // screen, even if the interval is throttled or an asset stalls.
         timeoutRef.current = setTimeout(finish, 2200);
 
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
+    }, []);
+
+    // Surface a boot error instead of an eternal black screen if the app
+    // never finishes booting (e.g. the Vite bundle failed to load).
+    useEffect(() => {
+        const watchdog = setTimeout(() => {
+            if (!completedRef.current && typeof window.__spotiridShowBootError === 'function') {
+                window.__spotiridShowBootError(
+                    'Preloader did not complete within 9s. An asset may have failed to load.',
+                );
+            }
+        }, 9000);
+        return () => clearTimeout(watchdog);
     }, []);
 
     useEffect(() => {
