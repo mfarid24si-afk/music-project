@@ -817,10 +817,10 @@ export default function NowPlayingView({ isOpen, onClose }) {
 
             {/* Floating transport bar */}
             <footer className="fixed right-0 bottom-4 left-0 z-20 mx-auto max-w-[1400px] px-4 sm:px-8">
-                <div className="flex flex-col gap-3 rounded-2xl border border-line-strong/20 bg-chrome/90 px-4 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-2xl sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="player-glass grid grid-cols-1 gap-3 rounded-2xl border border-line-strong/20 px-4 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.6)] sm:px-6 sm:py-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] lg:items-center lg:gap-6">
                     {/* Left: current track mini */}
-                    <div className="hidden items-center gap-3 lg:flex lg:w-1/4 lg:min-w-[200px]">
-                        <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-line-strong/20 bg-chip">
+                    <div className="hidden min-w-0 items-center gap-3 lg:flex">
+                        <div className="relative aspect-square h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-line-strong/20 bg-chip">
                             {artFailed ? (
                                 <span className="flex h-full w-full items-center justify-center">
                                     <LuMusic2
@@ -848,7 +848,7 @@ export default function NowPlayingView({ isOpen, onClose }) {
                     </div>
 
                     {/* Center: transport + scrubber */}
-                    <div className="flex w-full flex-col items-center gap-2 lg:w-2/4 lg:max-w-[620px]">
+                    <div className="flex w-full min-w-0 flex-col items-center gap-2">
                         <div className="flex items-center gap-5 sm:gap-7">
                             <button
                                 type="button"
@@ -944,28 +944,21 @@ export default function NowPlayingView({ isOpen, onClose }) {
                             <span className="w-10 text-right font-mono text-[11px] text-on-surface-variant tabular-nums">
                                 {formatSeconds(currentTime)}
                             </span>
-                            <div className="group relative flex h-6 flex-1 items-center rounded-full focus-within:ring-2 focus-within:ring-primary-container/60">
-                                <input
-                                    type="range"
-                                    min={0}
-                                    max={safeDuration || 100}
-                                    step={0.1}
-                                    value={currentTime || 0}
-                                    onChange={(e) =>
-                                        seekTo(parseFloat(e.target.value))
-                                    }
-                                    aria-label="Seek"
-                                    className="absolute inset-0 z-20 h-full w-full cursor-pointer appearance-none bg-transparent opacity-0"
-                                />
-                                <div className="relative h-1.5 w-full rounded-full bg-chip transition-all duration-200 ease-out group-hover:h-2 motion-reduce:transition-none">
-                                    <div
-                                        className="absolute inset-y-0 left-0 rounded-full bg-primary-container"
-                                        style={{ width: `${progressPct}%` }}
-                                    >
-                                        <span className="absolute top-1/2 right-0 h-3.5 w-3.5 -translate-y-1/2 translate-x-1/2 rounded-full bg-primary-container shadow-[0_0_12px_var(--accent-glow)] transition-transform duration-200 ease-out group-hover:scale-125 motion-reduce:transition-none" />
-                                    </div>
-                                </div>
-                            </div>
+                            <input
+                                type="range"
+                                min={0}
+                                max={safeDuration || 100}
+                                step={0.1}
+                                value={currentTime || 0}
+                                onChange={(e) =>
+                                    seekTo(parseFloat(e.target.value))
+                                }
+                                aria-label="Seek"
+                                style={{
+                                    '--range-progress': progressPct / 100,
+                                }}
+                                className="player-range--custom focus-ring min-w-0 flex-1"
+                            />
                             <span className="w-10 font-mono text-[11px] text-on-surface-variant tabular-nums">
                                 {formatSeconds(duration)}
                             </span>
@@ -973,7 +966,7 @@ export default function NowPlayingView({ isOpen, onClose }) {
                     </div>
 
                     {/* Right: volume */}
-                    <div className="hidden items-center justify-end gap-3 lg:flex lg:w-1/4">
+                    <div className="hidden min-w-0 items-center justify-end gap-3 lg:flex">
                         <button
                             type="button"
                             onClick={() => setIsMuted(!isMuted)}
@@ -993,29 +986,20 @@ export default function NowPlayingView({ isOpen, onClose }) {
                                 />
                             )}
                         </button>
-                        <div className="group relative flex h-6 w-24 flex-shrink-0 items-center rounded-full focus-within:ring-2 focus-within:ring-primary-container/60">
-                            <input
-                                type="range"
-                                min={0}
-                                max={1}
-                                step={0.01}
-                                value={isMuted ? 0 : volume}
-                                onChange={(e) => {
-                                    if (isMuted) setIsMuted(false);
-                                    setVolume(parseFloat(e.target.value));
-                                }}
-                                aria-label="Volume"
-                                className="absolute inset-0 z-20 h-full w-full cursor-pointer appearance-none bg-transparent opacity-0"
-                            />
-                            <div className="relative h-1.5 w-full rounded-full bg-chip">
-                                <div
-                                    className="absolute inset-y-0 left-0 rounded-full bg-primary-container"
-                                    style={{ width: `${volumePct}%` }}
-                                >
-                                    <span className="absolute top-1/2 right-0 h-2.5 w-2.5 -translate-y-1/2 translate-x-1/2 rounded-full bg-primary-container shadow-[0_0_8px_var(--accent-glow)] transition-transform duration-200 ease-out group-hover:scale-125 motion-reduce:transition-none" />
-                                </div>
-                            </div>
-                        </div>
+                        <input
+                            type="range"
+                            min={0}
+                            max={1}
+                            step={0.01}
+                            value={isMuted ? 0 : volume}
+                            onChange={(e) => {
+                                if (isMuted) setIsMuted(false);
+                                setVolume(parseFloat(e.target.value));
+                            }}
+                            aria-label="Volume"
+                            style={{ '--range-progress': volumePct / 100 }}
+                            className="player-range--custom focus-ring w-24 flex-shrink-0"
+                        />
                         <span
                             className="flex items-center gap-1.5 rounded border border-line-strong/30 bg-overlay px-2.5 py-1 font-mono text-[11px] font-bold tracking-wider text-ink"
                             title="Lossless output"

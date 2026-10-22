@@ -229,7 +229,7 @@ export default function SongGrid({
                 </div>
             ) : (
                 <div
-                    className="spotirid-stagger grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4"
+                    className="spotirid-stagger player-carousel sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4"
                     key={`grid-${activeFilter}-${songs.length}`}
                 >
                     {songs.map((song, idx) => {

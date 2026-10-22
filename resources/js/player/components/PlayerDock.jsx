@@ -52,7 +52,7 @@ export default function PlayerDock({
     const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
     return (
-        <footer className="fixed right-0 bottom-0 left-0 z-50 flex h-18 items-center justify-between border-t border-line-strong/30 bg-chrome/95 px-3 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:h-22 md:px-6">
+        <footer className="player-glass fixed right-0 bottom-0 left-0 z-50 grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 border-t border-line-strong/30 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] md:min-h-22 md:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)_minmax(0,1fr)] md:gap-4 md:px-6 md:pb-3">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px">
                 <div className={`h-px w-full ${isPlaying ? 'dock-glow' : ''}`} style={{ background: 'linear-gradient(90deg, transparent, var(--accent-color), transparent)', boxShadow: isPlaying ? '0 0 24px var(--accent-glow)' : 'none' }} />
             </div>
@@ -67,16 +67,16 @@ export default function PlayerDock({
                     seekTo(pos * (duration || 0));
                 }}
             >
-                <div className="h-1 w-full bg-chip">
+                <div className="h-1 w-full overflow-hidden rounded-full bg-chip">
                     <div
-                        className="h-full bg-primary-container transition-[width] duration-200 ease-out motion-reduce:transition-none"
-                        style={{ width: `${progressPct}%` }}
+                        className="h-full w-full origin-left bg-primary-container transition-transform duration-150 ease-linear motion-reduce:transition-none"
+                        style={{ transform: `scaleX(${progressPct / 100})` }}
                     />
                 </div>
             </div>
 
             {/* Left Zone: Current Track Info */}
-            <div className="flex min-w-0 flex-1 items-center gap-2.5 md:w-1/4 md:min-w-[220px] md:flex-initial md:gap-4">
+            <div className="flex min-w-0 items-center gap-2.5 md:gap-4">
                 <button
                     type="button"
                     onClick={onOpenNowPlaying}
@@ -84,7 +84,7 @@ export default function PlayerDock({
                     aria-label="Open now playing view"
                     className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity duration-200 ease-out hover:opacity-75 motion-reduce:transition-none md:gap-4"
                 >
-                    <div className={`relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-md border border-line-strong/30 bg-chip md:h-14 md:w-14 ${isPlaying ? 'spinning-vinyl' : 'spinning-vinyl paused'}`}>
+                    <div className={`relative aspect-square h-11 w-11 flex-shrink-0 overflow-hidden rounded-md border border-line-strong/30 bg-chip md:h-14 md:w-14 ${isPlaying ? 'spinning-vinyl' : 'spinning-vinyl paused'}`}>
                         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                             <span className="absolute inset-0 rounded-full border border-white/5" />
                             <span className="absolute h-1/2 w-1/2 rounded-full border border-white/10" />
@@ -104,9 +104,9 @@ export default function PlayerDock({
                     </div>
 
                     <div className="flex min-w-0 flex-1 flex-col">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex min-w-0 items-center gap-1.5">
                             <span
-                                className={`truncate font-display text-xs font-semibold md:text-sm ${isPlaying ? 'text-primary-container' : 'text-ink-strong'}`}
+                                className={`min-w-0 truncate font-display text-xs font-semibold md:text-sm ${isPlaying ? 'text-primary-container' : 'text-ink-strong'}`}
                             >
                                 {currentSong.title}
                             </span>
@@ -114,12 +114,12 @@ export default function PlayerDock({
                                 LOSSLESS
                             </span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <span className="truncate text-[11px] text-on-surface-variant md:text-xs">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                            <span className="min-w-0 truncate text-[11px] text-on-surface-variant md:text-xs">
                                 {currentSong.artist}
                             </span>
                             {isPlaying && (
-                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/40 backdrop-blur-sm">
+                                <div className="flex flex-shrink-0 items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/40 backdrop-blur-sm">
                                     {[0, 1, 2, 3].map((i) => (
                                         <div
                                             key={i}
@@ -224,7 +224,7 @@ export default function PlayerDock({
             </div>
 
             {/* Desktop Center Zone: Transport Controls & Scrubber (>= md) */}
-            <div className="hidden w-2/4 max-w-xl flex-col items-center gap-1.5 md:flex">
+            <div className="hidden min-w-0 flex-col items-center gap-1.5 md:flex">
                 {/* Buttons */}
                 <div className="flex items-center gap-4">
                     <button
@@ -297,7 +297,7 @@ export default function PlayerDock({
                         {formatSeconds(currentTime)}
                     </span>
 
-                    <div className="group relative flex-1 py-2">
+                    <div className="flex-1">
                         <input
                             type="range"
                             min={0}
@@ -306,11 +306,7 @@ export default function PlayerDock({
                             value={currentTime || 0}
                             onChange={(e) => seekTo(parseFloat(e.target.value))}
                             aria-label="Seek within track"
-                            className="h-1 w-full cursor-pointer appearance-none rounded-lg bg-chip accent-primary-container focus-ring"
-                        />
-                        <div
-                            className="pointer-events-none absolute top-1/2 left-0 h-1 -translate-y-1/2 rounded-lg bg-primary-container transition-[height] duration-200 ease-out group-hover:h-1.5 motion-reduce:transition-none"
-                            style={{ width: `${progressPct}%` }}
+                            className="player-range focus-ring"
                         />
                     </div>
 
@@ -321,7 +317,7 @@ export default function PlayerDock({
             </div>
 
             {/* Desktop Right Zone: Lyrics, Queue, Volume (>= md) */}
-            <div className="hidden w-1/4 min-w-[200px] items-center justify-end gap-3 md:flex">
+            <div className="hidden min-w-0 items-center justify-end gap-3 md:flex">
                 {/* Lyrics Button */}
                 <button
                     type="button"
@@ -384,7 +380,7 @@ export default function PlayerDock({
                             setVolume(parseFloat(e.target.value));
                         }}
                         aria-label="Volume"
-                        className="h-1 w-20 cursor-pointer appearance-none rounded-lg bg-chip accent-primary-container focus-ring"
+                        className="player-range focus-ring w-20"
                     />
                 </div>
             </div>

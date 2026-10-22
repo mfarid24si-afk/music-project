@@ -77,7 +77,7 @@ export default function PlaylistModal({ song, isOpen, onClose }) {
                 </div>
 
                 {/* Existing Playlists */}
-                <div className="flex max-h-56 flex-col gap-1.5 overflow-y-auto pr-1">
+                <div className="player-scroll flex max-h-56 flex-col gap-1.5 overflow-y-auto pr-1">
                     {playlists.length === 0 ? (
                         <p className="py-6 text-center text-xs text-text-muted">
                             No playlists created yet.

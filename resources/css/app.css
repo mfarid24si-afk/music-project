@@ -185,6 +185,11 @@
        redefines the same names - that is the whole light mode. */
     --surface-canvas: #121316; /* page background */
     --surface-chrome: #0d0e11; /* sidebar + player dock */
+    /* Alpha variants of the chrome surface, used by the glass
+       panels so they stay translucent even where `color-mix()`
+       or `backdrop-filter` are unavailable. */
+    --glass-chrome: rgb(13 14 17 / 92%);
+    --glass-chrome-blur: rgb(13 14 17 / 62%);
     --surface-raised: #1b1b1f; /* cards, rows, panels */
     --surface-overlay: #1f1f23; /* modals, hovers, tooltips */
     --surface-inset: #121316; /* inputs, wells */
@@ -268,6 +273,8 @@ html.light {
     /* --- Semantic surfaces (light) ------------------------------ */
     --surface-canvas: var(--lm-page);
     --surface-chrome: var(--lm-page-alt);
+    --glass-chrome: rgb(234 236 241 / 92%);
+    --glass-chrome-blur: rgb(234 236 241 / 62%);
     --surface-raised: var(--lm-surface);
     --surface-overlay: var(--lm-surface);
     --surface-inset: var(--lm-page);
@@ -392,6 +399,208 @@ html.light .hover\:text-white:hover {
     }
 }
 
+/* ============================================================ */
+/* Player UI primitives                                        */
+/* ------------------------------------------------------------ */
+/* Composable blocks shared by the player surfaces: range       */
+/* inputs, glass panels, scroll wells and the phone carousel.  */
+/* They live in `@layer components` so plain Tailwind           */
+/* utilities can still override them from the markup.          */
+/* ============================================================ */
+
+@layer components {
+    /* --- Range inputs ---------------------------------------- */
+    /* Native path: `accent-color` tints the UA-drawn track    */
+    /* and thumb, so progress and volume are coloured without  */
+    /* a single line of extra markup.                          */
+    .player-range {
+        accent-color: var(--accent-color);
+        cursor: pointer;
+        height: 1rem;
+        width: 100%;
+    }
+
+    /* Custom path: the native chrome is stripped, so the      */
+    /* track is painted from `--range-progress` (0..1) and the  */
+    /* thumb is drawn with the vendor pseudo-elements - an     */
+    /* `input` element cannot host a child node for it.        */
+    .player-range--custom {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+        cursor: pointer;
+        height: 1.25rem;
+        width: 100%;
+    }
+
+    .player-range--custom::-webkit-slider-runnable-track {
+        background: linear-gradient(
+            to right,
+            var(--accent-color) 0 calc(var(--range-progress, 0) * 100%),
+            var(--surface-chip) calc(var(--range-progress, 0) * 100%) 100%
+        );
+        border-radius: 9999px;
+        height: 0.375rem;
+    }
+
+    .player-range--custom::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        background: var(--accent-color);
+        border: 0;
+        border-radius: 9999px;
+        box-shadow: 0 0 12px var(--accent-glow);
+        height: 0.875rem;
+        margin-top: -0.25rem;
+        transition: transform 150ms ease-out;
+        width: 0.875rem;
+    }
+
+    .player-range--custom::-moz-range-track {
+        background: var(--surface-chip);
+        border-radius: 9999px;
+        height: 0.375rem;
+    }
+
+    .player-range--custom::-moz-range-progress {
+        background: var(--accent-color);
+        border-radius: 9999px;
+        height: 0.375rem;
+    }
+
+    .player-range--custom::-moz-range-thumb {
+        background: var(--accent-color);
+        border: 0;
+        border-radius: 9999px;
+        box-shadow: 0 0 12px var(--accent-glow);
+        height: 0.875rem;
+        transition: transform 150ms ease-out;
+        width: 0.875rem;
+    }
+
+    .player-range--custom:hover::-webkit-slider-thumb {
+        transform: scale(1.15);
+    }
+
+    .player-range--custom:hover::-moz-range-thumb {
+        transform: scale(1.15);
+    }
+
+    /* --- Glass panel ----------------------------------------- */
+    /* `backdrop-filter` is still not universal, so the         */
+    /* semi-opaque fallback ships first and the blur is only    */
+    /* layered on top where the browser can actually do it.     */
+    .player-glass {
+        background-color: var(--glass-chrome);
+    }
+
+    @supports ((backdrop-filter: blur(1px)) or
+        (-webkit-backdrop-filter: blur(1px))) {
+        .player-glass {
+            background-color: var(--glass-chrome-blur);
+            backdrop-filter: blur(18px) saturate(140%);
+            -webkit-backdrop-filter: blur(18px) saturate(140%);
+        }
+    }
+
+    /* --- Scroll well ----------------------------------------- */
+    /* Keeps an inner scroller from chaining to the page, so    */
+    /* hitting the end of a song list does not rubber-band the  */
+    /* whole document on touch devices.                         */
+    .player-scroll {
+        overscroll-behavior: contain;
+    }
+
+    /* --- Snap carousel --------------------------------------- */
+    /* Horizontal rail for phones: every card snaps to the      */
+    /* start edge instead of settling between two cards.        */
+    .player-carousel {
+        display: flex;
+        gap: 0.75rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        overscroll-behavior-x: contain;
+        padding-bottom: 0.5rem;
+        scroll-behavior: smooth;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .player-carousel::-webkit-scrollbar {
+        display: none;
+    }
+
+    .player-carousel > * {
+        flex: 0 0 72%;
+        scroll-snap-align: start;
+    }
+
+    /* From `sm` up the rail becomes a regular responsive grid. */
+    @media (min-width: 40rem) {
+        .player-carousel {
+            display: grid;
+            gap: 1rem;
+            overflow: visible;
+            padding-bottom: 0;
+            scroll-snap-type: none;
+        }
+
+        .player-carousel > * {
+            flex-basis: auto;
+        }
+    }
+}
+
+@layer base {
+    /* Generic aliases so plain CSS can reach the palette        */
+    /* without knowing the theme specific token names.           */
+    :root {
+        --primary: var(--accent-color);
+        --bg: var(--surface-canvas);
+    }
+
+    /* The palette is authored dark and `html.light` re-declares */
+    /* the same tokens for the light theme. These rules keep the */
+    /* OS preference honest for the parts CSS owns - scrollbars, */
+    /* form controls and the UA canvas colour.                  */
+    .dark {
+        color-scheme: dark;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root:not(.light) {
+            color-scheme: dark;
+        }
+    }
+
+    /* Drops the 300ms tap delay on every control the player    */
+    /* renders. `manipulation` keeps pinch-zoom and scrolling    */
+    /* intact, so nothing else on the page is affected.          */
+    button,
+    [role='button'],
+    a[href],
+    summary,
+    label {
+        touch-action: manipulation;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .player-range--custom::-webkit-slider-thumb,
+    .player-range--custom::-moz-range-thumb {
+        transition: none;
+    }
+
+    .player-carousel {
+        scroll-behavior: auto;
+    }
+
+    html {
+        scroll-behavior: auto;
+    }
+}
+
 @keyframes spinVinyl {
     from {
         transform: rotate(0deg);
@@ -403,6 +612,7 @@ html.light .hover\:text-white:hover {
 
 .spinning-vinyl {
     animation: spinVinyl 14s linear infinite;
+    will-change: transform;
 }
 
 .spinning-vinyl.paused {

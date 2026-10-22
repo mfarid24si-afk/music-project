@@ -87,7 +87,7 @@ export default function QueueDrawer({ isOpen, onClose }) {
                 </div>
 
                 {/* Scrollable list */}
-                <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-5">
+                <div className="player-scroll flex flex-1 flex-col gap-6 overflow-y-auto p-5">
                     {/* Now Playing section */}
                     {currentSong && (
                         <div className="flex flex-col gap-2">

@@ -80,7 +80,7 @@ export default function LyricsDrawer({ isOpen, onClose }) {
                 {/* Content */}
                 <div
                     ref={scrollRef}
-                    className="flex flex-1 flex-col gap-4 overflow-y-auto p-6"
+                    className="player-scroll flex flex-1 flex-col gap-4 overflow-y-auto p-6"
                 >
                     {loading ? (
                         <div className="flex h-64 flex-col items-center justify-center gap-3 text-text-muted">
