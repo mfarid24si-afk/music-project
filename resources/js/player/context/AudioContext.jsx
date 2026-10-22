@@ -364,6 +364,8 @@ export function AudioProvider({ children }) {
                         fs: 0,
                         playsinline: 1,
                         rel: 0,
+                        enablejsapi: 1,
+                        origin: typeof window !== 'undefined' ? window.location.origin : '',
                     },
                     events: {
                         onReady: (event) => {
