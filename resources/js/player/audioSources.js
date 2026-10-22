@@ -15,9 +15,13 @@ export const DEFAULT_COVER =
     'data:image/svg+xml,' +
     encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">' +
-            '<rect width="200" height="200" fill="#282828"/>' +
-            '<text x="100" y="110" text-anchor="middle" fill="#727272" font-size="60">🎵</text>' +
-            '</svg>',
+            '<rect width="200" height="200" fill="#1e1f22"/>' +
+            '<g transform="translate(60, 60) scale(3.33)" fill="none" stroke="#727272" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M9 18V5l12-2v13"/>' +
+                '<circle cx="6" cy="18" r="3"/>' +
+                '<circle cx="18" cy="16" r="3"/>' +
+            '</g>' +
+        '</svg>',
     );
 
 export function extractYouTubeId(urlOrStr) {

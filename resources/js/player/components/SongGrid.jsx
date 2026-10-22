@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAudio } from '../context/AudioContext';
-import { LuHeart, LuListPlus, LuMusic, LuPause, LuPlay, LuPlus } from 'react-icons/lu';
+import { LuHeart, LuListPlus, LuMusic, LuPause, LuPlay, LuPlus, LuSparkles } from 'react-icons/lu';
 import { MagneticButton, useHoloTilt } from '../utils/magneticTilt.jsx';
 
 function HoloCard({ song, idx, isCurrent, isSongPlaying, isLiked, playSong, togglePlay, addToQueue, onOpenPlaylistModal, toggleFavorite }) {
@@ -177,9 +177,9 @@ export default function SongGrid({
     } = useAudio();
 
     const filterChips = [
-        { id: 'all', label: 'All Sessions' },
-        { id: 'favorites', label: 'Favorites' },
-        { id: 'lossless', label: 'Lossless Only' },
+        { id: 'all', label: 'All Sessions', Icon: LuMusic },
+        { id: 'favorites', label: 'Favorites', Icon: LuHeart },
+        { id: 'lossless', label: 'Lossless Only', Icon: LuSparkles },
         { id: 'Pop', label: 'Pop' },
         { id: 'Rock', label: 'Rock' },
     ];
@@ -199,22 +199,33 @@ export default function SongGrid({
 
                 {/* Filter Chips */}
                 <div className="flex flex-wrap items-center gap-2">
-                    {filterChips.map((chip) => (
-                        <MagneticButton
-                            key={chip.id}
-                            type="button"
-                            strength={4}
-                            onClick={() => setActiveFilter(chip.id)}
-                            aria-pressed={activeFilter === chip.id}
-                            className={`focus-ring rounded-full px-3.5 py-1.5 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
-                                activeFilter === chip.id
-                                    ? 'border border-primary-container bg-chip text-ink-strong shadow-[0_0_16px_var(--accent-glow)]'
-                                    : 'border border-line-strong/20 bg-raised text-on-surface-variant hover:bg-chip hover:text-ink-strong'
-                            }`}
-                        >
-                            {chip.label}
-                        </MagneticButton>
-                    ))}
+                    {filterChips.map((chip) => {
+                        const Icon = chip.Icon;
+                        const isFavorites =
+                            chip.id === 'favorites' && activeFilter === 'favorites';
+                        return (
+                            <MagneticButton
+                                key={chip.id}
+                                type="button"
+                                strength={4}
+                                onClick={() => setActiveFilter(chip.id)}
+                                aria-pressed={activeFilter === chip.id}
+                                className={`focus-ring inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                                    activeFilter === chip.id
+                                        ? 'border border-primary-container bg-chip text-ink-strong shadow-[0_0_16px_var(--accent-glow)]'
+                                        : 'border border-line-strong/20 bg-raised text-on-surface-variant hover:bg-chip hover:text-ink-strong'
+                                }`}
+                            >
+                                {Icon && (
+                                    <Icon
+                                        className={`h-3.5 w-3.5 ${isFavorites ? 'fill-current' : ''}`}
+                                        aria-hidden="true"
+                                    />
+                                )}
+                                <span>{chip.label}</span>
+                            </MagneticButton>
+                        );
+                    })}
                 </div>
             </div>
 

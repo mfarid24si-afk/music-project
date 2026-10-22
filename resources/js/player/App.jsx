@@ -14,7 +14,7 @@ import PlaylistModal from './components/PlaylistModal';
 import PlaylistView from './components/PlaylistView';
 import PlaylistIcon from './components/PlaylistIcon';
 import ToastContainer from './components/ToastContainer';
-import { LuMusic, LuPlay, LuSparkles } from 'react-icons/lu';
+import { LuClock, LuHeart, LuListMusic, LuMusic, LuPlay, LuSparkles } from 'react-icons/lu';
 import SettingsModal from './components/SettingsModal';
 import SuggestSongModal from './components/SuggestSongModal';
 import Preloader from './components/Preloader';
@@ -195,39 +195,40 @@ export default function App() {
                                             onClick={() =>
                                                 setLibraryTab('liked')
                                             }
-                                            className={`focus-ring rounded-full px-4 py-2 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                                            className={`focus-ring inline-flex items-center gap-1.5 rounded-full px-4 py-2 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
                                                 libraryTab === 'liked'
                                                     ? 'bg-primary-container font-bold text-on-primary-container shadow-[0_0_12px_var(--accent-glow)]'
                                                     : 'border border-line-strong/30 bg-raised text-on-surface-variant hover:text-ink-strong'
                                             }`}
                                         >
-                                            Liked Songs ({favorites.length})
+                                            <LuHeart className={`h-3.5 w-3.5 ${libraryTab === 'liked' ? 'fill-current' : ''}`} aria-hidden="true" />
+                                            <span>Liked Songs ({favorites.length})</span>
                                         </button>
                                         <button
                                             onClick={() =>
                                                 setLibraryTab('recent')
                                             }
-                                            className={`focus-ring rounded-full px-4 py-2 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                                            className={`focus-ring inline-flex items-center gap-1.5 rounded-full px-4 py-2 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
                                                 libraryTab === 'recent'
                                                     ? 'bg-primary-container font-bold text-on-primary-container shadow-[0_0_12px_var(--accent-glow)]'
                                                     : 'border border-line-strong/30 bg-raised text-on-surface-variant hover:text-ink-strong'
                                             }`}
                                         >
-                                            Recently Played (
-                                            {recentlyPlayed.length})
+                                            <LuClock className="h-3.5 w-3.5" aria-hidden="true" />
+                                            <span>Recently Played ({recentlyPlayed.length})</span>
                                         </button>
                                         <button
                                             onClick={() =>
                                                 setLibraryTab('playlists')
                                             }
-                                            className={`focus-ring rounded-full px-4 py-2 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                                            className={`focus-ring inline-flex items-center gap-1.5 rounded-full px-4 py-2 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
                                                 libraryTab === 'playlists'
                                                     ? 'bg-primary-container font-bold text-on-primary-container shadow-[0_0_12px_var(--accent-glow)]'
                                                     : 'border border-line-strong/30 bg-raised text-on-surface-variant hover:text-ink-strong'
                                             }`}
                                         >
-                                            Shared Playlists ({playlists.length}
-                                            )
+                                            <LuListMusic className="h-3.5 w-3.5" aria-hidden="true" />
+                                            <span>Shared Playlists ({playlists.length})</span>
                                         </button>
                                     </div>
                                 </div>

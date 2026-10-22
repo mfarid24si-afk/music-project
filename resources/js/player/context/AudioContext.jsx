@@ -692,7 +692,7 @@ export function AudioProvider({ children }) {
                     handlePrevSong();
                 } else {
                     seekTo(Math.max(0, audioRef.current.currentTime - 5));
-                    showToast('⏪ -5s', 'info');
+                    showToast('Mundur 5 detik (-5s)', 'info');
                 }
             } else if (e.code === 'ArrowRight') {
                 e.preventDefault();
@@ -705,26 +705,26 @@ export function AudioProvider({ children }) {
                             audioRef.current.currentTime + 5,
                         ),
                     );
-                    showToast('⏩ +5s', 'info');
+                    showToast('Maju 5 detik (+5s)', 'info');
                 }
             } else if (e.code === 'ArrowUp') {
                 e.preventDefault();
                 setVolume((v) => {
                     const nv = Math.min(1, Math.round((v + 0.05) * 100) / 100);
-                    showToast(`🔊 ${Math.round(nv * 100)}%`, 'info');
+                    showToast(`Volume: ${Math.round(nv * 100)}%`, 'info');
                     return nv;
                 });
             } else if (e.code === 'ArrowDown') {
                 e.preventDefault();
                 setVolume((v) => {
                     const nv = Math.max(0, Math.round((v - 0.05) * 100) / 100);
-                    showToast(`🔉 ${Math.round(nv * 100)}%`, 'info');
+                    showToast(`Volume: ${Math.round(nv * 100)}%`, 'info');
                     return nv;
                 });
             } else if (e.code === 'KeyM') {
                 e.preventDefault();
                 setIsMuted((m) => {
-                    showToast(!m ? '🔇 Muted' : '🔊 Unmuted', 'info');
+                    showToast(!m ? 'Audio dibisukan' : 'Audio diaktifkan', 'info');
                     return !m;
                 });
             } else if (e.code === 'KeyL') {
@@ -927,7 +927,7 @@ export function AudioProvider({ children }) {
 
     const toggleShuffle = () => {
         setIsShuffle((s) => {
-            showToast(!s ? '🔀 Shuffle: ON' : '➡️ Shuffle: OFF', 'info');
+            showToast(!s ? 'Acak lagu: Aktif' : 'Acak lagu: Nonaktif', 'info');
             return !s;
         });
     };
@@ -935,14 +935,14 @@ export function AudioProvider({ children }) {
     const cycleRepeat = () => {
         setRepeatMode((m) => {
             if (m === 'off') {
-                showToast('🔁 Repeat: ALL', 'info');
+                showToast('Ulangi: Semua lagu', 'info');
                 return 'all';
             }
             if (m === 'all') {
-                showToast('🔂 Repeat: ONE', 'info');
+                showToast('Ulangi: 1 lagu', 'info');
                 return 'one';
             }
-            showToast('➡️ Repeat: OFF', 'info');
+            showToast('Ulangi: Nonaktif', 'info');
             return 'off';
         });
     };
@@ -956,8 +956,8 @@ export function AudioProvider({ children }) {
             const s = songs.find((x) => x.id === songId);
             showToast(
                 exists
-                    ? `Unliked "${s?.title || 'Song'}"`
-                    : `❤️ Liked "${s?.title || 'Song'}"`,
+                    ? `Batal menyukai "${s?.title || 'Song'}"`
+                    : `Menyukai "${s?.title || 'Song'}"`,
                 exists ? 'info' : 'success',
             );
             return updated;
@@ -1021,7 +1021,7 @@ export function AudioProvider({ children }) {
         // Optimistic local update
         setPlaylists((prev) => [newPl, ...prev]);
         showToast(
-            `⏳ Pengajuan playlist "${trimmed}" berhasil dibuat! Menunggu persetujuan Admin sebelum dapat diputar.`,
+            `Pengajuan playlist "${trimmed}" berhasil dibuat! Menunggu persetujuan Admin sebelum dapat diputar.`,
             'info',
         );
 
@@ -1073,7 +1073,7 @@ export function AudioProvider({ children }) {
                 return p;
             }),
         );
-        showToast('✨ Playlist updated', 'success');
+        showToast('Playlist berhasil diperbarui', 'success');
 
         // Sync to centralized database if numeric ID or community playlist
         if (/^\d+$/.test(String(playlistId))) {
@@ -1093,7 +1093,7 @@ export function AudioProvider({ children }) {
                 if (p.id === playlistId) {
                     const nextPinned = !p.isPinned;
                     showToast(
-                        nextPinned ? '📌 Playlist pinned' : 'Unpinned playlist',
+                        nextPinned ? 'Playlist disematkan' : 'Sematkan playlist dilepas',
                         'info',
                     );
                     return { ...p, isPinned: nextPinned };
@@ -1106,7 +1106,7 @@ export function AudioProvider({ children }) {
     const deletePlaylist = (playlistId) => {
         const pl = playlists.find((p) => p.id === playlistId);
         setPlaylists((prev) => prev.filter((p) => p.id !== playlistId));
-        showToast(`🗑️ Deleted playlist "${pl?.name || ''}"`, 'info');
+        showToast(`Playlist "${pl?.name || ''}" dihapus`, 'info');
 
         if (/^\d+$/.test(String(playlistId))) {
             deleteCommunityPlaylistAPI(playlistId).catch(() => {});
@@ -1142,7 +1142,7 @@ export function AudioProvider({ children }) {
                 return p;
             }),
         );
-        showToast('🗑️ Removed song from playlist', 'info');
+        showToast('Lagu dihapus dari playlist', 'info');
 
         if (/^\d+$/.test(String(playlistId))) {
             togglePlaylistSongAPI(playlistId, songId).catch(() => {});
@@ -1154,13 +1154,13 @@ export function AudioProvider({ children }) {
         if (!pl) return;
         if (pl.status !== 'approved' && pl.isLocked !== false) {
             showToast(
-                '🔒 Playlist terkunci! Menunggu izin persetujuan dari Administrator sebelum dapat diputar.',
+                'Playlist terkunci! Menunggu izin persetujuan dari Administrator sebelum dapat diputar.',
                 'warning',
             );
             return;
         }
         if (pl.songs.length === 0) {
-            showToast('⚠️ Playlist is empty', 'info');
+            showToast('Playlist masih kosong', 'warning');
             return;
         }
         const plSongs = pl.songs
@@ -1168,7 +1168,7 @@ export function AudioProvider({ children }) {
             .filter(Boolean);
 
         if (plSongs.length === 0) {
-            showToast('⚠️ No available tracks found', 'info');
+            showToast('Tidak ada track yang tersedia', 'warning');
             return;
         }
 
@@ -1184,7 +1184,7 @@ export function AudioProvider({ children }) {
         setQueue(rest.map((s) => s.id));
         playSong(first);
         showToast(
-            `${shuffle ? '🔀 Shuffling' : '▶ Playing'} "${pl.name}"`,
+            `${shuffle ? 'Memutar acak' : 'Memutar'} "${pl.name}"`,
             'success',
         );
     };
@@ -1194,13 +1194,13 @@ export function AudioProvider({ children }) {
         if (!pl) return;
         if (pl.status !== 'approved' && pl.isLocked !== false) {
             showToast(
-                '🔒 Playlist terkunci! Menunggu izin persetujuan dari Administrator.',
+                'Playlist terkunci! Menunggu izin persetujuan dari Administrator.',
                 'warning',
             );
             return;
         }
         if (pl.songs.length === 0) {
-            showToast('⚠️ Playlist is empty', 'info');
+            showToast('Playlist masih kosong', 'warning');
             return;
         }
         setQueue((prev) => [...prev, ...pl.songs]);
@@ -1227,7 +1227,7 @@ export function AudioProvider({ children }) {
                 .filter((n) => !isNaN(n) && n > 0),
         });
         if (res.success) {
-            showToast('🌍 Playlist published for everyone to see!', 'success');
+            showToast('Playlist berhasil dipublikasikan untuk semua pengguna!', 'success');
             setPlaylists((prev) =>
                 prev.map((p) =>
                     p.id === playlistId ? { ...p, isCommunity: true } : p,

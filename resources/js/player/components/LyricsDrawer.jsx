@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useAudio } from '../context/AudioContext';
 import { useLyrics } from '../hooks/useLyrics';
 import { useDialogA11y } from '../hooks/useDialogA11y';
-import { LuMic, LuMusic2, LuX } from 'react-icons/lu';
+import { LuMic, LuMusic, LuMusic2, LuX } from 'react-icons/lu';
 export default function LyricsDrawer({ isOpen, onClose }) {
     const { currentSong, currentTime, seekTo } = useAudio();
     const {
@@ -108,7 +108,13 @@ export default function LyricsDrawer({ isOpen, onClose }) {
                                                 : 'text-ink-dim hover:bg-hover-surface hover:text-ink'
                                         }`}
                                     >
-                                        {line.text || '♪ ♪ ♪'}
+                                        {line.text || (
+                                            <span className="inline-flex items-center gap-1.5 opacity-60">
+                                                <LuMusic className="h-4 w-4" aria-hidden="true" />
+                                                <LuMusic className="h-3.5 w-3.5" aria-hidden="true" />
+                                                <LuMusic className="h-3 w-3" aria-hidden="true" />
+                                            </span>
+                                        )}
                                     </button>
                                 );
                             })}

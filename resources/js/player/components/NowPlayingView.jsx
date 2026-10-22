@@ -11,6 +11,7 @@ import {
     LuListMusic,
     LuMaximize,
     LuMicVocal,
+    LuMusic,
     LuMusic2,
     LuPause,
     LuPlay,
@@ -803,8 +804,12 @@ export default function NowPlayingView({ isOpen, onClose }) {
                                                                 : 'text-base font-semibold text-ink-secondary group-hover:text-ink'
                                                         }`}
                                                     >
-                                                        {line.text ||
-                                                            '♪ ♪ ♪'}
+                                                        {line.text || (
+                                                            <span className="inline-flex items-center gap-1.5 opacity-60">
+                                                                <LuMusic className="h-4 w-4" aria-hidden="true" />
+                                                                <LuMusic className="h-3.5 w-3.5" aria-hidden="true" />
+                                                            </span>
+                                                        )}
                                                     </span>
                                                 </button>
                                             );

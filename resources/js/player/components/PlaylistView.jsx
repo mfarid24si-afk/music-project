@@ -132,7 +132,7 @@ export default function PlaylistView({ playlistId, onBack }) {
     const requestPlaySong = (song) => {
         if (isLocked) {
             showToast(
-                '🔒 Playlist terkunci! Menunggu izin Administrator sebelum lagu dapat diputar.',
+                'Playlist terkunci! Menunggu persetujuan Administrator sebelum lagu dapat diputar.',
                 'warning',
             );
             return;
@@ -143,7 +143,7 @@ export default function PlaylistView({ playlistId, onBack }) {
     const requestPlayPlaylist = (shuffle) => {
         if (isLocked) {
             showToast(
-                '🔒 Playlist terkunci! Menunggu izin Administrator.',
+                'Playlist terkunci! Menunggu persetujuan Administrator.',
                 'warning',
             );
             return;
