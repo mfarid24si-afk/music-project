@@ -52,7 +52,7 @@ export default function PlayerDock({
     const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
     return (
-        <footer className="player-glass fixed right-0 bottom-0 left-0 z-50 grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 border-t border-line-strong/30 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] md:min-h-22 md:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)_minmax(0,1fr)] md:gap-4 md:px-6 md:pb-3">
+        <footer className="player-glass fixed right-0 bottom-[calc(var(--player-nav-h)+env(safe-area-inset-bottom))] left-0 z-50 grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 border-t border-line-strong/30 px-3 pt-2 pb-2 md:bottom-0 md:min-h-22 md:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)_minmax(0,1fr)] md:gap-4 md:px-6 md:pb-3">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px">
                 <div className={`h-px w-full ${isPlaying ? 'dock-glow' : ''}`} style={{ background: 'linear-gradient(90deg, transparent, var(--accent-color), transparent)', boxShadow: isPlaying ? '0 0 24px var(--accent-glow)' : 'none' }} />
             </div>
@@ -79,11 +79,29 @@ export default function PlayerDock({
             <div className="flex min-w-0 items-center gap-2.5 md:gap-4">
                 <button
                     type="button"
-                    onClick={onOpenNowPlaying}
-                    title="Open now playing view"
-                    aria-label="Open now playing view"
-                    className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity duration-200 ease-out hover:opacity-75 motion-reduce:transition-none md:gap-4"
-                >
+                onClick={onOpenNowPlaying}
+                title="Open now playing view"
+                aria-label="Open now playing view"
+                className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left transition-opacity duration-200 ease-out hover:opacity-75 motion-reduce:transition-none md:gap-4"
+                onPointerDown={(e) => {
+                    // Allow the click to fire while not blocking horizontal scroll
+                    if (e.pointerType === 'touch') {
+                        e.currentTarget.dataset.pd = String(e.clientY);
+                    }
+                }}
+                onTouchStart={(e) => {
+                    e.currentTarget.dataset.ts = String(e.touches[0].clientY);
+                }}
+                onTouchEnd={(e) => {
+                    const start = parseFloat(e.currentTarget.dataset.ts || '0');
+                    const end = e.changedTouches[0].clientY;
+                    if (start > 0 && end - start < -40) {
+                        onOpenNowPlaying();
+                    }
+                    delete e.currentTarget.dataset.ts;
+                }}
+            >
+
                     <div className={`relative aspect-square h-11 w-11 flex-shrink-0 overflow-hidden rounded-md border border-line-strong/30 bg-chip md:h-14 md:w-14 ${isPlaying ? 'spinning-vinyl' : 'spinning-vinyl paused'}`}>
                         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                             <span className="absolute inset-0 rounded-full border border-white/5" />
@@ -143,11 +161,11 @@ export default function PlayerDock({
                             : `Add ${currentSong.title} to liked songs`
                     }
                     aria-pressed={isLiked}
-                    className={`focus-ring flex-shrink-0 rounded-full p-1 transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                    className={`tap-target focus-ring flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         isLiked
                             ? 'text-primary-container'
                             : 'text-on-surface-variant hover:text-ink-strong'
-                    }`}
+                    } ${isLiked ? 'like-pop' : ''}`}
                 >
                     <LuHeart
                         className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`}
@@ -155,13 +173,12 @@ export default function PlayerDock({
                 </button>
             </div>
 
-            {/* Mobile Right Controls (< md) */}
             <div className="flex flex-shrink-0 items-center gap-0.5 sm:gap-1 md:hidden">
                 <button
                     type="button"
                     onClick={prevSong}
                     aria-label="Previous track"
-                    className="focus-ring p-2 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong active:scale-95 motion-reduce:transition-none"
+                    className="tap-target focus-ring flex h-11 w-11 items-center justify-center p-2 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong active:scale-95 motion-reduce:transition-none"
                 >
                     <LuSkipBack className="h-4 w-4 fill-current" />
                 </button>
@@ -171,7 +188,7 @@ export default function PlayerDock({
                     strength={8}
                     onClick={togglePlay}
                     aria-label={isPlaying ? 'Pause' : 'Play'}
-                    className="focus-ring flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_16px_var(--accent-glow)] transition-transform duration-200 ease-out active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100"
+                    className="tap-target focus-ring flex h-11 w-11 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_16px_var(--accent-glow)] transition-transform duration-200 ease-out active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100"
                 >
                     {isPlaying ? (
                         <LuPause className="h-4 w-4 fill-current" />
@@ -184,7 +201,7 @@ export default function PlayerDock({
                     type="button"
                     onClick={() => nextSong()}
                     aria-label="Next track"
-                    className="focus-ring p-2 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong motion-reduce:transition-none"
+                    className="tap-target focus-ring flex h-11 w-11 items-center justify-center p-2 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong motion-reduce:transition-none"
                 >
                     <LuSkipForward className="h-4 w-4 fill-current" />
                 </button>
@@ -194,7 +211,7 @@ export default function PlayerDock({
                     onClick={onToggleLyrics}
                     aria-label="Toggle lyrics"
                     aria-pressed={isLyricsOpen}
-                    className={`focus-ring rounded-lg p-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                    className={`tap-target focus-ring flex h-11 w-11 items-center justify-center rounded-lg p-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         isLyricsOpen
                             ? 'text-primary-container'
                             : 'text-on-surface-variant'
@@ -208,7 +225,7 @@ export default function PlayerDock({
                     onClick={onToggleQueue}
                     aria-label="Toggle queue"
                     aria-pressed={isQueueOpen}
-                    className={`focus-ring relative rounded-lg p-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                    className={`tap-target focus-ring relative flex h-11 w-11 items-center justify-center rounded-lg p-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         isQueueOpen
                             ? 'text-primary-container'
                             : 'text-on-surface-variant'
@@ -245,7 +262,7 @@ export default function PlayerDock({
                         type="button"
                         onClick={prevSong}
                         aria-label="Previous track"
-                        className={TRANSPORT_BUTTON}
+                        className="tap-target focus-ring rounded-full p-1.5 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong motion-reduce:transition-none"
                     >
                         <LuSkipBack className="h-5 w-5 fill-current" />
                     </button>
@@ -255,7 +272,7 @@ export default function PlayerDock({
                         strength={8}
                         onClick={togglePlay}
                         aria-label={isPlaying ? 'Pause' : 'Play'}
-                        className="focus-ring flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_16px_var(--accent-glow)] transition-transform duration-200 ease-out hover:scale-105 active:scale-90 motion-reduce:transition-none"
+                        className="tap-target focus-ring flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_16px_var(--accent-glow)] transition-transform duration-200 ease-out hover:scale-105 active:scale-90 motion-reduce:transition-none"
                     >
                     {isPlaying ? (
                         <LuPause className="h-4 w-4 fill-current" />
@@ -268,7 +285,7 @@ export default function PlayerDock({
                         type="button"
                         onClick={() => nextSong()}
                         aria-label="Next track"
-                        className={TRANSPORT_BUTTON}
+                        className="tap-target focus-ring rounded-full p-1.5 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong motion-reduce:transition-none"
                     >
                         <LuSkipForward className="h-5 w-5 fill-current" />
                     </button>
@@ -324,14 +341,14 @@ export default function PlayerDock({
                     onClick={onToggleLyrics}
                     aria-label="Toggle lyrics"
                     aria-pressed={isLyricsOpen}
-                    className={`focus-ring flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-xs font-medium transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                    className={`tap-target focus-ring flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         isLyricsOpen
                             ? 'bg-primary-container text-on-primary-container shadow-[0_0_12px_var(--accent-glow)]'
                             : 'border border-line-strong/30 bg-raised text-on-surface-variant hover:bg-chip hover:text-ink-strong'
                     }`}
                 >
                     <LuMic className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Lyrics</span>
+                    <span className="sr-only sm:not-sr-only">Lyrics</span>
                 </button>
 
                 {/* Queue Button */}
@@ -340,7 +357,7 @@ export default function PlayerDock({
                     onClick={onToggleQueue}
                     aria-label="Toggle queue"
                     aria-pressed={isQueueOpen}
-                    className={`focus-ring relative rounded-lg p-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                    className={`tap-target focus-ring relative flex h-11 w-11 items-center justify-center rounded-lg p-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         isQueueOpen
                             ? 'bg-chip text-primary-container'
                             : 'text-on-surface-variant hover:bg-raised hover:text-ink-strong'

@@ -11,6 +11,7 @@ const appName =
 declare global {
     interface Window {
         __spotiridShowBootError?: (detail?: string) => void;
+        __spotiridAppMounted?: boolean;
     }
 }
 
@@ -25,10 +26,18 @@ class BootErrorBoundary extends React.Component<
     }
 
     componentDidCatch(error: unknown) {
+        const msg =
+            error instanceof Error ? error.message : String(error);
+
+        // React DOM reconciliation errors (e.g. removeChild from
+        // double-root in dev HMR) are recovered by the boundary
+        // itself — never show the fatal boot-error overlay for them.
+        if (/removeChild|insertBefore|appendChild/.test(msg)) {
+            return;
+        }
+
         if (typeof window !== 'undefined' && window.__spotiridShowBootError) {
-            window.__spotiridShowBootError(
-                error instanceof Error ? error.message : String(error),
-            );
+            window.__spotiridShowBootError(msg);
         }
     }
 
@@ -40,30 +49,28 @@ class BootErrorBoundary extends React.Component<
     }
 }
 
-void createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
-    layout: (name) => {
-        if (name === 'welcome') {
-            return null;
-        }
-        return null;
-    },
-    strictMode: true,
-    withApp(app) {
-        return (
-            <BootErrorBoundary>
-                <TooltipProvider delayDuration={0}>
-                    {app}
-                    <Toaster />
-                </TooltipProvider>
-            </BootErrorBoundary>
-        );
-    },
-    progress: {
-        color: 'var(--accent-color)',
-        delay: 150,
-    },
-});
+if (!window.__spotiridAppMounted) {
+    window.__spotiridAppMounted = true;
+    void createInertiaApp({
+        title: (title) => (title ? `${title} - ${appName}` : appName),
+        layout: () => null,
+        strictMode: true,
+        withApp(app) {
+            return (
+                <BootErrorBoundary>
+                    <TooltipProvider delayDuration={0}>
+                        {app}
+                        <Toaster />
+                    </TooltipProvider>
+                </BootErrorBoundary>
+            );
+        },
+        progress: {
+            color: 'var(--accent-color)',
+            delay: 150,
+        },
+    });
+}
 
 // This will set light / dark mode on load...
 initializeTheme();

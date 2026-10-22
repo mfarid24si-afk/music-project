@@ -73,6 +73,35 @@ export default function NowPlayingView({ isOpen, onClose }) {
     const activeLineRef = useRef(null);
     const lyricsScrollRef = useRef(null);
     const dialogRef = useRef(null);
+    const [swipeY, setSwipeY] = useState(0);
+    const [swiping, setSwiping] = useState(false);
+    const swipeStartY = useRef(0);
+    const swipeActive = useRef(false);
+
+    function onSwipeStart(e) {
+        swipeStartY.current = e.touches ? e.touches[0].clientY : e.clientY;
+        swipeActive.current = true;
+        setSwiping(true);
+    }
+
+    function onSwipeMove(e) {
+        if (!swipeActive.current) return;
+        const y = e.touches ? e.touches[0].clientY : e.clientY;
+        const delta = y - swipeStartY.current;
+        if (delta < 0) return;
+        setSwipeY(delta);
+        if (e.cancelable) e.preventDefault();
+    }
+
+    function onSwipeEnd() {
+        if (!swipeActive.current) return;
+        swipeActive.current = false;
+        setSwiping(false);
+        if (swipeY > 120) {
+            onClose();
+        }
+        setSwipeY(0);
+    }
 
     // Reset the art fallback whenever the focused track changes.
     if (currentSong && artSongId !== currentSong.id) {
@@ -154,13 +183,24 @@ export default function NowPlayingView({ isOpen, onClose }) {
             role="dialog"
             aria-modal="true"
             aria-label={`Now playing: ${currentSong.title}`}
-            className="animate-fadeIn fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-canvas text-ink-strong"
+            className="animate-fadeIn player-font fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-canvas text-ink-strong"
+            onTouchStart={onSwipeStart}
+            onTouchMove={onSwipeMove}
+            onTouchEnd={onSwipeEnd}
+            style={{
+                transform: swipeY > 0 ? `translateY(${swipeY}px)` : 'translateY(0)',
+                transition: swiping ? 'none' : 'transform 320ms ease-out',
+            }}
         >
-            {/* Ambient backdrop glow + subtle matrix grid */}
+            {/* Dynamic background gradient driven by cover colour */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                <div className="absolute -top-32 left-1/4 h-[750px] w-[750px] rounded-full bg-primary-container/10 opacity-40 blur-[140px]" />
-                <div className="absolute top-1/3 -left-32 h-[600px] w-[600px] rounded-full bg-primary-container/10 opacity-30 blur-[160px]" />
-                <div className="absolute bottom-20 left-1/2 h-[450px] w-[850px] -translate-x-1/2 rounded-full bg-primary-container/10 opacity-50 blur-[150px]" />
+                <div
+                    className="absolute inset-0 player-cover-gradient transition-opacity duration-300"
+                    style={{ opacity: isPlaying ? 1 : 0.8 }}
+                />
+                <div className="absolute -top-32 left-1/4 h-[750px] w-[750px] rounded-full opacity-40 blur-[140px]" style={{ background: 'color-mix(in oklab, var(--cover-accent, var(--accent-color)) 22%, transparent)' }} />
+                <div className="absolute top-1/3 -left-32 h-[600px] w-[600px] rounded-full opacity-30 blur-[160px]" style={{ background: 'color-mix(in oklab, var(--cover-accent, var(--accent-color)) 18%, transparent)' }} />
+                <div className="absolute bottom-20 left-1/2 h-[450px] w-[850px] -translate-x-1/2 rounded-full opacity-50 blur-[150px]" style={{ background: 'color-mix(in oklab, var(--cover-accent, var(--accent-color)) 20%, transparent)' }} />
                 {isPlaying && (
                     <>
                         <div className="absolute top-1/2 left-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary-container/30 animate-[scaleUp_2200ms_ease-out_infinite]" />
@@ -299,7 +339,7 @@ export default function NowPlayingView({ isOpen, onClose }) {
                                         {/* Spinning disc */}
                                         <span
                                             aria-hidden="true"
-                                            className={`spinning-vinyl absolute inset-0 ${isPlaying ? '' : 'paused'}`}
+                                            className={`spinning-vinyl player-cover-shadow absolute inset-0 ${isPlaying ? '' : 'paused'}`}
                                         >
                                             {artFailed ? (
                                                 <span className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-chip to-canvas">
@@ -583,7 +623,7 @@ export default function NowPlayingView({ isOpen, onClose }) {
                                             isLiked
                                                 ? 'border-primary-container/30 bg-primary-container/15 text-primary-container'
                                                 : 'border-line-strong/30 bg-overlay/70 text-ink-secondary hover:bg-chip hover:text-ink'
-                                        }`}
+                                        } ${isLiked ? 'like-pop' : ''}`}
                                     >
                                         <LuHeart
                                             aria-hidden="true"
@@ -816,7 +856,7 @@ export default function NowPlayingView({ isOpen, onClose }) {
             </main>
 
             {/* Floating transport bar */}
-            <footer className="fixed right-0 bottom-4 left-0 z-20 mx-auto max-w-[1400px] px-4 sm:px-8">
+            <footer className="fixed right-0 bottom-4 left-0 z-20 mx-auto max-w-[1400px] px-4 sm:px-8 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
                 <div className="player-glass grid grid-cols-1 gap-3 rounded-2xl border border-line-strong/20 px-4 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.6)] sm:px-6 sm:py-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] lg:items-center lg:gap-6">
                     {/* Left: current track mini */}
                     <div className="hidden min-w-0 items-center gap-3 lg:flex">
@@ -862,17 +902,13 @@ export default function NowPlayingView({ isOpen, onClose }) {
                                         : 'text-ink-secondary hover:text-ink'
                                 }`}
                             >
-                                <LuShuffle
-                                    aria-hidden="true"
-                                    className="h-5 w-5"
-                                />
+                                <LuShuffle aria-hidden="true" className="h-5 w-5" />
                             </button>
 
                             <button
                                 type="button"
                                 onClick={prevSong}
                                 aria-label="Previous track"
-                                title="Previous track"
                                 className={`rounded-full p-2 text-ink transition-colors duration-200 ease-out hover:text-primary-container active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
                             >
                                 <LuSkipBack
@@ -885,27 +921,25 @@ export default function NowPlayingView({ isOpen, onClose }) {
                                 type="button"
                                 onClick={togglePlay}
                                 aria-label={isPlaying ? 'Pause' : 'Play'}
-                                title={isPlaying ? 'Pause' : 'Play'}
-                                className={`flex h-14 w-14 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_32px_var(--accent-glow)] transition-transform duration-200 ease-out hover:scale-105 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100 ${FOCUS_RING}`}
+                                className={`flex h-12 w-12 items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-[0_0_32px_var(--accent-glow)] transition-transform duration-200 ease-out hover:scale-105 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100 ${FOCUS_RING}`}
                             >
                                 {isPlaying ? (
                                     <LuPause
                                         aria-hidden="true"
-                                        className="h-7 w-7 fill-current"
+                                        className="h-6 w-6 fill-current"
                                     />
                                 ) : (
                                     <LuPlay
                                         aria-hidden="true"
-                                        className="ml-0.5 h-7 w-7 fill-current"
+                                        className="ml-0.5 h-6 w-6 fill-current"
                                     />
                                 )}
                             </button>
 
                             <button
                                 type="button"
-                                onClick={() => nextSong()}
+                                onClick={nextSong}
                                 aria-label="Next track"
-                                title="Next track"
                                 className={`rounded-full p-2 text-ink transition-colors duration-200 ease-out hover:text-primary-container active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
                             >
                                 <LuSkipForward
@@ -918,20 +952,20 @@ export default function NowPlayingView({ isOpen, onClose }) {
                                 type="button"
                                 onClick={cycleRepeat}
                                 aria-label={`Repeat: ${repeatMode}`}
-                                title={`Repeat: ${repeatMode}`}
-                                className={`rounded-full p-2 transition-colors duration-200 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING} ${
+                                aria-pressed={repeatMode !== 'off'}
+                                className={`rounded-full p-2 transition-colors duration-200 ease-out active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING} ${
                                     repeatMode !== 'off'
                                         ? 'text-primary-container'
                                         : 'text-ink-secondary hover:text-ink'
                                 }`}
                             >
-                                {repeatMode === 'off' ? (
-                                    <LuRepeat
+                                {repeatMode === 'one' ? (
+                                    <LuRepeat1
                                         aria-hidden="true"
                                         className="h-5 w-5"
                                     />
                                 ) : (
-                                    <LuRepeat1
+                                    <LuRepeat
                                         aria-hidden="true"
                                         className="h-5 w-5"
                                     />

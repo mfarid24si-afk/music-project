@@ -54,7 +54,7 @@ export default function QueueDrawer({ isOpen, onClose }) {
                 aria-modal="true"
                 aria-labelledby="queue-drawer-title"
                 tabIndex={-1}
-                className="animate-fadeSlideUp fixed top-0 right-0 z-50 flex h-screen w-full max-w-sm flex-col border-l border-line-strong/30 bg-raised shadow-2xl focus:outline-none"
+                className="animate-fadeSlideUp fixed top-0 right-0 z-50 flex h-dvh w-full max-w-sm flex-col border-l border-line-strong/30 bg-raised shadow-2xl focus:outline-none"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-line/60 p-5">

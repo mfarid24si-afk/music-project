@@ -23,6 +23,7 @@ import {
     extractYouTubeId,
     isDirectAudioSource,
 } from '../audioSources';
+import { applyCoverAccent, clearCoverAccent } from '../utils/coverColor';
 import { DEFAULT_PLAYLIST_ICON } from '../playlistHelpers';
 
 const AudioContext = createContext(null);
@@ -505,6 +506,24 @@ export function AudioProvider({ children }) {
             audio.removeEventListener('error', onError);
         };
     }, [currentSong, repeatMode, queue, songs, isShuffle, autoplay]);
+
+    // Update cover colour accent when the current song changes
+    useEffect(() => {
+        const imgUrl = currentSong?.img;
+        if (!imgUrl) {
+            clearCoverAccent();
+            return;
+        }
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = imgUrl;
+        img.onload = () => applyCoverAccent(img);
+        img.onerror = () => clearCoverAccent();
+        return () => {
+            img.onload = null;
+            img.onerror = null;
+        };
+    }, [currentSong?.img]);
 
     // Media Session API Sync (Desktop & Mobile Lockscreen Widget)
     useEffect(() => {

@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
         {{-- Inline script to detect theme preference and apply it immediately to avoid FOUC --}}
         <script>
@@ -67,7 +67,7 @@
                 padding: 24px;
                 background: #121316;
                 color: #f3f3f5;
-                font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+                font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
                 text-align: center;
             }
             #spotirid-boot-error.is-visible { display: flex; }
@@ -115,13 +115,14 @@
                     if (!el) {
                         el = document.createElement('div');
                         el.id = 'spotirid-boot-error';
-                        el.className = 'card';
+                        document.body.appendChild(el);
+                    }
+                    if (!el.querySelector('.card')) {
                         el.innerHTML =
                             '<div class="card"><h1>Spotirid gagal dimuat</h1>' +
                             '<p>Aplikasi tidak dapat dimulai di perangkat ini. Coba muat ulang halaman, atau periksa koneksi.</p>' +
                             '<pre></pre>' +
                             '<button type="button" onclick="location.reload()">Muat Ulang</button></div>';
-                        document.body.appendChild(el);
                     }
                     var pre = el.querySelector('pre');
                     if (pre) pre.textContent = detail || 'Unknown boot error.';
@@ -133,7 +134,11 @@
                     }
                 }, true);
                 window.addEventListener('unhandledrejection', function (e) {
-                    window.__spotiridShowBootError('Unhandled error: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+                    var msg = e.reason && e.reason.message ? e.reason.message : String(e.reason || '');
+                    // React internal errors (e.g. strict-mode removeChild) are
+                    // recovered by the BootErrorBoundary — not fatal boot failures.
+                    if (/removeChild|insertBefore|appendChild/.test(msg)) return;
+                    window.__spotiridShowBootError('Unhandled error: ' + msg);
                 });
                 setTimeout(function () {
                     if (!document.querySelector('#app, [data-page]')) {
@@ -146,6 +151,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet">
         @fonts
 

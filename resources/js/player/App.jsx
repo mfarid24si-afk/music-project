@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAudio } from './context/AudioContext';
 import Sidebar from './components/Sidebar';
+import BottomNav from './components/BottomNav';
 import TopNav from './components/TopNav';
 import HeroSpotlight from './components/HeroSpotlight';
 import SongGrid from './components/SongGrid';
@@ -108,7 +109,7 @@ export default function App() {
     return (
         <>
             {showPreloader && <Preloader onComplete={() => setShowPreloader(false)} />}
-            <div className="relative flex h-dvh w-full overflow-hidden bg-canvas text-ink-strong select-none">
+            <div className="player-font relative flex h-dvh w-full overflow-hidden bg-canvas text-ink-strong select-none">
                 <div
                     className="pointer-events-none absolute -top-40 left-1/4 h-[520px] w-[520px] rounded-full blur-[130px] transition-opacity duration-700"
                     style={{
@@ -159,7 +160,7 @@ export default function App() {
                     onOpenSuggestSong={() => setIsSuggestSongOpen(true)}
                 />
                 {/* Scrollable Stream */}
-                <main className="flex-1 overflow-y-auto px-4 pt-6 pb-36 md:px-8">
+                <main className="flex-1 overflow-y-auto px-4 pt-6 pb-52 md:px-8 lg:pb-36">
                     <div className="mx-auto flex max-w-7xl flex-col gap-8">
                         {/* View Routing */}
                         {currentView === 'playlist' && activePlaylistId ? (
@@ -393,6 +394,16 @@ export default function App() {
                     </div>
                 </main>
             </div>
+
+            {/* Mobile Bottom Navigation (below lg, where the rail is hidden) */}
+            <BottomNav
+                currentView={currentView}
+                setView={(v) => {
+                    setCurrentView(v);
+                    setSearchVal('');
+                }}
+                onOpenProfile={() => setIsSettingsOpen(true)}
+            />
 
             {/* Persistent Bottom Player Dock */}
             <PlayerDock
