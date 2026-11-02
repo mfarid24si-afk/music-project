@@ -4,6 +4,39 @@ import { LuExternalLink, LuHeart, LuListMusic, LuMic, LuMusic2, LuPause, LuPlay,
 import { formatSeconds } from '../format';
 import { MagneticButton } from '../utils/magneticTilt.jsx';
 
+// Real-time equalizer visualizer using Web Audio Analyser
+function VisualizerBars({ audioRef }) {
+    const [heights, setHeights] = React.useState([10, 10, 10, 10]);
+    React.useEffect(() => {
+        let frameId;
+        const tick = () => {
+            const analyser = audioRef?.current?.__analyser;
+            if (analyser && analyser.frequencyBinCount) {
+                const data = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(data);
+                const bins = [0, 1, 2, 3].map((i) => {
+                    const idx = Math.floor(i * (data.length / 4));
+                    return Math.max(8, Math.min(32, (data[idx] / 255) * 32));
+                });
+                setHeights(bins);
+            }
+            frameId = requestAnimationFrame(tick);
+        };
+        frameId = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(frameId);
+    }, [audioRef]);
+    return (
+        <div className="flex flex-shrink-0 items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/40 backdrop-blur-sm">
+            {heights.map((h, i) => (
+                <div
+                    key={i}
+                    className="eq-bar"
+                    style={{ height: `${h}px`, animationDelay: `${i * 60}ms` }}
+                />
+            ))}
+        </div>
+    );
+}
 
 const TRANSPORT_BUTTON =
     'focus-ring rounded-full p-1.5 text-on-surface-variant transition-colors duration-200 ease-out hover:text-ink-strong motion-reduce:transition-none';
@@ -19,6 +52,7 @@ export default function PlayerDock({
         currentSong,
         isPlaying,
         currentTime,
+        audioRef,
         duration,
         volume,
         setVolume,
@@ -136,17 +170,7 @@ export default function PlayerDock({
                             <span className="min-w-0 truncate text-[11px] text-on-surface-variant md:text-xs">
                                 {currentSong.artist}
                             </span>
-                            {isPlaying && (
-                                <div className="flex flex-shrink-0 items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/40 backdrop-blur-sm">
-                                    {[0, 1, 2, 3].map((i) => (
-                                        <div
-                                            key={i}
-                                            className="eq-bar"
-                                            style={{ animationDelay: `${i * 70}ms` }}
-                                        />
-                                    ))}
-                                </div>
-                            )}
+                            {isPlaying && <VisualizerBars audioRef={audioRef} />}
                         </div>
                     </div>
                 </button>

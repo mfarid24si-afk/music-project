@@ -228,6 +228,10 @@ export default function NowPlayingView({ isOpen, onClose }) {
                     className="absolute inset-0"
                     style={GRID_BACKDROP_STYLE}
                 />
+                <div
+                    aria-hidden="true"
+                    className="player-grain absolute inset-0 opacity-[0.04]"
+                />
             </div>
 
             <main className="relative z-10 mx-auto flex w-full max-w-[1720px] flex-col px-4 pt-6 pb-44 md:px-8 lg:px-12 lg:pt-8 lg:pb-40">
@@ -582,7 +586,7 @@ export default function NowPlayingView({ isOpen, onClose }) {
                                             </span>
                                         )}
                                     </div>
-                                    <h1 className="truncate font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+                                    <h1 className="truncate font-classic text-[1.9rem] leading-[1.1] font-semibold tracking-tight text-ink sm:text-[2.4rem]">
                                         {currentSong.title}
                                     </h1>
                                     <p className="mt-0.5 flex flex-wrap items-center gap-2 text-sm font-semibold text-ink-secondary">

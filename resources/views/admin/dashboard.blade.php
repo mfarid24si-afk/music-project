@@ -137,10 +137,10 @@
     @keyframes adminAurora { 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(60px,-40px) scale(1.08); } }
     html.light .admin-atmosphere { opacity: 0.12; }
     :root {
-      --bg-primary: #0d0e11;
-      --bg-surface: #17181c;
-      --bg-elevated: #202227;
-      --border-subtle: rgba(255, 255, 255, 0.08);
+      --bg-primary: #090a0d;
+      --bg-surface: #111216;
+      --bg-elevated: #18191f;
+      --border-subtle: rgba(255, 255, 255, 0.07);
       --border-accent: rgba(204, 242, 40, 0.35);
       --accent: #ccf228;
       --accent-hover: #dbfa43;
@@ -151,8 +151,8 @@
       --success-bg: rgba(34, 197, 94, 0.12);
       --warning: #f59e0b;
       --warning-bg: rgba(245, 158, 11, 0.12);
-      --text-main: #f3f3f5;
-      --text-muted: #9a9ca6;
+      --text-main: #f8f9fa;
+      --text-muted: #9496a1;
       --font-body: 'Hanken Grotesk', -apple-system, sans-serif;
       --font-mono: 'Space Grotesk', monospace;
     }
@@ -361,10 +361,9 @@
     .icon-sm { width: 13px; height: 13px; }
     .icon-lg { width: 20px; height: 20px; }
     .admin-header {
-      background: rgba(23, 24, 28, 0.95);
-      backdrop-filter: blur(12px);
+      background: rgba(9, 10, 13, 0.94);
+      backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-subtle);
-      position: sticky;
       top: 0;
       z-index: 50;
       padding: 0 24px;

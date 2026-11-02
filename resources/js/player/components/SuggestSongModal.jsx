@@ -441,8 +441,9 @@ export default function SuggestSongModal({ isOpen, onClose }) {
                                 <div className="flex flex-col gap-2 rounded-xl border border-line-strong/30 bg-canvas p-2.5">
                                     {isPlayingYtPreview ? (
                                         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+                                            {/* Menambahkan parameter origin untuk keamanan postMessage & mencegah error origin mismatch */}
                                             <iframe
-                                                src={`https://www.youtube-nocookie.com/embed/${currentYtId}?autoplay=1&controls=1&modestbranding=1`}
+                                                src={`https://www.youtube-nocookie.com/embed/${currentYtId}?autoplay=1&controls=1&modestbranding=1&origin=${typeof window !== 'undefined' ? encodeURIComponent(window.location.origin) : ''}`}
                                                 title="YouTube Test Player"
                                                 className="h-full w-full border-0"
                                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

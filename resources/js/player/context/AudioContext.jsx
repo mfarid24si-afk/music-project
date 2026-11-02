@@ -124,6 +124,22 @@ export function AudioProvider({ children }) {
             if (!audio.parentNode) {
                 document.body.appendChild(audio);
             }
+            // Equalizer Visualizer setup
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    const ctx = new AudioCtx();
+                    const analyser = ctx.createAnalyser();
+                    analyser.fftSize = 256;
+                    analyser.smoothingTimeConstant = 0.8;
+                    const source = ctx.createMediaElementSource(audio);
+                    source.connect(analyser);
+                    analyser.connect(ctx.destination);
+                    audioRef.current.__analyser = analyser;
+                }
+            } catch (e) {
+                // Visualizer optional; ignore on browsers that block it.
+            }
         }
         return () => {
             if (audio && audio.parentNode) {
@@ -315,6 +331,28 @@ export function AudioProvider({ children }) {
         };
     }, []);
 
+    // Cross-Device Sync via BroadcastChannel
+    useEffect(() => {
+        try {
+            const bc = new BroadcastChannel('spotirid-sync');
+            bc.onmessage = (e) => {
+                if (!e.data) return;
+                if (e.data.type === 'favorites' && Array.isArray(e.data.value)) {
+                    setFavorites(e.data.value);
+                }
+                if (e.data.type === 'playlists' && Array.isArray(e.data.value)) {
+                    setPlaylists(e.data.value);
+                }
+                if (e.data.type === 'queue' && Array.isArray(e.data.value)) {
+                    setQueue(e.data.value);
+                }
+            };
+            return () => bc.close();
+        } catch (e) {
+            // BroadcastChannel not supported; ignore gracefully.
+        }
+    }, []);
+
     // Save state to localStorage
     useEffect(() => {
         localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites));
@@ -333,10 +371,28 @@ export function AudioProvider({ children }) {
         if (audioRef.current) {
             audioRef.current.volume = isMuted ? 0 : volume;
         }
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.setVolume === 'function') {
+            try {
+                ytPlayerRef.current.setVolume(isMuted ? 0 : volume * 100);
+            } catch (e) {}
+        }
     }, [volume, isMuted]);
 
-    // YouTube Iframe Player Background Bridge
-    useEffect(() => {
+    // Sinkronisasi state ke ref agar event callback YouTube selalu memakai nilai terbaru tanpa stale closure
+    const repeatModeRef = useRef(repeatMode);
+    repeatModeRef.current = repeatMode;
+    const autoplayRef = useRef(autoplay);
+    autoplayRef.current = autoplay;
+    const volumeRef = useRef(volume);
+    volumeRef.current = volume;
+    const isMutedRef = useRef(isMuted);
+    isMutedRef.current = isMuted;
+    const handleNextSongRef = useRef(null);
+
+    // YouTube Iframe Player Dynamic Lazy Bridge
+    // Objek YT.Player diinisialisasi secara dinamis hanya saat lagu YouTube pertama kali diputar dengan videoId yang valid.
+    // Menghindari error postMessage origin mismatch karena videoId kosong dan memastikan host mengarah ke https://www.youtube.com
+    const initYTPlayer = (initialVideoId = '') => {
         if (typeof window === 'undefined') return;
 
         let ytContainer = document.getElementById('spotirid-yt-container');
@@ -348,7 +404,7 @@ export function AudioProvider({ children }) {
             document.body.appendChild(ytContainer);
         }
 
-        function initYTPlayer() {
+        const createPlayer = () => {
             if (!window.YT || !window.YT.Player) return;
             if (ytPlayerRef.current) return;
 
@@ -356,7 +412,8 @@ export function AudioProvider({ children }) {
                 ytPlayerRef.current = new window.YT.Player('spotirid-yt-container', {
                     height: '1',
                     width: '1',
-                    videoId: '',
+                    host: 'https://www.youtube.com', // Origin target resmi YouTube
+                    videoId: initialVideoId || '',
                     playerVars: {
                         autoplay: 1,
                         controls: 0,
@@ -366,12 +423,17 @@ export function AudioProvider({ children }) {
                         rel: 0,
                         enablejsapi: 1,
                         origin: typeof window !== 'undefined' ? window.location.origin : '',
+                        host: 'https://www.youtube.com',
                     },
                     events: {
                         onReady: (event) => {
                             ytIframeReadyRef.current = true;
                             try {
-                                event.target.setVolume(isMuted ? 0 : volume * 100);
+                                event.target.setVolume(isMutedRef.current ? 0 : volumeRef.current * 100);
+                                if (initialVideoId) {
+                                    event.target.playVideo();
+                                    setIsPlaying(true);
+                                }
                             } catch (e) {}
                         },
                         onStateChange: (event) => {
@@ -381,11 +443,11 @@ export function AudioProvider({ children }) {
                                 setIsPlaying(false);
                             } else if (event.data === 0) {
                                 setIsPlaying(false);
-                                if (repeatMode === 'one') {
+                                if (repeatModeRef.current === 'one') {
                                     event.target.seekTo(0, true);
                                     event.target.playVideo();
-                                } else if (autoplay) {
-                                    handleNextSong(true);
+                                } else if (autoplayRef.current && typeof handleNextSongRef.current === 'function') {
+                                    handleNextSongRef.current(true);
                                 }
                             }
                         },
@@ -398,10 +460,10 @@ export function AudioProvider({ children }) {
             } catch (err) {
                 console.warn('YouTube Player init error:', err);
             }
-        }
+        };
 
         if (window.YT && window.YT.Player) {
-            initYTPlayer();
+            createPlayer();
         } else {
             const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
             if (!existingScript) {
@@ -418,14 +480,16 @@ export function AudioProvider({ children }) {
             const prevOnReady = window.onYouTubeIframeAPIReady;
             window.onYouTubeIframeAPIReady = () => {
                 if (typeof prevOnReady === 'function') prevOnReady();
-                initYTPlayer();
+                createPlayer();
             };
         }
+    };
 
+    useEffect(() => {
         return () => {
             clearInterval(ytIntervalRef.current);
         };
-    }, [repeatMode, autoplay]);
+    }, []);
 
     // YouTube Playback Time Tracker
     useEffect(() => {
@@ -773,6 +837,9 @@ export function AudioProvider({ children }) {
                     } catch (e) {
                         console.warn('YT loadVideoById error:', e);
                     }
+                } else if (!player) {
+                    // Inisialisasi dinamis YT.Player pertama kali dengan ID video yang valid
+                    initYTPlayer(ytId);
                 } else {
                     setTimeout(playYT, 300);
                 }
@@ -829,6 +896,8 @@ export function AudioProvider({ children }) {
                     player.playVideo();
                     setIsPlaying(true);
                 }
+            } else if (!player && currentSong) {
+                playSong(currentSong);
             }
             return;
         }
@@ -849,6 +918,22 @@ export function AudioProvider({ children }) {
             setQueue((prev) => prev.slice(1));
             if (nextSongInQueue) {
                 playSong(nextSongInQueue);
+                return;
+            }
+        }
+
+        // Smart Autoplay Queue: saat autoplay aktif dan antrean kosong,
+        // isi dari recently-played / favorites agar alur tetap hidup.
+        if (autoplay && fromAutoEnd && queue.length === 0 && recentlyPlayed.length > 0) {
+            const smartIds = recentlyPlayed
+                .filter((id) => id !== currentSong?.id)
+                .slice(0, 5);
+            const smartSongs = smartIds
+                .map((id) => songs.find((s) => s.id === id))
+                .filter(Boolean);
+            if (smartSongs.length > 0) {
+                setQueue(smartSongs.map((s) => s.id));
+                playSong(smartSongs[0]);
                 return;
             }
         }
@@ -875,6 +960,7 @@ export function AudioProvider({ children }) {
         playSong(songs[nextIdx]);
     };
 
+    handleNextSongRef.current = handleNextSong;
     const handlePrevSong = () => {
         if (isYouTubeTrackRef.current) {
             const player = ytPlayerRef.current;
@@ -1292,6 +1378,7 @@ export function AudioProvider({ children }) {
                 setProfileName,
                 autoplay,
                 setAutoplay,
+                audioRef,
                 keepAwake,
                 setKeepAwake,
                 DEFAULT_COVER,

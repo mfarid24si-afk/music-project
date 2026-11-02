@@ -14,6 +14,11 @@
         'Noto Color Emoji';
     --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
     --font-body: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+    /* Editorial voice: a warm, high-contrast serif for the titular
+       moments (song titles, page headings). Paired with the modern
+       sans UI, this is what makes the player read as classic-meets-
+       modern instead of another neon dark app. */
+    --font-classic: 'Fraunces', 'Iowan Old Style', 'Georgia', serif;
 
     --color-primary-container: var(--accent-color, #ccf228);
     --color-on-primary-container: var(--on-accent-color, #2a3400);
@@ -183,23 +188,22 @@
     /* Every value below mirrors the hex it replaces, so the dark
        theme is unchanged by the migration. `html.light` below
        redefines the same names - that is the whole light mode. */
-    --surface-canvas: #121316; /* page background */
-    --surface-chrome: #0d0e11; /* sidebar + player dock */
+    --surface-canvas: #090a0d; /* page background - deep obsidian */
+    --surface-chrome: #050608; /* sidebar + player dock */
     /* Alpha variants of the chrome surface, used by the glass
        panels so they stay translucent even where `color-mix()`
        or `backdrop-filter` are unavailable. */
-    --glass-chrome: rgb(13 14 17 / 92%);
-    --glass-chrome-blur: rgb(13 14 17 / 62%);
-    --surface-raised: #1b1b1f; /* cards, rows, panels */
-    --surface-overlay: #1f1f23; /* modals, hovers, tooltips */
-    --surface-inset: #121316; /* inputs, wells */
-    --surface-chip: #292a2d; /* chips, close buttons, inactive avatar */
-    --surface-hover: #1f1f23; /* hover state */
+    --glass-chrome: rgb(5 6 8 / 94%);
+    --glass-chrome-blur: rgb(5 6 8 / 72%);
+    --surface-raised: #111216; /* cards, rows, panels */
+    --surface-overlay: #18191f; /* modals, hovers, tooltips */
+    --surface-inset: #090a0d; /* inputs, wells */
+    --surface-chip: #1e2026; /* chips, close buttons, inactive avatar */
+    --surface-hover: #17181e; /* hover state */
 
     /* --- Semantic lines ---------------------------------------- */
-    --surface-line: #343538; /* dividers, subtle borders */
-    --surface-line-strong: #454934; /* default borders */
-
+    --surface-line: rgba(255, 255, 255, 0.07); /* dividers, subtle borders */
+    --surface-line-strong: rgba(255, 255, 255, 0.14); /* default borders */
     /* --- Semantic text ----------------------------------------- */
     --text-primary: #ffffff;
     --text-secondary: #c5c9ad;
@@ -590,6 +594,15 @@ html.light .hover\:text-white:hover {
             ),
             transparent 64%
         );
+    }
+
+    /* --- Analog grain ----------------------------------------- */
+    /* A faint film-grain layer over the canvas. Static (no motion),
+       purely texture: it warms the flat dark surfaces so the player
+       reads like a lit room rather than an LED panel. */
+    .player-grain {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        background-size: 160px 160px;
     }
 }
 

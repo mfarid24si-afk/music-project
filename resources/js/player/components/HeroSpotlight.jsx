@@ -37,6 +37,10 @@ export default function HeroSpotlight({ onOpenLyrics }) {
             onMouseMove={onMouseMove}
             onMouseLeave={onMouseLeave}
         >
+            <div
+                aria-hidden="true"
+                className="player-grain pointer-events-none absolute inset-0 opacity-[0.04]"
+            />
             <div className="pointer-events-none absolute inset-0">
                 <div
                     className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -101,7 +105,7 @@ export default function HeroSpotlight({ onOpenLyrics }) {
                         </span>
                     </div>
 
-                    <h3 className="font-display text-2xl leading-tight font-extrabold tracking-tight text-ink-strong md:text-3xl lg:text-4xl">
+                    <h3 className="font-classic text-[1.9rem] leading-[1.05] font-semibold tracking-tight text-ink-strong md:text-3xl lg:text-[2.6rem]">
                         {currentSong.title}
                     </h3>
 

@@ -124,7 +124,7 @@ export default function LyricsDrawer({ isOpen, onClose }) {
                             {lyricsData.plainLyrics}
                         </div>
                     ) : (
-                        <div className="flex h-64 flex-col items-center justify-center gap-2 text-center text-text-muted">
+                        <div className="flex h-64 flex-col items-center justify-center gap-3 text-center text-text-muted">
                             <LuMusic2 className="h-10 w-10 opacity-30" aria-hidden="true" />
                             <p className="text-sm font-semibold text-ink">
                                 No synchronized lyrics available
@@ -132,6 +132,9 @@ export default function LyricsDrawer({ isOpen, onClose }) {
                             <p className="max-w-xs text-xs text-on-surface-variant">
                                 Lyrics could not be found for this track. You
                                 can still enjoy the lossless audio playback.
+                                <span className="mt-2 block rounded bg-chip px-2.5 py-1 font-mono text-[11px] font-bold tracking-wider text-primary-container">
+                                    AI Lyrics Fallback · Coming Soon
+                                </span>
                             </p>
                         </div>
                     )}

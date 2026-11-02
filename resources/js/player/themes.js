@@ -5,4 +5,5 @@ export const THEMES = [
     { id: 'cyberpunk', color: '#ec4899', name: 'Hot Pink' },
     { id: 'sunset', color: '#f97316', name: 'Safety Amber' },
     { id: 'ocean', color: '#06b6d4', name: 'Cyan Laser' },
+    { id: 'vinyl', color: '#d4a843', name: 'Vinyl Cream' },
 ];

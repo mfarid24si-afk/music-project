@@ -176,7 +176,7 @@ export default function App() {
                             <div className="flex flex-col gap-6">
                                 <div className="flex flex-col justify-between gap-4 border-b border-line-strong/20 pb-5 sm:flex-row sm:items-center">
                                     <div>
-                                        <h2 className="font-display text-2xl font-bold text-ink-strong md:text-3xl">
+                                        <h2 className="font-classic text-[1.65rem] leading-tight font-semibold tracking-tight text-ink-strong md:text-[2rem]">
                                             Your Library
                                         </h2>
                                         <p className="mt-1 font-mono text-xs text-on-surface-variant">
@@ -317,7 +317,7 @@ export default function App() {
                             /* Search View */
                             <div className="flex flex-col gap-6">
                                 <div className="border-b border-line-strong/20 pb-5">
-                                    <h2 className="font-display text-2xl font-bold text-ink-strong md:text-3xl">
+                                    <h2 className="font-classic text-[1.65rem] leading-tight font-semibold tracking-tight text-ink-strong md:text-[2rem]">
                                         {searchVal
                                             ? `Search Results for "${searchVal}"`
                                             : 'Browse & Search'}
@@ -356,7 +356,7 @@ export default function App() {
                                             HIGH RESOLUTION MASTER &bull; 24-BIT
                                             / 96KHZ
                                         </div>
-                                        <h2 className="font-display text-2xl font-bold tracking-tight text-ink-strong md:text-3xl">
+                                        <h2 className="font-classic text-[1.9rem] leading-[1.1] font-semibold tracking-tight text-ink-strong md:text-[2.4rem]">
                                             Welcome back,{' '}
                                             {profileName || 'Listener'}
                                         </h2>

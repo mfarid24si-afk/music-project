@@ -14,14 +14,14 @@ export const THEMES = [
 ];
 
 export const THEME = {
-    bg: '#0d0e11',
-    surface: '#17181c',
-    elevated: '#202227',
+    bg: '#090a0d',
+    surface: '#111216',
+    elevated: '#18191f',
     accent: '#ccf228',
-    accentGlow: 'rgba(204, 242, 40, 0.25)',
+    accentGlow: 'rgba(204, 242, 40, 0.22)',
     textMain: '#ffffff',
-    textMuted: '#9a9ca6',
-    border: 'rgba(255, 255, 255, 0.08)',
+    textMuted: '#9496a1',
+    border: 'rgba(255, 255, 255, 0.07)',
     borderAccent: 'rgba(204, 242, 40, 0.35)',
     danger: '#ef4444',
 };
