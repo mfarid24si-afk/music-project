@@ -2,6 +2,7 @@ import React from 'react';
 import { useAudio } from '../context/AudioContext';
 import { LuDisc3, LuHeart, LuMic, LuPause, LuPlay } from 'react-icons/lu';
 import { MagneticButton, useHoloTilt } from '../utils/magneticTilt.jsx';
+import { AuroraText, useBeamBorder } from './effects';
 
 
 export default function HeroSpotlight({ onOpenLyrics }) {
@@ -25,16 +26,20 @@ export default function HeroSpotlight({ onOpenLyrics }) {
             : `TRACK 01 OF 0${songs.length || 1} IN ROTATION`;
 
     const { vars, onMouseMove, onMouseLeave } = useHoloTilt(7, 7, -4);
+    const beam = useBeamBorder();
 
     return (
         <section
-            className="group relative flex flex-col items-center gap-6 overflow-hidden rounded-2xl border border-line-strong/30 bg-raised p-4 shadow-xl sm:p-6 md:gap-8 md:p-8 lg:flex-row"
+            className="group beam-border relative flex flex-col items-center gap-6 overflow-hidden rounded-2xl border border-line-strong/30 bg-raised p-4 shadow-xl sm:p-6 md:gap-8 md:p-8 lg:flex-row"
             style={{
                 ...vars,
                 transform: 'perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(var(--ty,0px))',
                 willChange: 'transform',
             }}
-            onMouseMove={onMouseMove}
+            onMouseMove={(e) => {
+                onMouseMove(e);
+                beam.onMouseMove(e);
+            }}
             onMouseLeave={onMouseLeave}
         >
             <div
@@ -105,8 +110,8 @@ export default function HeroSpotlight({ onOpenLyrics }) {
                         </span>
                     </div>
 
-                    <h3 className="font-classic text-[1.9rem] leading-[1.05] font-semibold tracking-tight text-ink-strong md:text-3xl lg:text-[2.6rem]">
-                        {currentSong.title}
+                    <h3 className="font-classic text-[1.9rem] leading-[1.05] font-semibold tracking-tight md:text-3xl lg:text-[2.6rem]">
+                        <AuroraText>{currentSong.title}</AuroraText>
                     </h3>
 
                     <p className="text-base font-medium text-on-surface-variant">

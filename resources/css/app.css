@@ -1003,3 +1003,126 @@ html.light .hover\:text-white:hover {
         transition: none;
     }
 }
+
+/* ============================================================ */
+/* Lightswind-inspired effects (aurora text, beam border,      */
+/* ambient aurora backdrop) — additive, theme-aware,           */
+/* reduced-motion safe.                                        */
+/* ============================================================ */
+
+@layer components {
+    /* --- Aurora text ------------------------------------------ */
+    /* A slow accent-coloured sheen drifts through headline text.
+       The gradient's flat ends are the theme's strong text colour,
+       so titles stay legible at every point of the sweep (and when
+       motion is disabled the sweep simply sits still).             */
+    .aurora-text {
+        background-image: linear-gradient(
+            100deg,
+            var(--text-strong) 0%,
+            var(--text-strong) 38%,
+            var(--accent-color) 50%,
+            color-mix(in oklab, var(--accent-color) 55%, #ffffff) 62%,
+            var(--text-strong) 78%,
+            var(--text-strong) 100%
+        );
+        background-size: 220% auto;
+        background-position: 0% center;
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* --- Beam / spotlight border ------------------------------ */
+    /* A glowing accent ring traces the cursor around the card's
+       perimeter. The ring is painted by a radial gradient pinned
+       to `--beam-x` / `--beam-y` and masked down to a 1px frame.  */
+    .beam-border {
+        position: relative;
+    }
+
+    .beam-border::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: radial-gradient(
+            280px circle at var(--beam-x, 50%) var(--beam-y, 50%),
+            var(--accent-color),
+            transparent 70%
+        );
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        opacity: 0;
+        transition: opacity 250ms ease;
+        pointer-events: none;
+    }
+
+    .beam-border:hover::before {
+        opacity: 1;
+    }
+
+    /* --- Aurora backdrop -------------------------------------- */
+    /* Slow-drifting layered colour field for the canvas. Soft
+       radial falloffs (no blur filter) so it stays cheap to
+       composite and runs comfortably at 60fps.                  */
+    .aurora-backdrop {
+        background:
+            radial-gradient(
+                42% 58% at 22% 28%,
+                var(--accent-glow),
+                transparent 70%
+            ),
+            radial-gradient(
+                46% 62% at 80% 22%,
+                color-mix(in oklab, var(--accent-color) 30%, transparent),
+                transparent 72%
+            ),
+            radial-gradient(
+                52% 68% at 66% 82%,
+                color-mix(in oklab, var(--accent-color) 22%, transparent),
+                transparent 70%
+            );
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .aurora-text {
+        animation: auroraText 9s ease-in-out infinite;
+    }
+
+    .aurora-backdrop {
+        animation: auroraDrift 28s ease-in-out infinite alternate;
+        will-change: transform;
+    }
+}
+
+@keyframes auroraText {
+    0%,
+    100% {
+        background-position: 100% center;
+    }
+    50% {
+        background-position: 0% center;
+    }
+}
+
+@keyframes auroraDrift {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+        transform: translate3d(-3%, 2%, 0) scale(1.06);
+    }
+    100% {
+        transform: translate3d(3%, -2%, 0) scale(1.03);
+    }
+}

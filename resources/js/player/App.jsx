@@ -18,6 +18,7 @@ import { LuClock, LuHeart, LuListMusic, LuMusic, LuPlay, LuSparkles } from 'reac
 import SettingsModal from './components/SettingsModal';
 import SuggestSongModal from './components/SuggestSongModal';
 import Preloader from './components/Preloader';
+import { AuroraText } from './components/effects';
 
 export default function App() {
     const {
@@ -110,6 +111,10 @@ export default function App() {
         <>
             {showPreloader && <Preloader onComplete={() => setShowPreloader(false)} />}
             <div className="player-font relative flex h-dvh w-full overflow-hidden bg-canvas text-ink-strong select-none">
+                <div
+                    aria-hidden="true"
+                    className="aurora-backdrop pointer-events-none absolute inset-0 opacity-60"
+                />
                 <div
                     className="pointer-events-none absolute -top-40 left-1/4 h-[520px] w-[520px] rounded-full blur-[130px] transition-opacity duration-700"
                     style={{
@@ -356,9 +361,11 @@ export default function App() {
                                             HIGH RESOLUTION MASTER &bull; 24-BIT
                                             / 96KHZ
                                         </div>
-                                        <h2 className="font-classic text-[1.9rem] leading-[1.1] font-semibold tracking-tight text-ink-strong md:text-[2.4rem]">
-                                            Welcome back,{' '}
-                                            {profileName || 'Listener'}
+                                        <h2 className="font-classic text-[1.9rem] leading-[1.1] font-semibold tracking-tight md:text-[2.4rem]">
+                                            <AuroraText>
+                                                Welcome back,{' '}
+                                                {profileName || 'Listener'}
+                                            </AuroraText>
                                         </h2>
                                         <p className="mt-1 font-mono text-xs text-on-surface-variant">
                                             Lossless Audio Archive &bull;{' '}

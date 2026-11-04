@@ -25,6 +25,7 @@ import {
     LuWaves,
 } from 'react-icons/lu';
 import { formatSeconds } from '../format';
+import { AuroraText } from './effects';
 import {
     GRID_BACKDROP_STYLE,
     GROOVE_OVERLAY_STYLE,
@@ -586,8 +587,8 @@ export default function NowPlayingView({ isOpen, onClose }) {
                                             </span>
                                         )}
                                     </div>
-                                    <h1 className="truncate font-classic text-[1.9rem] leading-[1.1] font-semibold tracking-tight text-ink sm:text-[2.4rem]">
-                                        {currentSong.title}
+                                    <h1 className="truncate font-classic text-[1.9rem] leading-[1.1] font-semibold tracking-tight sm:text-[2.4rem]">
+                                        <AuroraText>{currentSong.title}</AuroraText>
                                     </h1>
                                     <p className="mt-0.5 flex flex-wrap items-center gap-2 text-sm font-semibold text-ink-secondary">
                                         <span>{currentSong.artist}</span>
